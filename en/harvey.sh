@@ -1,7 +1,5 @@
 #!/bin/bash
 sh_v="4.5.1"
-
-
 gl_hui='\e[37m'
 gl_hong='\033[31m'
 gl_lv='\033[32m'
@@ -10,13 +8,9 @@ gl_lan='\033[34m'
 gl_bai='\033[0m'
 gl_zi='\033[35m'
 gl_kjlan='\033[96m'
-
-
 canshu="default"
 permission_granted="false"
 ENABLE_STATS="true"
-
-
 quanju_canshu() {
 if [ "$canshu" = "CN" ]; then
 	zhushi=0
@@ -28,22 +22,15 @@ else
 	zhushi=1  # 0 表示执行，1 表示不执行
 	gh_proxy="https://"
 fi
-
 gh_https_url="https://"
-
 }
 quanju_canshu
-
-
-
 # Define a function to execute the command
 run_command() {
 	if [ "$zhushi" -eq 0 ]; then
 		"$@"
 	fi
 }
-
-
 canshu_v6() {
 	if grep -q '^canshu="V6"' /usr/local/bin/k > /dev/null 2>&1; then
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/harvey.sh
@@ -51,8 +38,6 @@ canshu_v6() {
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/harvey.sh
 	fi
 }
-
-
 CheckFirstRun_true() {
 	if grep -q '^permission_granted="true"' /usr/local/bin/k > /dev/null 2>&1; then
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
@@ -60,76 +45,52 @@ CheckFirstRun_true() {
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
 	fi
 }
-
-
-
 # This function collects function buried information and records the current script version number, usage time, system version, CPU architecture, machine country and function name used by the user. It does not involve any sensitive information, so don’t worry! Please believe me!
 # Why is this function designed? The purpose is to better understand the functions that users like to use, and to further optimize the functions and launch more functions that meet user needs.
 # The full text can be searched for the send_stats function call location. It is transparent and open source. If you have any concerns, you can refuse to use it.
-
-
-
 send_stats() {
 	if [ "$ENABLE_STATS" == "false" ]; then
 		return
 	fi
-
 	local country=$(curl -s ipinfo.io/country)
 	local os_info=$(grep PRETTY_NAME /etc/os-release | cut -d '=' -f2 | tr -d '"')
 	local cpu_arch=$(uname -m)
-
 	(
 		curl -s -X POST "https://api.harvey.pro/api/log" \
 			-H "Content-Type: application/json" \
 			-d "{\"action\":\"$1\",\"timestamp\":\"$(date -u '+%Y-%m-%d %H:%M:%S')\",\"country\":\"$country\",\"os_info\":\"$os_info\",\"cpu_arch\":\"$cpu_arch\",\"version\":\"$sh_v\"}" \
 		&>/dev/null
 	) &
-
 }
-
-
 yinsiyuanquan2() {
-
 if grep -q '^ENABLE_STATS="false"' /usr/local/bin/k > /dev/null 2>&1; then
 	sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 elif grep -q '^ENABLE_STATS="false"' ~/harvey.sh.bak > /dev/null 2>&1; then
 	sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 fi
-
 }
-
-
-
 canshu_v6
 CheckFirstRun_true
 yinsiyuanquan2
-
-
 sed -i '/^alias k=/d' ~/.bashrc > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.profile > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.bash_profile > /dev/null 2>&1
 cp -f ./harvey.sh ~/harvey.sh > /dev/null 2>&1
 cp -f ~/harvey.sh /usr/local/bin/k > /dev/null 2>&1
 ln -sf /usr/local/bin/k /usr/bin/k > /dev/null 2>&1
-
-
-
 CheckFirstRun_false() {
 	if grep -q '^permission_granted="false"' /usr/local/bin/k > /dev/null 2>&1; then
 		UserLicenseAgreement
 	fi
 }
-
 # Prompt user to agree to terms
 UserLicenseAgreement() {
 	clear
-	echo -e "${gl_kjlan}Welcome to the technology lion script toolbox${gl_bai}"
+	echo -e "${gl_kjlan}Welcome to the Harvey script toolbox${gl_bai}"
 	echo "When using the script for the first time, please read and agree to the User License Agreement."
 	echo "User License Agreement: https://blog.harvey.pro/user-license-agreement/"
 	echo -e "----------------------"
 	read -e -p "Do you agree to the above terms? (y/n):" user_input
-
-
 	if [ "$user_input" = "y" ] || [ "$user_input" = "Y" ]; then
 		send_stats "License agreement"
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
@@ -140,49 +101,31 @@ UserLicenseAgreement() {
 		exit
 	fi
 }
-
 CheckFirstRun_false
-
-
-
-
-
 ip_address() {
-
 get_public_ip() {
 	curl -s https://ipinfo.io/ip && echo
 }
-
 get_local_ip() {
 	ip route get 8.8.8.8 2>/dev/null | grep -oP 'src \K[^ ]+' || \
 	hostname -I 2>/dev/null | awk '{print $1}' || \
 	ifconfig 2>/dev/null | grep -E 'inet [0-9]' | grep -v '127.0.0.1' | awk '{print $2}' | head -n1
 }
-
 public_ip=$(get_public_ip)
 isp_info=$(curl -s --max-time 3 http://ipinfo.io/org)
-
-
 if echo "$isp_info" | grep -Eiq 'CHINANET|mobile|unicom|telecom'; then
   ipv4_address=$(get_local_ip)
 else
   ipv4_address="$public_ip"
 fi
-
-
 # ipv4_address=$(curl -s https://ipinfo.io/ip && echo)
 ipv6_address=$(curl -s --max-time 1 https://v6.ipinfo.io/ip && echo)
-
 }
-
-
-
 install() {
 	if [ $# -eq 0 ]; then
 		echo "No package parameters provided!"
 		return 1
 	fi
-
 	for package in "$@"; do
 		if ! command -v "$package" &>/dev/null; then
 			echo -e "${gl_kjlan}Installing$package...${gl_bai}"
@@ -219,17 +162,12 @@ install() {
 		fi
 	done
 }
-
-
 check_disk_space() {
 	local required_gb=$1
 	local path=${2:-/}
-
 	mkdir -p "$path"
-
 	local required_space_mb=$((required_gb * 1024))
 	local available_space_mb=$(df -m "$path" | awk 'NR==2 {print $4}')
-
 	if [ "$available_space_mb" -lt "$required_space_mb" ]; then
 		echo -e "${gl_huang}hint:${gl_bai}Not enough disk space!"
 		echo "Current available space: $((available_space_mb/1024))G"
@@ -240,9 +178,6 @@ check_disk_space() {
 		harvey
 	fi
 }
-
-
-
 install_dependency() {
 	switch_mirror false false
 	check_port
@@ -250,15 +185,12 @@ install_dependency() {
 	prefer_ipv4
 	auto_optimize_dns
 	install wget unzip tar jq grep
-
 }
-
 remove() {
 	if [ $# -eq 0 ]; then
 		echo "No package parameters provided!"
 		return 1
 	fi
-
 	for package in "$@"; do
 		echo -e "${gl_kjlan}Uninstalling$package...${gl_bai}"
 		if command -v dnf &>/dev/null; then
@@ -283,21 +215,16 @@ remove() {
 		fi
 	done
 }
-
-
 # Universal systemctl function, suitable for various distributions
 systemctl() {
 	local COMMAND="$1"
 	local SERVICE_NAME="$2"
-
 	if command -v apk &>/dev/null; then
 		service "$SERVICE_NAME" "$COMMAND"
 	else
 		/bin/systemctl "$COMMAND" "$SERVICE_NAME"
 	fi
 }
-
-
 # Restart service
 restart() {
 	systemctl restart "$1"
@@ -307,7 +234,6 @@ restart() {
 		echo "Error: Restart$1Service failed."
 	fi
 }
-
 # Start service
 start() {
 	systemctl start "$1"
@@ -317,7 +243,6 @@ start() {
 		echo "Error: start$1Service failed."
 	fi
 }
-
 # Stop service
 stop() {
 	systemctl stop "$1"
@@ -327,7 +252,6 @@ stop() {
 		echo "Error: stop$1Service failed."
 	fi
 }
-
 # Check service status
 status() {
 	systemctl status "$1"
@@ -337,8 +261,6 @@ status() {
 		echo "Error: cannot be displayed$1Service status."
 	fi
 }
-
-
 enable() {
 	local SERVICE_NAME="$1"
 	if command -v apk &>/dev/null; then
@@ -346,12 +268,8 @@ enable() {
 	else
 	   /bin/systemctl enable "$SERVICE_NAME"
 	fi
-
 	echo "$SERVICE_NAMEIt has been set to start automatically at boot."
 }
-
-
-
 break_end() {
 	  echo -e "${gl_lv}Operation completed${gl_bai}"
 	  echo "Press any key to continue..."
@@ -359,19 +277,13 @@ break_end() {
 	  echo ""
 	  clear
 }
-
 harvey() {
 			cd ~
 			harvey_sh
 }
-
-
-
-
 stop_containers_or_kill_process() {
 	local port=$1
 	local containers=$(docker ps --filter "publish=$port" --format "{{.ID}}" 2>/dev/null)
-
 	if [ -n "$containers" ]; then
 		docker stop $containers
 	else
@@ -381,16 +293,11 @@ stop_containers_or_kill_process() {
 		done
 	fi
 }
-
-
 check_port() {
 	stop_containers_or_kill_process 80
 	stop_containers_or_kill_process 443
 }
-
-
 install_add_docker_cn() {
-
 local country=$(curl -s ipinfo.io/country)
 if [ "$country" = "CN" ]; then
 	cat > /etc/docker/daemon.json << EOF
@@ -417,18 +324,11 @@ if [ "$country" = "CN" ]; then
 }
 EOF
 fi
-
-
 enable docker
 start docker
 restart docker
-
 }
-
-
-
 linuxmirrors_install_docker() {
-
 local country=$(curl -s ipinfo.io/country)
 if [ "$country" = "CN" ]; then
 	bash <(curl -sSL https://linuxmirrors.cn/docker.sh) \
@@ -449,13 +349,8 @@ else
 	  --close-firewall false \
 	  --ignore-backup-tips
 fi
-
 install_add_docker_cn
-
 }
-
-
-
 install_add_docker() {
 	echo -e "${gl_kjlan}Installing docker environment...${gl_bai}"
 	if command -v apt &>/dev/null || command -v yum &>/dev/null || command -v dnf &>/dev/null; then
@@ -463,19 +358,14 @@ install_add_docker() {
 	else
 		install docker docker-compose
 		install_add_docker_cn
-
 	fi
 	sleep 2
 }
-
-
 install_docker() {
 	if ! command -v docker &>/dev/null; then
 		install_add_docker
 	fi
 }
-
-
 docker_ps() {
 while true; do
 	clear
@@ -587,7 +477,6 @@ while true; do
 			docker stats --no-stream
 			break_end
 			;;
-
 		15)
 			send_stats "Allow container port access"
 			read -e -p "Please enter the container name:" docker_name
@@ -597,7 +486,6 @@ while true; do
 			check_docker_app_ip
 			break_end
 			;;
-
 		16)
 			send_stats "Block container port access"
 			read -e -p "Please enter the container name:" docker_name
@@ -607,15 +495,12 @@ while true; do
 			check_docker_app_ip
 			break_end
 			;;
-
 		*)
 			break  # 跳出循环，退出菜单
 			;;
 	esac
 done
 }
-
-
 docker_image() {
 while true; do
 	clear
@@ -674,24 +559,13 @@ while true; do
 			;;
 	esac
 done
-
-
 }
-
-
-
-
-
 check_crontab_installed() {
 	if ! command -v crontab >/dev/null 2>&1; then
 		install_crontab
 	fi
 }
-
-
-
 install_crontab() {
-
 	if [ -f /etc/os-release ]; then
 		. /etc/os-release
 		case "$ID" in
@@ -741,19 +615,13 @@ install_crontab() {
 		echo "Unable to determine operating system."
 		return
 	fi
-
 	echo -e "${gl_lv}crontab is installed and cron service is running.${gl_bai}"
 }
-
-
-
 docker_ipv6_on() {
 	root_use
 	install jq
-
 	local CONFIG_FILE="/etc/docker/daemon.json"
 	local REQUIRED_IPV6_CONFIG='{"ipv6": true, "fixed-cidr-v6": "2001:db8:1::/64"}'
-
 	# Check if the configuration file exists, if not create the file and write the default settings
 	if [ ! -f "$CONFIG_FILE" ]; then
 		echo "$REQUIRED_IPV6_CONFIG" | jq . > "$CONFIG_FILE"
@@ -761,17 +629,14 @@ docker_ipv6_on() {
 	else
 		# Use jq to handle configuration file updates
 		local ORIGINAL_CONFIG=$(<"$CONFIG_FILE")
-
 		# Check if the current configuration already has ipv6 settings
 		local CURRENT_IPV6=$(echo "$ORIGINAL_CONFIG" | jq '.ipv6 // false')
-
 		# Update configuration and enable IPv6
 		if [[ "$CURRENT_IPV6" == "false" ]]; then
 			UPDATED_CONFIG=$(echo "$ORIGINAL_CONFIG" | jq '. + {ipv6: true, "fixed-cidr-v6": "2001:db8:1::/64"}')
 		else
 			UPDATED_CONFIG=$(echo "$ORIGINAL_CONFIG" | jq '. + {"fixed-cidr-v6": "2001:db8:1::/64"}')
 		fi
-
 		# Compare original configuration to new configuration
 		if [[ "$ORIGINAL_CONFIG" == "$UPDATED_CONFIG" ]]; then
 			echo -e "${gl_huang}IPv6 access is currently enabled${gl_bai}"
@@ -781,29 +646,21 @@ docker_ipv6_on() {
 		fi
 	fi
 }
-
-
 docker_ipv6_off() {
 	root_use
 	install jq
-
 	local CONFIG_FILE="/etc/docker/daemon.json"
-
 	# Check if the configuration file exists
 	if [ ! -f "$CONFIG_FILE" ]; then
 		echo -e "${gl_hong}Configuration file does not exist${gl_bai}"
 		return
 	fi
-
 	# Read current configuration
 	local ORIGINAL_CONFIG=$(<"$CONFIG_FILE")
-
 	# Use jq to handle configuration file updates
 	local UPDATED_CONFIG=$(echo "$ORIGINAL_CONFIG" | jq 'del(.["fixed-cidr-v6"]) | .ipv6 = false')
-
 	# Check current ipv6 status
 	local CURRENT_IPV6=$(echo "$ORIGINAL_CONFIG" | jq -r '.ipv6 // false')
-
 	# Compare original configuration to new configuration
 	if [[ "$CURRENT_IPV6" == "false" ]]; then
 		echo -e "${gl_huang}IPv6 access is currently closed${gl_bai}"
@@ -813,9 +670,6 @@ docker_ipv6_off() {
 		echo -e "${gl_huang}IPv6 access has been successfully closed${gl_bai}"
 	fi
 }
-
-
-
 save_iptables_rules() {
 	mkdir -p /etc/iptables
 	touch /etc/iptables/rules.v4
@@ -823,12 +677,7 @@ save_iptables_rules() {
 	check_crontab_installed
 	crontab -l | grep -v 'iptables-restore' | crontab - > /dev/null 2>&1
 	(crontab -l ; echo '@reboot iptables-restore < /etc/iptables/rules.v4') | crontab - > /dev/null 2>&1
-
 }
-
-
-
-
 iptables_open() {
 	install iptables
 	save_iptables_rules
@@ -836,138 +685,101 @@ iptables_open() {
 	iptables -P FORWARD ACCEPT
 	iptables -P OUTPUT ACCEPT
 	iptables -F
-
 	ip6tables -P INPUT ACCEPT
 	ip6tables -P FORWARD ACCEPT
 	ip6tables -P OUTPUT ACCEPT
 	ip6tables -F
-
 }
-
-
-
 open_port() {
 	local ports=($@)  # 将传入的参数转换为数组
 	if [ ${#ports[@]} -eq 0 ]; then
 		echo "Please provide at least one port number"
 		return 1
 	fi
-
 	install iptables
-
 	for port in "${ports[@]}"; do
 		# Delete existing shutdown rules
 		iptables -D INPUT -p tcp --dport $port -j DROP 2>/dev/null
 		iptables -D INPUT -p udp --dport $port -j DROP 2>/dev/null
-
 		# Add open rule
 		if ! iptables -C INPUT -p tcp --dport $port -j ACCEPT 2>/dev/null; then
 			iptables -I INPUT 1 -p tcp --dport $port -j ACCEPT
 		fi
-
 		if ! iptables -C INPUT -p udp --dport $port -j ACCEPT 2>/dev/null; then
 			iptables -I INPUT 1 -p udp --dport $port -j ACCEPT
 			echo "Port opened$port"
 		fi
 	done
-
 	save_iptables_rules
 	send_stats "Port opened"
 }
-
-
 close_port() {
 	local ports=($@)  # 将传入的参数转换为数组
 	if [ ${#ports[@]} -eq 0 ]; then
 		echo "Please provide at least one port number"
 		return 1
 	fi
-
 	install iptables
-
 	for port in "${ports[@]}"; do
 		# Delete existing open rules
 		iptables -D INPUT -p tcp --dport $port -j ACCEPT 2>/dev/null
 		iptables -D INPUT -p udp --dport $port -j ACCEPT 2>/dev/null
-
 		# Add a shutdown rule
 		if ! iptables -C INPUT -p tcp --dport $port -j DROP 2>/dev/null; then
 			iptables -I INPUT 1 -p tcp --dport $port -j DROP
 		fi
-
 		if ! iptables -C INPUT -p udp --dport $port -j DROP 2>/dev/null; then
 			iptables -I INPUT 1 -p udp --dport $port -j DROP
 			echo "Port closed$port"
 		fi
 	done
-
 	# Delete existing rules (if any)
 	iptables -D INPUT -i lo -j ACCEPT 2>/dev/null
 	iptables -D FORWARD -i lo -j ACCEPT 2>/dev/null
-
 	# Insert new rule into the first one
 	iptables -I INPUT 1 -i lo -j ACCEPT
 	iptables -I FORWARD 1 -i lo -j ACCEPT
-
 	save_iptables_rules
 	send_stats "Port closed"
 }
-
-
 allow_ip() {
 	local ips=($@)  # 将传入的参数转换为数组
 	if [ ${#ips[@]} -eq 0 ]; then
 		echo "Please provide at least one IP address or IP segment"
 		return 1
 	fi
-
 	install iptables
-
 	for ip in "${ips[@]}"; do
 		# Delete existing blocking rules
 		iptables -D INPUT -s $ip -j DROP 2>/dev/null
-
 		# Add allow rule
 		if ! iptables -C INPUT -s $ip -j ACCEPT 2>/dev/null; then
 			iptables -I INPUT 1 -s $ip -j ACCEPT
 			echo "Released IP$ip"
 		fi
 	done
-
 	save_iptables_rules
 	send_stats "Released IP"
 }
-
 block_ip() {
 	local ips=($@)  # 将传入的参数转换为数组
 	if [ ${#ips[@]} -eq 0 ]; then
 		echo "Please provide at least one IP address or IP segment"
 		return 1
 	fi
-
 	install iptables
-
 	for ip in "${ips[@]}"; do
 		# Delete existing allow rules
 		iptables -D INPUT -s $ip -j ACCEPT 2>/dev/null
-
 		# Add blocking rule
 		if ! iptables -C INPUT -s $ip -j DROP 2>/dev/null; then
 			iptables -I INPUT 1 -s $ip -j DROP
 			echo "IP blocked$ip"
 		fi
 	done
-
 	save_iptables_rules
 	send_stats "IP blocked"
 }
-
-
-
-
-
-
-
 enable_ddos_defense() {
 	# Turn on DDoS protection
 	iptables -A DOCKER-USER -p tcp --syn -m limit --limit 500/s --limit-burst 100 -j ACCEPT
@@ -978,10 +790,8 @@ enable_ddos_defense() {
 	iptables -A INPUT -p tcp --syn -j DROP
 	iptables -A INPUT -p udp -m limit --limit 3000/s -j ACCEPT
 	iptables -A INPUT -p udp -j DROP
-
 	send_stats "Turn on DDoS defense"
 }
-
 # Turn off DDoS defense
 disable_ddos_defense() {
 	# Turn off DDoS protection
@@ -993,95 +803,62 @@ disable_ddos_defense() {
 	iptables -D INPUT -p tcp --syn -j DROP 2>/dev/null
 	iptables -D INPUT -p udp -m limit --limit 3000/s -j ACCEPT 2>/dev/null
 	iptables -D INPUT -p udp -j DROP 2>/dev/null
-
 	send_stats "Turn off DDoS defense"
 }
-
-
-
-
-
 # Functions to manage national IP rules
 manage_country_rules() {
 	local action="$1"
 	shift  # 去掉第一个参数，剩下的全是国家代码
-
 	install ipset
-
 	for country_code in "$@"; do
 		local ipset_name="${country_code,,}_block"
 		local download_url="http://www.ipdeny.com/ipblocks/data/countries/${country_code,,}.zone"
-
 		case "$action" in
 			block)
 				if ! ipset list "$ipset_name" &> /dev/null; then
 					ipset create "$ipset_name" hash:net
 				fi
-
 				if ! wget -q "$download_url" -O "${country_code,,}.zone"; then
 					echo "Error: Download$country_codeIP zone file failed"
 					continue
 				fi
-
 				while IFS= read -r ip; do
 					ipset add "$ipset_name" "$ip" 2>/dev/null
 				done < "${country_code,,}.zone"
-
 				iptables -I INPUT -m set --match-set "$ipset_name" src -j DROP
-
 				echo "Blocked successfully$country_codeIP address"
 				rm "${country_code,,}.zone"
 				;;
-
 			allow)
 				if ! ipset list "$ipset_name" &> /dev/null; then
 					ipset create "$ipset_name" hash:net
 				fi
-
 				if ! wget -q "$download_url" -O "${country_code,,}.zone"; then
 					echo "Error: Download$country_codeIP zone file failed"
 					continue
 				fi
-
 				ipset flush "$ipset_name"
 				while IFS= read -r ip; do
 					ipset add "$ipset_name" "$ip" 2>/dev/null
 				done < "${country_code,,}.zone"
-
-
 				iptables -P INPUT DROP
 				iptables -A INPUT -m set --match-set "$ipset_name" src -j ACCEPT
-
 				echo "Successfully allowed$country_codeIP address"
 				rm "${country_code,,}.zone"
 				;;
-
 			unblock)
 				iptables -D INPUT -m set --match-set "$ipset_name" src -j DROP 2>/dev/null
-
 				if ipset list "$ipset_name" &> /dev/null; then
 					ipset destroy "$ipset_name"
 				fi
-
 				echo "Removed successfully$country_codeIP address restrictions"
 				;;
-
 			*)
 				echo "Usage: manage_country_rules {block|allow|unblock} <country_code...>"
 				;;
 		esac
 	done
 }
-
-
-
-
-
-
-
-
-
-
 iptables_panel() {
   root_use
   install iptables
@@ -1154,7 +931,6 @@ iptables_panel() {
 				  iptables-save > /etc/iptables/rules.v4
 				  send_stats "Close all ports"
 				  ;;
-
 			  5)
 				  # IP whitelist
 				  read -e -p "Please enter the allowed IP or IP segment:" o_ip
@@ -1193,7 +969,6 @@ iptables_panel() {
 			  14)
 				  disable_ddos_defense
 				  ;;
-
 			  15)
 				  read -e -p "Please enter the blocked country code (multiple country codes can be separated by spaces, such as CN US JP):" country_code
 				  manage_country_rules block $country_code
@@ -1204,163 +979,101 @@ iptables_panel() {
 				  manage_country_rules allow $country_code
 				  send_stats "block country$country_codeIP"
 				  ;;
-
 			  17)
 				  read -e -p "Please enter the cleared country code (multiple country codes can be separated by spaces, such as CN US JP):" country_code
 				  manage_country_rules unblock $country_code
 				  send_stats "clear country$country_codeIP"
 				  ;;
-
 			  *)
 				  break  # 跳出循环，退出菜单
 				  ;;
 		  esac
   done
-
 }
-
-
-
-
-
-
 add_swap() {
 	local new_swap=$1  # 获取传入的参数
-
 	# Get all swap partitions in the current system
 	local swap_partitions=$(grep -E '^/dev/' /proc/swaps | awk '{print $1}')
-
 	# Traverse and delete all swap partitions
 	for partition in $swap_partitions; do
 		swapoff "$partition"
 		wipefs -a "$partition"
 		mkswap -f "$partition"
 	done
-
 	# Make sure /swapfile is no longer in use
 	swapoff /swapfile
-
 	# Delete old /swapfile
 	rm -f /swapfile
-
 	# Create a new swap partition
 	fallocate -l ${new_swap}M /swapfile
 	chmod 600 /swapfile
 	mkswap /swapfile
 	swapon /swapfile
-
 	sed -i '/\/swapfile/d' /etc/fstab
 	echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
-
 	if [ -f /etc/alpine-release ]; then
 		echo "nohup swapon /swapfile" > /etc/local.d/swap.start
 		chmod +x /etc/local.d/swap.start
 		rc-update add local
 	fi
-
 	echo -e "The virtual memory size has been adjusted to${gl_huang}${new_swap}${gl_bai}M"
 }
-
-
-
-
 check_swap() {
-
 local swap_total=$(free -m | awk 'NR==3{print $2}')
-
 # Determine whether virtual memory needs to be created
 [ "$swap_total" -gt 0 ] || add_swap 1024
-
-
 }
-
-
-
-
-
-
-
-
-
 ldnmp_v() {
-
 	  # Get nginx version
 	  local nginx_version=$(docker exec nginx nginx -v 2>&1)
 	  local nginx_version=$(echo "$nginx_version" | grep -oP "nginx/\K[0-9]+\.[0-9]+\.[0-9]+")
 	  echo -n -e "nginx : ${gl_huang}v$nginx_version${gl_bai}"
-
 	  # Get mysql version
 	  local dbrootpasswd=$(grep -oP 'MYSQL_ROOT_PASSWORD:\s*\K.*' /home/web/docker-compose.yml | tr -d '[:space:]')
 	  local mysql_version=$(docker exec mysql mysql -u root -p"$dbrootpasswd" -e "SELECT VERSION();" 2>/dev/null | tail -n 1)
 	  echo -n -e "            mysql : ${gl_huang}v$mysql_version${gl_bai}"
-
 	  # Get php version
 	  local php_version=$(docker exec php php -v 2>/dev/null | grep -oP "PHP \K[0-9]+\.[0-9]+\.[0-9]+")
 	  echo -n -e "            php : ${gl_huang}v$php_version${gl_bai}"
-
 	  # Get redis version
 	  local redis_version=$(docker exec redis redis-server -v 2>&1 | grep -oP "v=+\K[0-9]+\.[0-9]+")
 	  echo -e "            redis : ${gl_huang}v$redis_version${gl_bai}"
-
 	  echo "------------------------"
 	  echo ""
-
 }
-
-
-
 install_ldnmp_conf() {
-
   # Create necessary directories and files
   cd /home && mkdir -p web/html web/mysql web/certs web/conf.d web/stream.d web/redis web/log/nginx web/letsencrypt && touch web/docker-compose.yml
   wget -O /home/web/nginx.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/nginx10.conf
   wget -O /home/web/conf.d/default.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/default10.conf
-
   default_server_ssl
-
   # Download the docker-compose.yml file and replace it
   wget -O /home/web/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/harvey/docker/main/LNMP-docker-compose-10.yml
   dbrootpasswd=$(openssl rand -base64 16) ; dbuse=$(openssl rand -hex 4) ; dbusepasswd=$(openssl rand -base64 8)
-
   # Replace in docker-compose.yml file
   sed -i "s#webroot#$dbrootpasswd#g" /home/web/docker-compose.yml
   sed -i "s#harveyYYDS#$dbusepasswd#g" /home/web/docker-compose.yml
   sed -i "s#harvey#$dbuse#g" /home/web/docker-compose.yml
-
 }
-
-
 update_docker_compose_with_db_creds() {
-
   cp /home/web/docker-compose.yml /home/web/docker-compose1.yml
-
   if ! grep -q "letsencrypt" /home/web/docker-compose.yml; then
 	wget -O /home/web/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/harvey/docker/main/LNMP-docker-compose-10.yml
-
   	dbrootpasswd=$(grep -oP 'MYSQL_ROOT_PASSWORD:\s*\K.*' /home/web/docker-compose1.yml | tr -d '[:space:]')
   	dbuse=$(grep -oP 'MYSQL_USER:\s*\K.*' /home/web/docker-compose1.yml | tr -d '[:space:]')
   	dbusepasswd=$(grep -oP 'MYSQL_PASSWORD:\s*\K.*' /home/web/docker-compose1.yml | tr -d '[:space:]')
-
 	sed -i "s#webroot#$dbrootpasswd#g" /home/web/docker-compose.yml
 	sed -i "s#harveyYYDS#$dbusepasswd#g" /home/web/docker-compose.yml
 	sed -i "s#harvey#$dbuse#g" /home/web/docker-compose.yml
   fi
-
   if grep -q "kjlion/nginx:alpine" /home/web/docker-compose1.yml; then
   	sed -i 's|kjlion/nginx:alpine|nginx:alpine|g' /home/web/docker-compose.yml  > /dev/null 2>&1
 	sed -i 's|nginx:alpine|kjlion/nginx:alpine|g' /home/web/docker-compose.yml  > /dev/null 2>&1
   fi
-
 }
-
-
-
-
-
 auto_optimize_dns() {
 	# Get the country code (such as CN, US, etc.)
 	local country=$(curl -s ipinfo.io/country)
-
 	# Set DNS based on country
 	if [ "$country" = "CN" ]; then
 		local dns1_ipv4="223.5.5.5"
@@ -1373,71 +1086,46 @@ auto_optimize_dns() {
 		local dns1_ipv6="2606:4700:4700::1111"
 		local dns2_ipv6="2001:4860:4860::8888"
 	fi
-
 	set_dns
-
-
 }
-
-
 prefer_ipv4() {
 grep -q '^precedence ::ffff:0:0/96  100' /etc/gai.conf 2>/dev/null \
 	|| echo 'precedence ::ffff:0:0/96  100' >> /etc/gai.conf
 echo "Switched to IPv4 priority"
 send_stats "Switched to IPv4 priority"
 }
-
-
-
-
 install_ldnmp() {
-
 	  update_docker_compose_with_db_creds
-
 	  cd /home/web && docker compose up -d
 	  sleep 1
   	  crontab -l 2>/dev/null | grep -v 'logrotate' | crontab -
   	  (crontab -l 2>/dev/null; echo '0 2 * * * docker exec nginx apk add logrotate && docker exec nginx logrotate -f /etc/logrotate.conf') | crontab -
-
 	  fix_phpfpm_conf php
 	  fix_phpfpm_conf php74
-
 	  # mysql tuning
 	  wget -O /home/custom_mysql_config.cnf ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/custom_mysql_config-1.cnf
 	  docker cp /home/custom_mysql_config.cnf mysql:/etc/mysql/conf.d/
 	  rm -rf /home/custom_mysql_config.cnf
-
-
-
 	  restart_ldnmp
 	  sleep 2
-
 	  clear
 	  echo "The LDNMP environment is installed"
 	  echo "------------------------"
 	  ldnmp_v
-
 }
-
-
 install_certbot() {
-
 	cd ~
 	curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/auto_cert_renewal.sh
 	chmod +x auto_cert_renewal.sh
-
 	check_crontab_installed
 	local cron_job="0 0 * * * ~/auto_cert_renewal.sh"
 	crontab -l 2>/dev/null | grep -vF "$cron_job" | crontab -
 	(crontab -l 2>/dev/null; echo "$cron_job") | crontab -
 	echo "The renewal task has been updated"
 }
-
-
 install_ssltls() {
 	  docker stop nginx > /dev/null 2>&1
 	  cd ~
-
 	  local file_path="/etc/letsencrypt/live/$yuming/fullchain.pem"
 	  if [ ! -f "$file_path" ]; then
 		 	local ipv4_pattern='^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
@@ -1457,12 +1145,8 @@ install_ssltls() {
 	  mkdir -p /home/web/certs/
 	  cp /etc/letsencrypt/live/$yuming/fullchain.pem /home/web/certs/${yuming}_cert.pem > /dev/null 2>&1
 	  cp /etc/letsencrypt/live/$yuming/privkey.pem /home/web/certs/${yuming}_key.pem > /dev/null 2>&1
-
 	  docker start nginx > /dev/null 2>&1
 }
-
-
-
 install_ssltls_text() {
 	echo -e "${gl_huang}$yumingPublic key information${gl_bai}"
 	cat /etc/letsencrypt/live/$yuming/fullchain.pem
@@ -1475,11 +1159,6 @@ install_ssltls_text() {
 	echo "Private key: /etc/letsencrypt/live/$yuming/privkey.pem"
 	echo ""
 }
-
-
-
-
-
 add_ssl() {
 echo -e "${gl_huang}Quickly apply for an SSL certificate and automatically renew it before expiration${gl_bai}"
 yuming="${1:-}"
@@ -1494,8 +1173,6 @@ certs_status
 install_ssltls_text
 ssl_ps
 }
-
-
 ssl_ps() {
 	echo -e "${gl_huang}Expiration status of applied certificates${gl_bai}"
 	echo "Site information Certificate expiration time"
@@ -1511,30 +1188,19 @@ ssl_ps() {
 	done
 	echo ""
 }
-
-
-
-
 default_server_ssl() {
 install openssl
-
 if command -v dnf &>/dev/null || command -v yum &>/dev/null; then
 	openssl req -x509 -nodes -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -keyout /home/web/certs/default_server.key -out /home/web/certs/default_server.crt -days 5475 -subj "/C=US/ST=State/L=City/O=Organization/OU=Organizational Unit/CN=Common Name"
 else
 	openssl genpkey -algorithm Ed25519 -out /home/web/certs/default_server.key
 	openssl req -x509 -key /home/web/certs/default_server.key -out /home/web/certs/default_server.crt -days 5475 -subj "/C=US/ST=State/L=City/O=Organization/OU=Organizational Unit/CN=Common Name"
 fi
-
 openssl rand -out /home/web/certs/ticket12.key 48
 openssl rand -out /home/web/certs/ticket13.key 80
-
 }
-
-
 certs_status() {
-
 	sleep 1
-
 	local file_path="/etc/letsencrypt/live/$yuming/fullchain.pem"
 	if [ -f "$file_path" ]; then
 		send_stats "Domain name certificate application successful"
@@ -1558,17 +1224,13 @@ certs_status() {
 		  	add_yuming
 		  	install_ssltls
 		  	certs_status
-
 	  		  ;;
 	  	  2)
 	  	  	send_stats "Import existing certificate"
-
 			# Define file path
 			local cert_file="/home/web/certs/${yuming}_cert.pem"
 			local key_file="/home/web/certs/${yuming}_key.pem"
-
 			mkdir -p /home/web/certs
-
 			# 1. Enter the certificate (both ECC and RSA certificates start with BEGIN CERTIFICATE)
 			echo "Please paste the certificate (CRT/PEM) content (press Enter twice to end):"
 			local cert_content=""
@@ -1576,7 +1238,6 @@ certs_status() {
 				[[ -z "$line" && "$cert_content" == *"-----BEGIN"* ]] && break
 				cert_content+="${line}"$'\n'
 			done
-
 			# 2. Enter the private key (compatible with RSA, ECC, PKCS#8)
 			echo "Please paste the certificate private key (Private Key) content (press Enter twice to end):"
 			local key_content=""
@@ -1584,16 +1245,13 @@ certs_status() {
 				[[ -z "$line" && "$key_content" == *"-----BEGIN"* ]] && break
 				key_content+="${line}"$'\n'
 			done
-
 			# 3. Intelligent verification
 			# Just include "BEGIN CERTIFICATE" and "PRIVATE KEY" to pass
 			if [[ "$cert_content" == *"-----BEGIN CERTIFICATE-----"* && "$key_content" == *"PRIVATE KEY-----"* ]]; then
 				echo -n "$cert_content" > "$cert_file"
 				echo -n "$key_content" > "$key_file"
-
 				chmod 644 "$cert_file"
 				chmod 600 "$key_file"
-
 				# Identify the current certificate type and display it
 				if [[ "$key_content" == *"EC PRIVATE KEY"* ]]; then
 					echo "Detected that the ECC certificate was saved successfully."
@@ -1611,71 +1269,49 @@ certs_status() {
 	  		  ;;
 		esac
 	fi
-
 }
-
-
 repeat_add_yuming() {
 if [ -e /home/web/conf.d/$yuming.conf ]; then
   send_stats "Domain name reuse"
   web_del "${yuming}" > /dev/null 2>&1
 fi
-
 }
-
-
 add_yuming() {
 	  ip_address
 	  echo -e "First resolve the domain name to the local IP:${gl_huang}$ipv4_address  $ipv6_address${gl_bai}"
 	  read -e -p "Please enter your IP or resolved domain name:" yuming
 }
-
-
 check_ip_and_get_access_port() {
 	local yuming="$1"
-
 	local ipv4_pattern='^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
 	local ipv6_pattern='^(([0-9A-Fa-f]{1,4}:){1,7}:|([0-9A-Fa-f]{1,4}:){7,7}[0-9A-Fa-f]{1,4}|::1)$'
-
 	if [[ "$yuming" =~ $ipv4_pattern || "$yuming" =~ $ipv6_pattern ]]; then
 		read -e -p "Please enter the access/listening port, and press Enter to use 80 by default:" access_port
 		access_port=${access_port:-80}
 	fi
 }
-
-
-
 update_nginx_listen_port() {
 	local yuming="$1"
 	local access_port="$2"
 	local conf="/home/web/conf.d/${yuming}.conf"
-
 	# Skip if access_port is empty
 	[ -z "$access_port" ] && return 0
-
 	# Remove all listen lines
 	sed -i '/^[[:space:]]*listen[[:space:]]\+/d' "$conf"
-
 	# Insert new listen after server {
 	sed -i "/server {/a\\
 	listen ${access_port};\\
 	listen [::]:${access_port};
 " "$conf"
 }
-
-
-
 add_db() {
 	  dbname=$(echo "$yuming" | sed -e 's/[^A-Za-z0-9]/_/g')
 	  dbname="${dbname}"
-
 	  dbrootpasswd=$(grep -oP 'MYSQL_ROOT_PASSWORD:\s*\K.*' /home/web/docker-compose.yml | tr -d '[:space:]')
 	  dbuse=$(grep -oP 'MYSQL_USER:\s*\K.*' /home/web/docker-compose.yml | tr -d '[:space:]')
 	  dbusepasswd=$(grep -oP 'MYSQL_PASSWORD:\s*\K.*' /home/web/docker-compose.yml | tr -d '[:space:]')
 	  docker exec mysql mysql -u root -p"$dbrootpasswd" -e "CREATE DATABASE $dbname; GRANT ALL PRIVILEGES ON $dbname.* TO \"$dbuse\"@\"%\";"
 }
-
-
 restart_ldnmp() {
 	  docker exec nginx chown -R nginx:nginx /var/www/html > /dev/null 2>&1
 	  docker exec nginx mkdir -p /var/cache/nginx/proxy > /dev/null 2>&1
@@ -1685,12 +1321,8 @@ restart_ldnmp() {
 	  docker exec php chown -R www-data:www-data /var/www/html > /dev/null 2>&1
 	  docker exec php74 chown -R www-data:www-data /var/www/html > /dev/null 2>&1
 	  cd /home/web && docker compose restart
-
-
 }
-
 nginx_upgrade() {
-
   local ldnmp_pods="nginx"
   cd /home/web/
   docker rm -f $ldnmp_pods > /dev/null 2>&1
@@ -1705,18 +1337,14 @@ nginx_upgrade() {
   docker exec nginx chown -R nginx:nginx /var/cache/nginx/proxy
   docker exec nginx chown -R nginx:nginx /var/cache/nginx/fastcgi
   docker restart $ldnmp_pods > /dev/null 2>&1
-
   send_stats "renew$ldnmp_pods"
   echo "renew${ldnmp_pods}Finish"
-
 }
-
 phpmyadmin_upgrade() {
   local ldnmp_pods="phpmyadmin"
   local local docker_port=8877
   local dbuse=$(grep -oP 'MYSQL_USER:\s*\K.*' /home/web/docker-compose.yml | tr -d '[:space:]')
   local dbusepasswd=$(grep -oP 'MYSQL_PASSWORD:\s*\K.*' /home/web/docker-compose.yml | tr -d '[:space:]')
-
   cd /home/web/
   docker rm -f $ldnmp_pods > /dev/null 2>&1
   docker images --filter=reference="$ldnmp_pods*" -q | xargs docker rmi > /dev/null 2>&1
@@ -1724,7 +1352,6 @@ phpmyadmin_upgrade() {
   docker compose -f docker-compose.phpmyadmin.yml up -d
   clear
   ip_address
-
   check_docker_app_ip
   echo "Login information:"
   echo "username:$dbuse"
@@ -1732,14 +1359,11 @@ phpmyadmin_upgrade() {
   echo
   send_stats "start up$ldnmp_pods"
 }
-
-
 cf_purge_cache() {
   local CONFIG_FILE="/home/web/config/cf-purge-cache.txt"
   local API_TOKEN
   local EMAIL
   local ZONE_IDS
-
   # Check if the configuration file exists
   if [ -f "$CONFIG_FILE" ]; then
 	# Read API_TOKEN and zone_id from configuration file
@@ -1754,12 +1378,10 @@ cf_purge_cache() {
 	  read -e -p "Please enter your API_TOKEN:" API_TOKEN
 	  read -e -p "Please enter your CF username:" EMAIL
 	  read -e -p "Please enter zone_id (separate multiple with spaces):" -a ZONE_IDS
-
 	  mkdir -p /home/web/config/
 	  echo "$API_TOKEN $EMAIL ${ZONE_IDS[*]}" > "$CONFIG_FILE"
 	fi
   fi
-
   # Loop through each zone_id and execute the clear cache command
   for ZONE_ID in "${ZONE_IDS[@]}"; do
 	echo "Clearing cache for zone_id:$ZONE_ID"
@@ -1769,22 +1391,14 @@ cf_purge_cache() {
 	-H "Content-Type: application/json" \
 	--data '{"purge_everything":true}'
   done
-
   echo "Cache clearing request has been sent."
 }
-
-
-
 web_cache() {
   send_stats "Clear site cache"
   cf_purge_cache
   cd /home/web && docker compose restart
 }
-
-
-
 web_del() {
-
 	send_stats "Delete site data"
 	yuming_list="${1:-}"
 	if [ -z "$yuming_list" ]; then
@@ -1793,35 +1407,26 @@ web_del() {
 			return
 		fi
 	fi
-
 	for yuming in $yuming_list; do
 		echo "Domain name is being deleted:$yuming"
 		rm -r /home/web/html/$yuming > /dev/null 2>&1
 		rm /home/web/conf.d/$yuming.conf > /dev/null 2>&1
 		rm /home/web/certs/${yuming}_key.pem > /dev/null 2>&1
 		rm /home/web/certs/${yuming}_cert.pem > /dev/null 2>&1
-
 		# Convert domain name to database name
 		dbname=$(echo "$yuming" | sed -e 's/[^A-Za-z0-9]/_/g')
 		dbrootpasswd=$(grep -oP 'MYSQL_ROOT_PASSWORD:\s*\K.*' /home/web/docker-compose.yml | tr -d '[:space:]')
-
 		# Check whether the database exists before deleting it to avoid errors.
 		echo "Deleting database:$dbname"
 		docker exec mysql mysql -u root -p"$dbrootpasswd" -e "DROP DATABASE ${dbname};" > /dev/null 2>&1
 	done
-
 	docker exec nginx nginx -s reload
-
 }
-
-
 nginx_waf() {
 	local mode=$1
-
 	if ! grep -q "kjlion/nginx:alpine" /home/web/docker-compose.yml; then
 		wget -O /home/web/nginx.conf "${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/nginx10.conf"
 	fi
-
 	# Determine whether to turn on or off WAF according to the mode parameter
 	if [ "$mode" == "on" ]; then
 		# Turn on WAF: remove comments
@@ -1837,7 +1442,6 @@ nginx_waf() {
 		echo "Invalid argument: use 'on' or 'off'"
 		return 1
 	fi
-
 	# Check the nginx image and handle it accordingly
 	if grep -q "kjlion/nginx:alpine" /home/web/docker-compose.yml; then
 		docker exec nginx nginx -s reload
@@ -1845,9 +1449,7 @@ nginx_waf() {
 		sed -i 's|nginx:alpine|kjlion/nginx:alpine|g' /home/web/docker-compose.yml
 		nginx_upgrade
 	fi
-
 }
-
 check_waf_status() {
 	if grep -q "^\s*#\s*modsecurity on;" /home/web/nginx.conf; then
 		waf_status=""
@@ -1857,8 +1459,6 @@ check_waf_status() {
 		waf_status=""
 	fi
 }
-
-
 check_cf_mode() {
 	if [ -f "/etc/fail2ban/action.d/cloudflare-docker.conf" ]; then
 		CFmessage="cf mode is on"
@@ -1866,29 +1466,21 @@ check_cf_mode() {
 		CFmessage=""
 	fi
 }
-
-
 nginx_http_on() {
-
 local ipv4_pattern='^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
 local ipv6_pattern='^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|(2[0-4][0-9]|[01]?[0-9][0-9]?))|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|(2[0-4][0-9]|[01]?[0-9][0-9]?))|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|(2[0-4][0-9]|[01]?[0-9][0-9]?))|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|(2[0-4][0-9]|[01]?[0-9][0-9]?))))$'
 if [[ ($yuming =~ $ipv4_pattern || $yuming =~ $ipv6_pattern) ]]; then
 	sed -i '/if (\$scheme = http) {/,/}/s/^/#/' /home/web/conf.d/${yuming}.conf
 fi
-
 }
-
-
 patch_wp_memory_limit() {
   local MEMORY_LIMIT="${1:-256M}"      # 第一个参数，默认256M
   local MAX_MEMORY_LIMIT="${2:-256M}"  # 第二个参数，默认256M
   local TARGET_DIR="/home/web/html"    # 路径写死
-
   find "$TARGET_DIR" -type f -name "wp-config.php" | while read -r FILE; do
 	# Delete old definition
 	sed -i "/define(['\"]WP_MEMORY_LIMIT['\"].*/d" "$FILE"
 	sed -i "/define(['\"]WP_MAX_MEMORY_LIMIT['\"].*/d" "$FILE"
-
 	# Insert the new definition before the line containing "Happy publishing"
 	awk -v insert="define('WP_MEMORY_LIMIT', '$MEMORY_LIMIT');\ndefine('WP_MAX_MEMORY_LIMIT', '$MAX_MEMORY_LIMIT');" \
 	'
@@ -1897,26 +1489,19 @@ patch_wp_memory_limit() {
 	  }
 	  { print }
 	' "$FILE" > "$FILE.tmp" && mv -f "$FILE.tmp" "$FILE"
-
 	echo "[+] Replaced WP_MEMORY_LIMIT in $FILE"
   done
 }
-
-
-
-
 patch_wp_debug() {
   local DEBUG="${1:-false}"           # 第一个参数，默认false
   local DEBUG_DISPLAY="${2:-false}"   # 第二个参数，默认false
   local DEBUG_LOG="${3:-false}"       # 第三个参数，默认false
   local TARGET_DIR="/home/web/html"   # 路径写死
-
   find "$TARGET_DIR" -type f -name "wp-config.php" | while read -r FILE; do
 	# Delete old definition
 	sed -i "/define(['\"]WP_DEBUG['\"].*/d" "$FILE"
 	sed -i "/define(['\"]WP_DEBUG_DISPLAY['\"].*/d" "$FILE"
 	sed -i "/define(['\"]WP_DEBUG_LOG['\"].*/d" "$FILE"
-
 	# Insert the new definition before the line containing "Happy publishing"
 	awk -v insert="define('WP_DEBUG_DISPLAY', $DEBUG_DISPLAY);\ndefine('WP_DEBUG_LOG', $DEBUG_LOG);" \
 	'
@@ -1925,30 +1510,22 @@ patch_wp_debug() {
 	  }
 	  { print }
 	' "$FILE" > "$FILE.tmp" && mv -f "$FILE.tmp" "$FILE"
-
 	echo "[+] Replaced WP_DEBUG settings in $FILE"
   done
 }
-
-
-
-
 patch_wp_url() {
   local HOME_URL="$1"
   local SITE_URL="$2"
   local TARGET_DIR="/home/web/html"
-
   find "$TARGET_DIR" -type f -name "wp-config-sample.php" | while read -r FILE; do
 	# Delete old definition
 	sed -i "/define(['\"]WP_HOME['\"].*/d" "$FILE"
 	sed -i "/define(['\"]WP_SITEURL['\"].*/d" "$FILE"
-
 	# Generate insert content
 	INSERT="
 define('WP_HOME', '$HOME_URL');
 define('WP_SITEURL', '$SITE_URL');
 "
-
 	# Insert before “Happy publishing”
 	awk -v insert="$INSERT" '
 	  /Happy publishing/ {
@@ -1956,31 +1533,18 @@ define('WP_SITEURL', '$SITE_URL');
 	  }
 	  { print }
 	' "$FILE" > "$FILE.tmp" && mv -f "$FILE.tmp" "$FILE"
-
 	echo "[+] Updated WP_HOME and WP_SITEURL in $FILE"
   done
 }
-
-
-
-
-
-
-
-
 nginx_br() {
-
 	local mode=$1
-
 	if ! grep -q "kjlion/nginx:alpine" /home/web/docker-compose.yml; then
 		wget -O /home/web/nginx.conf "${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/nginx10.conf"
 	fi
-
 	if [ "$mode" == "on" ]; then
 		# Turn on Brotli: remove comments
 		sed -i 's|# load_module /etc/nginx/modules/ngx_http_brotli_filter_module.so;|load_module /etc/nginx/modules/ngx_http_brotli_filter_module.so;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|# load_module /etc/nginx/modules/ngx_http_brotli_static_module.so;|load_module /etc/nginx/modules/ngx_http_brotli_static_module.so;|' /home/web/nginx.conf > /dev/null 2>&1
-
 		sed -i 's|^\(\s*\)# brotli on;|\1brotli on;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^\(\s*\)# brotli_static on;|\1brotli_static on;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^\(\s*\)# brotli_comp_level \(.*\);|\1brotli_comp_level \2;|' /home/web/nginx.conf > /dev/null 2>&1
@@ -1989,12 +1553,10 @@ nginx_br() {
 		sed -i 's|^\(\s*\)# brotli_window \(.*\);|\1brotli_window \2;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^\(\s*\)# brotli_types \(.*\);|\1brotli_types \2;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i '/brotli_types/,+6 s/^\(\s*\)#\s*/\1/' /home/web/nginx.conf
-
 	elif [ "$mode" == "off" ]; then
 		# Close Brotli: add comments
 		sed -i 's|^load_module /etc/nginx/modules/ngx_http_brotli_filter_module.so;|# load_module /etc/nginx/modules/ngx_http_brotli_filter_module.so;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^load_module /etc/nginx/modules/ngx_http_brotli_static_module.so;|# load_module /etc/nginx/modules/ngx_http_brotli_static_module.so;|' /home/web/nginx.conf > /dev/null 2>&1
-
 		sed -i 's|^\(\s*\)brotli on;|\1# brotli on;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^\(\s*\)brotli_static on;|\1# brotli_static on;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^\(\s*\)brotli_comp_level \(.*\);|\1# brotli_comp_level \2;|' /home/web/nginx.conf > /dev/null 2>&1
@@ -2005,12 +1567,10 @@ nginx_br() {
 		sed -i '/brotli_types/,+6 {
 			/^[[:space:]]*[^#[:space:]]/ s/^\(\s*\)/\1# /
 		}' /home/web/nginx.conf
-
 	else
 		echo "Invalid argument: use 'on' or 'off'"
 		return 1
 	fi
-
 	# Check the nginx image and handle it accordingly
 	if grep -q "kjlion/nginx:alpine" /home/web/docker-compose.yml; then
 		docker exec nginx nginx -s reload
@@ -2018,25 +1578,16 @@ nginx_br() {
 		sed -i 's|nginx:alpine|kjlion/nginx:alpine|g' /home/web/docker-compose.yml
 		nginx_upgrade
 	fi
-
-
 }
-
-
-
 nginx_zstd() {
-
 	local mode=$1
-
 	if ! grep -q "kjlion/nginx:alpine" /home/web/docker-compose.yml; then
 		wget -O /home/web/nginx.conf "${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/nginx10.conf"
 	fi
-
 	if [ "$mode" == "on" ]; then
 		# Turn on Zstd: remove comments
 		sed -i 's|# load_module /etc/nginx/modules/ngx_http_zstd_filter_module.so;|load_module /etc/nginx/modules/ngx_http_zstd_filter_module.so;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|# load_module /etc/nginx/modules/ngx_http_zstd_static_module.so;|load_module /etc/nginx/modules/ngx_http_zstd_static_module.so;|' /home/web/nginx.conf > /dev/null 2>&1
-
 		sed -i 's|^\(\s*\)# zstd on;|\1zstd on;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^\(\s*\)# zstd_static on;|\1zstd_static on;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^\(\s*\)# zstd_comp_level \(.*\);|\1zstd_comp_level \2;|' /home/web/nginx.conf > /dev/null 2>&1
@@ -2044,14 +1595,10 @@ nginx_zstd() {
 		sed -i 's|^\(\s*\)# zstd_min_length \(.*\);|\1zstd_min_length \2;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^\(\s*\)# zstd_types \(.*\);|\1zstd_types \2;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i '/zstd_types/,+6 s/^\(\s*\)#\s*/\1/' /home/web/nginx.conf
-
-
-
 	elif [ "$mode" == "off" ]; then
 		# Close Zstd: add comments
 		sed -i 's|^load_module /etc/nginx/modules/ngx_http_zstd_filter_module.so;|# load_module /etc/nginx/modules/ngx_http_zstd_filter_module.so;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^load_module /etc/nginx/modules/ngx_http_zstd_static_module.so;|# load_module /etc/nginx/modules/ngx_http_zstd_static_module.so;|' /home/web/nginx.conf > /dev/null 2>&1
-
 		sed -i 's|^\(\s*\)zstd on;|\1# zstd on;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^\(\s*\)zstd_static on;|\1# zstd_static on;|' /home/web/nginx.conf > /dev/null 2>&1
 		sed -i 's|^\(\s*\)zstd_comp_level \(.*\);|\1# zstd_comp_level \2;|' /home/web/nginx.conf > /dev/null 2>&1
@@ -2061,13 +1608,10 @@ nginx_zstd() {
 		sed -i '/zstd_types/,+6 {
 			/^[[:space:]]*[^#[:space:]]/ s/^\(\s*\)/\1# /
 		}' /home/web/nginx.conf
-
-
 	else
 		echo "Invalid argument: use 'on' or 'off'"
 		return 1
 	fi
-
 	# Check the nginx image and handle it accordingly
 	if grep -q "kjlion/nginx:alpine" /home/web/docker-compose.yml; then
 		docker exec nginx nginx -s reload
@@ -2075,20 +1619,8 @@ nginx_zstd() {
 		sed -i 's|nginx:alpine|kjlion/nginx:alpine|g' /home/web/docker-compose.yml
 		nginx_upgrade
 	fi
-
-
-
 }
-
-
-
-
-
-
-
-
 nginx_gzip() {
-
 	local mode=$1
 	if [ "$mode" == "on" ]; then
 		sed -i 's|^\(\s*\)# gzip on;|\1gzip on;|' /home/web/nginx.conf > /dev/null 2>&1
@@ -2098,16 +1630,8 @@ nginx_gzip() {
 		echo "Invalid argument: use 'on' or 'off'"
 		return 1
 	fi
-
 	docker exec nginx nginx -s reload
-
 }
-
-
-
-
-
-
 web_security() {
 	  send_stats "LDNMP environment defense"
 	  while true; do
@@ -2143,7 +1667,6 @@ web_security() {
 					  wget ${gh_proxy}raw.githubusercontent.com/linuxserver/fail2ban-confs/master/filter.d/nginx-deny.conf
 					  wget ${gh_proxy}raw.githubusercontent.com/linuxserver/fail2ban-confs/master/filter.d/nginx-unauthorized.conf
 					  wget ${gh_proxy}raw.githubusercontent.com/linuxserver/fail2ban-confs/master/filter.d/nginx-bad-request.conf
-
 					  cd /etc/fail2ban/jail.d/
 					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/nginx-docker-cc.conf
 					  sed -i "/cloudflare/d" /etc/fail2ban/jail.d/nginx-docker-cc.conf
@@ -2155,7 +1678,6 @@ web_security() {
 					  echo "------------------------"
 					  ;;
 				  6)
-
 					  echo "------------------------"
 					  local xxx="fail2ban-nginx-cc"
 					  f2b_status_xxx
@@ -2184,15 +1706,12 @@ web_security() {
 					  local xxx="php-url-fopen"
 					  f2b_status_xxx
 					  echo "------------------------"
-
 					  ;;
-
 				  7)
 					  fail2ban-client status
 					  ;;
 				  8)
 					  tail -f /var/log/fail2ban.log
-
 					  ;;
 				  9)
 					  remove fail2ban
@@ -2201,41 +1720,32 @@ web_security() {
 					  echo "Fail2Ban defense program has been uninstalled"
 					  break
 					  ;;
-
 				  11)
 					  install nano
 					  nano /etc/fail2ban/jail.d/nginx-docker-cc.conf
 					  f2b_status
 					  break
 					  ;;
-
 				  12)
 					  fail2ban-client unban --all
 					  ;;
-
 				  21)
 					  send_stats "cloudflare mode"
 					  echo "Go to my profile in the upper right corner of the cf backend, select the API token on the left, and get the Global API Key"
 					  echo "https://dash.cloudflare.com/login"
 					  read -e -p "Enter CF’s account number:" cfuser
 					  read -e -p "Enter CF’s Global API Key:" cftoken
-
 					  wget -O /home/web/conf.d/default.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/default11.conf
 					  docker exec nginx nginx -s reload
-
 					  cd /etc/fail2ban/jail.d/
 					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/nginx-docker-cc.conf
-
 					  cd /etc/fail2ban/action.d
 					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/cloudflare-docker.conf
-
 					  sed -i "s/harvey@outlook.com/$cfuser/g" /etc/fail2ban/action.d/cloudflare-docker.conf
 					  sed -i "s/APIKEY00000/$cftoken/g" /etc/fail2ban/action.d/cloudflare-docker.conf
 					  f2b_status
-
 					  echo "Cloudflare mode has been configured, and the interception record can be viewed in the cf background, site-security-events"
 					  ;;
-
 				  22)
 					  send_stats "High load enables 5 seconds shield"
 					  echo -e "${gl_huang}The website automatically detects every 5 minutes. When it detects high load, it will automatically open the shield, and when it detects low load, it will automatically close the shield for 5 seconds.${gl_bai}"
@@ -2248,7 +1758,6 @@ web_security() {
 					  read -e -p "Enter CF’s account number:" cfuser
 					  read -e -p "Enter CF’s Global API Key:" cftoken
 					  read -e -p "Enter the zone ID of the domain name in CF:" cfzonID
-
 					  cd ~
 					  install jq bc
 					  check_crontab_installed
@@ -2257,40 +1766,31 @@ web_security() {
 					  sed -i "s/AAAA/$cfuser/g" ~/CF-Under-Attack.sh
 					  sed -i "s/BBBB/$cftoken/g" ~/CF-Under-Attack.sh
 					  sed -i "s/CCCC/$cfzonID/g" ~/CF-Under-Attack.sh
-
 					  local cron_job="*/5 * * * * ~/CF-Under-Attack.sh"
-
 					  local existing_cron=$(crontab -l 2>/dev/null | grep -F "$cron_job")
-
 					  if [ -z "$existing_cron" ]; then
 						  (crontab -l 2>/dev/null; echo "$cron_job") | crontab -
 						  echo "High load automatic shield opening script has been added"
 					  else
 						  echo "The automatic shield opening script already exists, no need to add it"
 					  fi
-
 					  ;;
-
 				  31)
 					  nginx_waf on
 					  echo "Site WAF is enabled"
 					  send_stats "Site WAF is enabled"
 					  ;;
-
 				  32)
 				  	  nginx_waf off
 					  echo "Site WAF is down"
 					  send_stats "Site WAF is down"
 					  ;;
-
 				  33)
 					  enable_ddos_defense
 					  ;;
-
 				  34)
 					  disable_ddos_defense
 					  ;;
-
 				  *)
 					  break
 					  ;;
@@ -2298,44 +1798,30 @@ web_security() {
 	  break_end
 	  done
 }
-
-
-
 check_ldnmp_mode() {
-
 	local MYSQL_CONTAINER="mysql"
 	local MYSQL_CONF="/etc/mysql/conf.d/custom_mysql_config.cnf"
-
 	# Check if MySQL configuration file contains 4096M
 	if docker exec "$MYSQL_CONTAINER" grep -q "4096M" "$MYSQL_CONF" 2>/dev/null; then
 		mode_info="High performance mode"
 	else
 		mode_info="Standard mode"
 	fi
-
-
-
 }
-
-
 check_nginx_compression() {
-
 	local CONFIG_FILE="/home/web/nginx.conf"
-
 	# Check whether zstd is on and uncommented (the whole line starts with zstd on;)
 	if grep -qE '^\s*zstd\s+on;' "$CONFIG_FILE"; then
 		zstd_status="zstd compression is on"
 	else
 		zstd_status=""
 	fi
-
 	# Check if brotli is enabled and uncommented
 	if grep -qE '^\s*brotli\s+on;' "$CONFIG_FILE"; then
 		br_status="brCompression is on"
 	else
 		br_status=""
 	fi
-
 	# Check if gzip is enabled and uncommented
 	if grep -qE '^\s*gzip\s+on;' "$CONFIG_FILE"; then
 		gzip_status="gzip compression is on"
@@ -2343,10 +1829,6 @@ check_nginx_compression() {
 		gzip_status=""
 	fi
 }
-
-
-
-
 web_optimization() {
 		  while true; do
 		  	  check_ldnmp_mode
@@ -2367,83 +1849,60 @@ web_optimization() {
 			  case $sub_choice in
 				  1)
 				  send_stats "site standards mode"
-
 				  local cpu_cores=$(nproc)
 				  local connections=$((1024 * ${cpu_cores}))
 				  sed -i "s/worker_processes.*/worker_processes ${cpu_cores};/" /home/web/nginx.conf
 				  sed -i "s/worker_connections.*/worker_connections ${connections};/" /home/web/nginx.conf
-
-
 				  # php tuning
 				  wget -O /home/optimized_php.ini ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/optimized_php.ini
 				  docker cp /home/optimized_php.ini php:/usr/local/etc/php/conf.d/optimized_php.ini
 				  docker cp /home/optimized_php.ini php74:/usr/local/etc/php/conf.d/optimized_php.ini
 				  rm -rf /home/optimized_php.ini
-
 				  # php tuning
 				  wget -O /home/www.conf ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/www-1.conf
 				  docker cp /home/www.conf php:/usr/local/etc/php-fpm.d/www.conf
 				  docker cp /home/www.conf php74:/usr/local/etc/php-fpm.d/www.conf
 				  rm -rf /home/www.conf
-
 				  patch_wp_memory_limit
 				  patch_wp_debug
-
 				  fix_phpfpm_conf php
 				  fix_phpfpm_conf php74
-
 				  # mysql tuning
 				  wget -O /home/custom_mysql_config.cnf ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/custom_mysql_config-1.cnf
 				  docker cp /home/custom_mysql_config.cnf mysql:/etc/mysql/conf.d/
 				  rm -rf /home/custom_mysql_config.cnf
-
-
 				  cd /home/web && docker compose restart
-
 				  optimize_balanced
-
-
 				  echo "The LDNMP environment has been set to standard mode"
-
 					  ;;
 				  2)
 				  send_stats "Site high performance mode"
-
 				  # nginx tuning
 				  local cpu_cores=$(nproc)
 				  local connections=$((2048 * ${cpu_cores}))
 				  sed -i "s/worker_processes.*/worker_processes ${cpu_cores};/" /home/web/nginx.conf
 				  sed -i "s/worker_connections.*/worker_connections ${connections};/" /home/web/nginx.conf
-
 				  # php tuning
 				  wget -O /home/optimized_php.ini ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/optimized_php.ini
 				  docker cp /home/optimized_php.ini php:/usr/local/etc/php/conf.d/optimized_php.ini
 				  docker cp /home/optimized_php.ini php74:/usr/local/etc/php/conf.d/optimized_php.ini
 				  rm -rf /home/optimized_php.ini
-
 				  # php tuning
 				  wget -O /home/www.conf ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/www.conf
 				  docker cp /home/www.conf php:/usr/local/etc/php-fpm.d/www.conf
 				  docker cp /home/www.conf php74:/usr/local/etc/php-fpm.d/www.conf
 				  rm -rf /home/www.conf
-
 				  patch_wp_memory_limit 512M 512M
 				  patch_wp_debug
-
 				  fix_phpfpm_conf php
 				  fix_phpfpm_conf php74
-
 				  # mysql tuning
 				  wget -O /home/custom_mysql_config.cnf ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/custom_mysql_config.cnf
 				  docker cp /home/custom_mysql_config.cnf mysql:/etc/mysql/conf.d/
 				  rm -rf /home/custom_mysql_config.cnf
-
 				  cd /home/web && docker compose restart
-
 				  optimize_web_server
-
 				  echo "The LDNMP environment has been set to high performance mode"
-
 					  ;;
 				  3)
 				  send_stats "nginx_gzip on"
@@ -2474,21 +1933,8 @@ web_optimization() {
 					  ;;
 			  esac
 			  break_end
-
 		  done
-
-
 }
-
-
-
-
-
-
-
-
-
-
 check_docker_app() {
 	if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "$docker_name" ; then
 		check_docker="${gl_lv}Installed${gl_bai}"
@@ -2496,38 +1942,25 @@ check_docker_app() {
 		check_docker="${gl_hui}Not installed${gl_bai}"
 	fi
 }
-
-
-
 # check_docker_app() {
-
 # if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "$docker_name"; then
 # check_docker="${gl_lv} has installed ${gl_bai}"
 # else
 # check_docker="${gl_hui} is not installed ${gl_bai}"
 # fi
-
 # }
-
-
 check_docker_app_ip() {
 echo "------------------------"
 echo "Visit address:"
 ip_address
-
-
-
 if [ -n "$ipv4_address" ]; then
 	echo "http://$ipv4_address:${docker_port}"
 fi
-
 if [ -n "$ipv6_address" ]; then
 	echo "http://[$ipv6_address]:${docker_port}"
 fi
-
 local search_pattern1="$ipv4_address:${docker_port}"
 local search_pattern2="127.0.0.1:${docker_port}"
-
 for file in /home/web/conf.d/*; do
 	if [ -f "$file" ]; then
 		if grep -q "$search_pattern1" "$file" 2>/dev/null || grep -q "$search_pattern2" "$file" 2>/dev/null; then
@@ -2535,27 +1968,19 @@ for file in /home/web/conf.d/*; do
 		fi
 	fi
 done
-
-
 }
-
-
 check_docker_image_update() {
 	local container_name=$1
 	update_status=""
-
 	# 1. Regional inspection
 	local country=$(curl -s --max-time 2 ipinfo.io/country)
 	[[ "$country" == "CN" ]] && return
-
 	# 2. Get local mirror information
 	local container_info=$(docker inspect --format='{{.Created}},{{.Config.Image}}' "$container_name" 2>/dev/null)
 	[[ -z "$container_info" ]] && return
-
 	local container_created=$(echo "$container_info" | cut -d',' -f1)
 	local full_image_name=$(echo "$container_info" | cut -d',' -f2)
 	local container_created_ts=$(date -d "$container_created" +%s 2>/dev/null)
-
 	# 3. Intelligent routing judgment
 	if [[ "$full_image_name" == ghcr.io* ]]; then
 		# --- Scenario A: Mirror on GitHub (ghcr.io) ---
@@ -2564,23 +1989,19 @@ check_docker_image_update() {
 		# Note: The API of ghcr.io is relatively complex. Usually the fastest way is to check the Release of GitHub Repo
 		local api_url="https://api.github.com/repos/$repo_path/releases/latest"
 		local remote_date=$(curl -s "$api_url" | jq -r '.published_at' 2>/dev/null)
-
 	elif [[ "$full_image_name" == *"oneimg"* ]]; then
 		# --- Scenario B: Special designation (even in Docker Hub, I want to judge by GitHub Release) ---
 		local api_url="https://api.github.com/repos/onexru/oneimg/releases/latest"
 		local remote_date=$(curl -s "$api_url" | jq -r '.published_at' 2>/dev/null)
-
 	else
 		# --- Scenario C: Standard Docker Hub ---
 		local image_repo=${full_image_name%%:*}
 		local image_tag=${full_image_name##*:}
 		[[ "$image_repo" == "$image_tag" ]] && image_tag="latest"
 		[[ "$image_repo" != */* ]] && image_repo="library/$image_repo"
-
 		local api_url="https://hub.docker.com/v2/repositories/$image_repo/tags/$image_tag"
 		local remote_date=$(curl -s "$api_url" | jq -r '.last_updated' 2>/dev/null)
 	fi
-
 	# 4. Timestamp comparison
 	if [[ -n "$remote_date" && "$remote_date" != "null" ]]; then
 		local remote_ts=$(date -d "$remote_date" +%s 2>/dev/null)
@@ -2589,279 +2010,182 @@ check_docker_image_update() {
 		fi
 	fi
 }
-
-
-
-
-
-
-
 block_container_port() {
 	local container_name_or_id=$1
 	local allowed_ip=$2
-
 	# Get the IP address of the container
 	local container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container_name_or_id")
-
 	if [ -z "$container_ip" ]; then
 		return 1
 	fi
-
 	install iptables
-
-
 	# Check and block all other IPs
 	if ! iptables -C DOCKER-USER -p tcp -d "$container_ip" -j DROP &>/dev/null; then
 		iptables -I DOCKER-USER -p tcp -d "$container_ip" -j DROP
 	fi
-
 	# Check and release the specified IP
 	if ! iptables -C DOCKER-USER -p tcp -s "$allowed_ip" -d "$container_ip" -j ACCEPT &>/dev/null; then
 		iptables -I DOCKER-USER -p tcp -s "$allowed_ip" -d "$container_ip" -j ACCEPT
 	fi
-
 	# Check and allow local network 127.0.0.0/8
 	if ! iptables -C DOCKER-USER -p tcp -s 127.0.0.0/8 -d "$container_ip" -j ACCEPT &>/dev/null; then
 		iptables -I DOCKER-USER -p tcp -s 127.0.0.0/8 -d "$container_ip" -j ACCEPT
 	fi
-
-
-
 	# Check and block all other IPs
 	if ! iptables -C DOCKER-USER -p udp -d "$container_ip" -j DROP &>/dev/null; then
 		iptables -I DOCKER-USER -p udp -d "$container_ip" -j DROP
 	fi
-
 	# Check and release the specified IP
 	if ! iptables -C DOCKER-USER -p udp -s "$allowed_ip" -d "$container_ip" -j ACCEPT &>/dev/null; then
 		iptables -I DOCKER-USER -p udp -s "$allowed_ip" -d "$container_ip" -j ACCEPT
 	fi
-
 	# Check and allow local network 127.0.0.0/8
 	if ! iptables -C DOCKER-USER -p udp -s 127.0.0.0/8 -d "$container_ip" -j ACCEPT &>/dev/null; then
 		iptables -I DOCKER-USER -p udp -s 127.0.0.0/8 -d "$container_ip" -j ACCEPT
 	fi
-
 	if ! iptables -C DOCKER-USER -m state --state ESTABLISHED,RELATED -d "$container_ip" -j ACCEPT &>/dev/null; then
 		iptables -I DOCKER-USER -m state --state ESTABLISHED,RELATED -d "$container_ip" -j ACCEPT
 	fi
-
-
 	echo "IP+port has been blocked from accessing the service"
 	save_iptables_rules
 }
-
-
-
-
 clear_container_rules() {
 	local container_name_or_id=$1
 	local allowed_ip=$2
-
 	# Get the IP address of the container
 	local container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container_name_or_id")
-
 	if [ -z "$container_ip" ]; then
 		return 1
 	fi
-
 	install iptables
-
-
 	# Clear rules that block all other IPs
 	if iptables -C DOCKER-USER -p tcp -d "$container_ip" -j DROP &>/dev/null; then
 		iptables -D DOCKER-USER -p tcp -d "$container_ip" -j DROP
 	fi
-
 	# Clear the rules that allow specified IPs
 	if iptables -C DOCKER-USER -p tcp -s "$allowed_ip" -d "$container_ip" -j ACCEPT &>/dev/null; then
 		iptables -D DOCKER-USER -p tcp -s "$allowed_ip" -d "$container_ip" -j ACCEPT
 	fi
-
 	# Clear the rules that allow local network 127.0.0.0/8
 	if iptables -C DOCKER-USER -p tcp -s 127.0.0.0/8 -d "$container_ip" -j ACCEPT &>/dev/null; then
 		iptables -D DOCKER-USER -p tcp -s 127.0.0.0/8 -d "$container_ip" -j ACCEPT
 	fi
-
-
-
-
-
 	# Clear rules that block all other IPs
 	if iptables -C DOCKER-USER -p udp -d "$container_ip" -j DROP &>/dev/null; then
 		iptables -D DOCKER-USER -p udp -d "$container_ip" -j DROP
 	fi
-
 	# Clear the rules that allow specified IPs
 	if iptables -C DOCKER-USER -p udp -s "$allowed_ip" -d "$container_ip" -j ACCEPT &>/dev/null; then
 		iptables -D DOCKER-USER -p udp -s "$allowed_ip" -d "$container_ip" -j ACCEPT
 	fi
-
 	# Clear the rules that allow local network 127.0.0.0/8
 	if iptables -C DOCKER-USER -p udp -s 127.0.0.0/8 -d "$container_ip" -j ACCEPT &>/dev/null; then
 		iptables -D DOCKER-USER -p udp -s 127.0.0.0/8 -d "$container_ip" -j ACCEPT
 	fi
-
-
 	if iptables -C DOCKER-USER -m state --state ESTABLISHED,RELATED -d "$container_ip" -j ACCEPT &>/dev/null; then
 		iptables -D DOCKER-USER -m state --state ESTABLISHED,RELATED -d "$container_ip" -j ACCEPT
 	fi
-
-
 	echo "IP+port has been allowed to access the service"
 	save_iptables_rules
 }
-
-
-
-
-
-
 block_host_port() {
 	local port=$1
 	local allowed_ip=$2
-
 	if [[ -z "$port" || -z "$allowed_ip" ]]; then
 		echo "Error: Please provide port number and IP to allow access."
 		echo "Usage: block_host_port <port number> <allowed IP>"
 		return 1
 	fi
-
 	install iptables
-
-
 	# Deny access from all other IPs
 	if ! iptables -C INPUT -p tcp --dport "$port" -j DROP &>/dev/null; then
 		iptables -I INPUT -p tcp --dport "$port" -j DROP
 	fi
-
 	# Allow access to specified IP
 	if ! iptables -C INPUT -p tcp --dport "$port" -s "$allowed_ip" -j ACCEPT &>/dev/null; then
 		iptables -I INPUT -p tcp --dport "$port" -s "$allowed_ip" -j ACCEPT
 	fi
-
 	# Allow local access
 	if ! iptables -C INPUT -p tcp --dport "$port" -s 127.0.0.0/8 -j ACCEPT &>/dev/null; then
 		iptables -I INPUT -p tcp --dport "$port" -s 127.0.0.0/8 -j ACCEPT
 	fi
-
-
-
-
-
 	# Deny access from all other IPs
 	if ! iptables -C INPUT -p udp --dport "$port" -j DROP &>/dev/null; then
 		iptables -I INPUT -p udp --dport "$port" -j DROP
 	fi
-
 	# Allow access to specified IP
 	if ! iptables -C INPUT -p udp --dport "$port" -s "$allowed_ip" -j ACCEPT &>/dev/null; then
 		iptables -I INPUT -p udp --dport "$port" -s "$allowed_ip" -j ACCEPT
 	fi
-
 	# Allow local access
 	if ! iptables -C INPUT -p udp --dport "$port" -s 127.0.0.0/8 -j ACCEPT &>/dev/null; then
 		iptables -I INPUT -p udp --dport "$port" -s 127.0.0.0/8 -j ACCEPT
 	fi
-
 	# Allow traffic for established and related connections
 	if ! iptables -C INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT &>/dev/null; then
 		iptables -I INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 	fi
-
 	echo "IP+port has been blocked from accessing the service"
 	save_iptables_rules
 }
-
-
-
-
 clear_host_port_rules() {
 	local port=$1
 	local allowed_ip=$2
-
 	if [[ -z "$port" || -z "$allowed_ip" ]]; then
 		echo "Error: Please provide port number and IP to allow access."
 		echo "Usage: clear_host_port_rules <port number> <allowed IP>"
 		return 1
 	fi
-
 	install iptables
-
-
 	# Clear the rule that blocks access from all other IPs
 	if iptables -C INPUT -p tcp --dport "$port" -j DROP &>/dev/null; then
 		iptables -D INPUT -p tcp --dport "$port" -j DROP
 	fi
-
 	# Clear rules that allow local access
 	if iptables -C INPUT -p tcp --dport "$port" -s 127.0.0.0/8 -j ACCEPT &>/dev/null; then
 		iptables -D INPUT -p tcp --dport "$port" -s 127.0.0.0/8 -j ACCEPT
 	fi
-
 	# Clear rules that allow access from specified IPs
 	if iptables -C INPUT -p tcp --dport "$port" -s "$allowed_ip" -j ACCEPT &>/dev/null; then
 		iptables -D INPUT -p tcp --dport "$port" -s "$allowed_ip" -j ACCEPT
 	fi
-
-
 	# Clear the rule that blocks access from all other IPs
 	if iptables -C INPUT -p udp --dport "$port" -j DROP &>/dev/null; then
 		iptables -D INPUT -p udp --dport "$port" -j DROP
 	fi
-
 	# Clear rules that allow local access
 	if iptables -C INPUT -p udp --dport "$port" -s 127.0.0.0/8 -j ACCEPT &>/dev/null; then
 		iptables -D INPUT -p udp --dport "$port" -s 127.0.0.0/8 -j ACCEPT
 	fi
-
 	# Clear rules that allow access from specified IPs
 	if iptables -C INPUT -p udp --dport "$port" -s "$allowed_ip" -j ACCEPT &>/dev/null; then
 		iptables -D INPUT -p udp --dport "$port" -s "$allowed_ip" -j ACCEPT
 	fi
-
-
 	echo "IP+port has been allowed to access the service"
 	save_iptables_rules
-
 }
-
-
-
 setup_docker_dir() {
-
 	mkdir -p /home /home/docker 2>/dev/null
-
 	if [ -d "/vol1/1000/" ] && [ ! -d "/vol1/1000/docker" ]; then
 		cp -f /home/docker /home/docker1 2>/dev/null
 		rm -rf /home/docker 2>/dev/null
 		mkdir -p /vol1/1000/docker 2>/dev/null
 		ln -s /vol1/1000/docker /home/docker 2>/dev/null
 	fi
-
 	if [ -d "/volume1/" ] && [ ! -d "/volume1/docker" ]; then
 		cp -f /home/docker /home/docker1 2>/dev/null
 		rm -rf /home/docker 2>/dev/null
 		mkdir -p /volume1/docker 2>/dev/null
 		ln -s /volume1/docker /home/docker 2>/dev/null
 	fi
-
-
 }
-
-
 add_app_id() {
 mkdir -p /home/docker
 touch /home/docker/appno.txt
 grep -qxF "${app_id}" /home/docker/appno.txt || echo "${app_id}" >> /home/docker/appno.txt
-
 }
-
-
-
 docker_app() {
 send_stats "${docker_name}manage"
-
 while true; do
 	clear
 	check_docker_app
@@ -2895,7 +2219,6 @@ while true; do
 			while true; do
 				read -e -p "Enter the application external service port and press Enter to use it by default.${docker_port}port:" app_port
 				local app_port=${app_port:-${docker_port}}
-
 				if ss -tuln | grep -q ":$app_port "; then
 					echo -e "${gl_hong}mistake:${gl_bai}port$app_portAlready occupied, please change a port"
 					send_stats "Application port is occupied"
@@ -2904,14 +2227,11 @@ while true; do
 					break
 				fi
 			done
-
 			install jq
 			install_docker
 			docker_rum
 			echo "$docker_port" > "/home/docker/${docker_name}_port.conf"
-
 			add_app_id
-
 			clear
 			echo "$docker_nameInstallation completed"
 			check_docker_app_ip
@@ -2924,9 +2244,7 @@ while true; do
 			docker rm -f "$docker_name"
 			docker rmi -f "$docker_img"
 			docker_rum
-
 			add_app_id
-
 			clear
 			echo "$docker_nameInstallation completed"
 			check_docker_app_ip
@@ -2940,12 +2258,10 @@ while true; do
 			docker rmi -f "$docker_img"
 			rm -rf "/home/docker/$docker_name"
 			rm -f /home/docker/${docker_name}_port.conf
-
 			sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
 			echo "App has been uninstalled"
 			send_stats "uninstall$docker_name"
 			;;
-
 		5)
 			echo "${docker_name}Domain name access settings"
 			send_stats "${docker_name}Domain name access settings"
@@ -2953,35 +2269,25 @@ while true; do
 			ldnmp_Proxy ${yuming} 127.0.0.1 ${docker_port}
 			block_container_port "$docker_name" "$ipv4_address"
 			;;
-
 		6)
 			echo "Domain name format example.com without https://"
 			web_del
 			;;
-
 		7)
 			send_stats "Allow IP access${docker_name}"
 			clear_container_rules "$docker_name" "$ipv4_address"
 			;;
-
 		8)
 			send_stats "Block IP access${docker_name}"
 			block_container_port "$docker_name" "$ipv4_address"
 			;;
-
 		*)
 			break
 			;;
 	 esac
 	 break_end
 done
-
 }
-
-
-
-
-
 docker_app_plus() {
 	send_stats "$app_name"
 	while true; do
@@ -3014,11 +2320,9 @@ docker_app_plus() {
 			1)
 				setup_docker_dir
 				check_disk_space $app_size /home/docker
-
 				while true; do
 					read -e -p "Enter the application external service port and press Enter to use it by default.${docker_port}port:" app_port
 					local app_port=${app_port:-${docker_port}}
-
 					if ss -tuln | grep -q ":$app_port "; then
 						echo -e "${gl_hong}mistake:${gl_bai}port$app_portAlready occupied, please change a port"
 						send_stats "Application port is occupied"
@@ -3027,37 +2331,30 @@ docker_app_plus() {
 						break
 					fi
 				done
-
 				install jq
 				install_docker
 				docker_app_install
 				echo "$docker_port" > "/home/docker/${docker_name}_port.conf"
-
 				add_app_id
 				send_stats "$app_nameInstall"
 				;;
-
 			2)
 				docker_app_update
 				add_app_id
 				send_stats "$app_namerenew"
 				;;
-
 			3)
 				docker_app_uninstall
 				rm -f /home/docker/${docker_name}_port.conf
-
 				sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
 				send_stats "$app_nameuninstall"
 				;;
-
 			5)
 				echo "${docker_name}Domain name access settings"
 				send_stats "${docker_name}Domain name access settings"
 				add_yuming
 				ldnmp_Proxy ${yuming} 127.0.0.1 ${docker_port}
 				block_container_port "$docker_name" "$ipv4_address"
-
 				;;
 			6)
 				echo "Domain name format example.com without https://"
@@ -3078,38 +2375,26 @@ docker_app_plus() {
 		break_end
 	done
 }
-
-
-
-
-
 prometheus_install() {
-
 local PROMETHEUS_DIR="/home/docker/monitoring/prometheus"
 local GRAFANA_DIR="/home/docker/monitoring/grafana"
 local NETWORK_NAME="monitoring"
-
 # Create necessary directories
 mkdir -p $PROMETHEUS_DIR
 mkdir -p $GRAFANA_DIR
-
 # Set correct ownership for Grafana directory
 chown -R 472:472 $GRAFANA_DIR
-
 if [ ! -f "$PROMETHEUS_DIR/prometheus.yml" ]; then
 	curl -o "$PROMETHEUS_DIR/prometheus.yml" ${gh_proxy}raw.githubusercontent.com/harvey/config/refs/heads/main/prometheus/prometheus.yml
 fi
-
 # Create Docker network for monitoring
 docker network create $NETWORK_NAME
-
 # Run Node Exporter container
 docker run -d \
   --name=node-exporter \
   --network $NETWORK_NAME \
   --restart=always \
   prom/node-exporter
-
 # Run Prometheus container
 docker run -d \
   --name prometheus \
@@ -3119,7 +2404,6 @@ docker run -d \
   --restart=always \
   --user 0:0 \
   prom/prometheus:latest
-
 # Run Grafana container
 docker run -d \
   --name grafana \
@@ -3128,12 +2412,7 @@ docker run -d \
   --network $NETWORK_NAME \
   --restart=always \
   grafana/grafana:latest
-
 }
-
-
-
-
 tmux_run() {
 	# Check if the session already exists
 	tmux has-session -t $SESSION_NAME 2>/dev/null
@@ -3146,41 +2425,28 @@ tmux_run() {
 	  tmux attach-session -t $SESSION_NAME
 	fi
 }
-
-
 tmux_run_d() {
-
 local base_name="tmuxd"
 local tmuxd_ID=1
-
 # Function to check if session exists
 session_exists() {
   tmux has-session -t $1 2>/dev/null
 }
-
 # Loop until a non-existing session name is found
 while session_exists "$base_name-$tmuxd_ID"; do
   local tmuxd_ID=$((tmuxd_ID + 1))
 done
-
 # Create a new tmux session
 tmux new -d -s "$base_name-$tmuxd_ID" "$tmuxd"
-
-
 }
-
-
-
 f2b_status() {
 	 fail2ban-client reload
 	 sleep 3
 	 fail2ban-client status
 }
-
 f2b_status_xxx() {
 	fail2ban-client status $xxx
 }
-
 check_f2b_status() {
 	if command -v fail2ban-client >/dev/null 2>&1; then
 		check_f2b_status="${gl_lv}Installed${gl_bai}"
@@ -3188,27 +2454,21 @@ check_f2b_status() {
 		check_f2b_status="${gl_hui}Not installed${gl_bai}"
 	fi
 }
-
 f2b_install_sshd() {
-
 	docker rm -f fail2ban >/dev/null 2>&1
 	install fail2ban
 	start fail2ban
 	enable fail2ban
-
 	if command -v dnf &>/dev/null; then
 		cd /etc/fail2ban/jail.d/
 		curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/centos-ssh.conf
 	fi
-
 	if command -v apt &>/dev/null; then
 		install rsyslog
 		systemctl start rsyslog
 		systemctl enable rsyslog
 	fi
-
 }
-
 f2b_sshd() {
 	if grep -q 'Alpine' /etc/issue; then
 		xxx=alpine-sshd
@@ -3218,7 +2478,6 @@ f2b_sshd() {
 		f2b_status_xxx
 	fi
 }
-
 # Basic parameter configuration: ban duration (bantime), time window (findtime), number of retries (maxretry)
 # illustrate:
 # - Prioritize writing to /etc/fail2ban/jail.d/sshd.local (overrides the default jail configuration and is not easy to lose when upgrading)
@@ -3226,12 +2485,10 @@ f2b_sshd() {
 f2b_basic_config() {
 	root_use
 	install nano
-
 	if ! command -v fail2ban-client >/dev/null 2>&1; then
 		echo -e "${gl_hui}fail2ban-client is not detected, please install fail2ban first.${gl_bai}"
 		return
 	fi
-
 	local jail_name="sshd"
 	if grep -qi 'Alpine' /etc/issue 2>/dev/null; then
 		# Alpine default jail is usually sshd; only switches if custom alpine-sshd rules are detected
@@ -3239,16 +2496,13 @@ f2b_basic_config() {
 			jail_name="alpine-sshd"
 		fi
 	fi
-
 	echo "About to configure the SSH jail:$jail_name"
 	read -e -p "Bantime bantime (seconds/minutes/hours, such as 3600 or 1h) [default 1h]:" bantime
 	read -e -p "Time window findtime (seconds/minutes/hours, e.g. 600 or 10m) [default 10m]:" findtime
 	read -e -p "Number of retries maxretry (integer) [default 5]:" maxretry
-
 	bantime=${bantime:-1h}
 	findtime=${findtime:-10m}
 	maxretry=${maxretry:-5}
-
 	mkdir -p /etc/fail2ban/jail.d
 	cat > /etc/fail2ban/jail.d/sshd.local <<EOF
 [$jail_name]
@@ -3259,7 +2513,6 @@ bantime = $bantime
 findtime = $findtime
 maxretry = $maxretry
 EOF
-
 	# Ensure a logfile exists for sshd jail on Debian/Ubuntu minimal images
 	# (without it, fail2ban-server may refuse to start)
 	if [ "$jail_name" = "sshd" ]; then
@@ -3267,37 +2520,28 @@ EOF
 			grep -qE '^\s*logpath\s*=' /etc/fail2ban/jail.d/sshd.local || echo 'logpath = /var/log/auth.log' >> /etc/fail2ban/jail.d/sshd.local
 		fi
 	fi
-
 	echo -e "${gl_lv}Configuration has been written${gl_bai}: /etc/fail2ban/jail.d/sshd.local"
 	fail2ban-client reload >/dev/null 2>&1 || true
 	sleep 2
 	fail2ban-client status $jail_name || true
 }
-
 # Directly open the main configuration/overlay configuration editor (nano)
 # Edit /etc/fail2ban/jail.d/sshd.local first (more secure), create it if it does not exist
 f2b_edit_config() {
 	root_use
 	install nano
-
 	if [ ! -d /etc/fail2ban ]; then
 		echo -e "${gl_hui}/etc/fail2ban does not exist, please install fail2ban first.${gl_bai}"
 		return
 	fi
-
 	mkdir -p /etc/fail2ban/jail.d
 	local cfg="/etc/fail2ban/jail.d/sshd.local"
 	[ -f "$cfg" ] || printf "[sshd]\n# bantime/findtime/maxretry\n" > "$cfg"
-
 	nano "$cfg"
 	echo -e "${gl_lv}saved${gl_bai}, reloading fail2ban..."
 	fail2ban-client reload >/dev/null 2>&1 || true
 }
-
-
-
 server_reboot() {
-
 	read -e -p "$(echo -e "${gl_huang}提示: ${gl_bai}现在重启服务器吗？(Y/N): ")" rboot
 	case "$rboot" in
 	  [Yy])
@@ -3308,14 +2552,7 @@ server_reboot() {
 		echo "Canceled"
 		;;
 	esac
-
-
 }
-
-
-
-
-
 output_status() {
 	output=$(awk 'BEGIN { rx_total = 0; tx_total = 0 }
 		$1 ~ /^(eth|ens|enp|eno)[0-9]+/ {
@@ -3328,24 +2565,15 @@ output_status() {
 			if (rx_total > 1024) { rx_total /= 1024; rx_units = "K"; }
 			if (rx_total > 1024) { rx_total /= 1024; rx_units = "M"; }
 			if (rx_total > 1024) { rx_total /= 1024; rx_units = "G"; }
-
 			if (tx_total > 1024) { tx_total /= 1024; tx_units = "K"; }
 			if (tx_total > 1024) { tx_total /= 1024; tx_units = "M"; }
 			if (tx_total > 1024) { tx_total /= 1024; tx_units = "G"; }
-
 			printf("%.2f%s %.2f%s\n", rx_total, rx_units, tx_total, tx_units);
 		}' /proc/net/dev)
-
 	rx=$(echo "$output" | awk '{print $1}')
 	tx=$(echo "$output" | awk '{print $2}')
-
 }
-
-
-
-
 ldnmp_install_status_one() {
-
    if docker inspect "php" &>/dev/null; then
 	clear
 	send_stats "Unable to install LDNMP environment again"
@@ -3353,10 +2581,7 @@ ldnmp_install_status_one() {
 	break_end
 	linux_ldnmp
    fi
-
 }
-
-
 ldnmp_install_all() {
 cd ~
 send_stats "Install LDNMP environment"
@@ -3369,10 +2594,7 @@ install_docker
 install_certbot
 install_ldnmp_conf
 install_ldnmp
-
 }
-
-
 nginx_install_all() {
 cd ~
 send_stats "Install nginx environment"
@@ -3390,51 +2612,31 @@ local nginx_version=$(echo "$nginx_version" | grep -oP "nginx/\K[0-9]+\.[0-9]+\.
 echo "nginx has been installed"
 echo -e "Current version:${gl_huang}v$nginx_version${gl_bai}"
 echo ""
-
 }
-
-
-
-
 ldnmp_install_status() {
-
 	if ! docker inspect "php" &>/dev/null; then
 		send_stats "Please install the LDNMP environment first"
 		ldnmp_install_all
 	fi
-
 }
-
-
 nginx_install_status() {
-
 	if ! docker inspect "nginx" &>/dev/null; then
 		send_stats "Please install nginx environment first"
 		nginx_install_all
 	fi
-
 }
-
-
-
-
 ldnmp_web_on() {
 	  clear
 	  echo "your$webnameIt's built!"
 	  echo "https://$yuming"
 	  echo "------------------------"
 	  echo "$webnameThe installation information is as follows:"
-
 }
-
 nginx_web_on() {
 	clear
-
 	local ipv4_pattern='^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
 	local ipv6_pattern='^(([0-9A-Fa-f]{1,4}:){1,7}:|([0-9A-Fa-f]{1,4}:){7,7}[0-9A-Fa-f]{1,4}|::1)$'
-
 	echo "your$webnameIt's built!"
-
 	if [[ "$yuming" =~ $ipv4_pattern || "$yuming" =~ $ipv6_pattern ]]; then
 		mv /home/web/conf.d/"$yuming".conf /home/web/conf.d/"${yuming}_${access_port}".conf
 		echo "http://$yuming:$access_port"
@@ -3444,9 +2646,6 @@ nginx_web_on() {
 		echo "https://$yuming"
 	fi
 }
-
-
-
 ldnmp_wp() {
   clear
   # wordpress
@@ -3459,18 +2658,13 @@ ldnmp_wp() {
   fi
   repeat_add_yuming
   ldnmp_install_status
-
-
   install_ssltls
   certs_status
   add_db
-
   wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/map.conf
   wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/wordpress.com.conf
   sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
   nginx_http_on
-
-
   cd /home/web/html
   mkdir $yuming
   cd $yuming
@@ -3484,171 +2678,109 @@ ldnmp_wp() {
   sed -i "s|localhost|mysql|g" /home/web/html/$yuming/wordpress/wp-config-sample.php
   patch_wp_url "https://$yuming" "https://$yuming"
   cp /home/web/html/$yuming/wordpress/wp-config-sample.php /home/web/html/$yuming/wordpress/wp-config.php
-
-
   restart_ldnmp
   nginx_web_on
-
 }
-
-
-
 ldnmp_Proxy() {
 	clear
 	webname="Reverse proxy-IP+port"
 	yuming="${1:-}"
 	reverseproxy="${2:-}"
 	port="${3:-}"
-
 	send_stats "Install$webname"
 	echo "Start deployment$webname"
 	if [ -z "$yuming" ]; then
 		add_yuming
 	fi
-
 	check_ip_and_get_access_port "$yuming"
-
 	if [ -z "$reverseproxy" ]; then
 		read -e -p "Please enter your anti-generation IP (press Enter to default to the local IP 127.0.0.1):" reverseproxy
 		reverseproxy=${reverseproxy:-127.0.0.1}
 	fi
-
 	if [ -z "$port" ]; then
 		read -e -p "Please enter your anti-generation port:" port
 	fi
 	nginx_install_status
-
-
 	install_ssltls
 	certs_status
-
 	wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/map.conf
 	wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/reverse-proxy-backend.conf
-
 	backend=$(tr -dc 'A-Za-z' < /dev/urandom | head -c 8)
 	sed -i "s/backend_yuming_com/backend_$backend/g" /home/web/conf.d/"$yuming".conf
-
-
 	sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
-
 	reverseproxy_port="$reverseproxy:$port"
 	upstream_servers=""
 	for server in $reverseproxy_port; do
 		upstream_servers="$upstream_servers    server $server;\n"
 	done
-
 	sed -i "s/# dynamically add/$upstream_servers/g" /home/web/conf.d/$yuming.conf
 	sed -i '/remote_addr/d' /home/web/conf.d/$yuming.conf
-
 	update_nginx_listen_port "$yuming" "$access_port"
-
 	nginx_http_on
 	docker exec nginx nginx -s reload
 	nginx_web_on
 }
-
-
-
 ldnmp_Proxy_backend() {
 	clear
 	webname="Reverse proxy-load balancing"
-
 	send_stats "Install$webname"
 	echo "Start deployment$webname"
 	if [ -z "$yuming" ]; then
 		add_yuming
 	fi
-
 	check_ip_and_get_access_port "$yuming"
-
 	if [ -z "$reverseproxy_port" ]; then
 		read -e -p "Please enter your multiple anti-generation IP+ports separated by spaces (for example, 127.0.0.1:3000 127.0.0.1:3002):" reverseproxy_port
 	fi
-
 	nginx_install_status
-
 	install_ssltls
 	certs_status
-
 	wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/map.conf
 	wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/reverse-proxy-backend.conf
-
 	backend=$(tr -dc 'A-Za-z' < /dev/urandom | head -c 8)
 	sed -i "s/backend_yuming_com/backend_$backend/g" /home/web/conf.d/"$yuming".conf
-
-
 	sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
-
 	upstream_servers=""
 	for server in $reverseproxy_port; do
 		upstream_servers="$upstream_servers    server $server;\n"
 	done
-
 	sed -i "s/# dynamically add/$upstream_servers/g" /home/web/conf.d/$yuming.conf
-
-
 	update_nginx_listen_port "$yuming" "$access_port"
-
 	nginx_http_on
 	docker exec nginx nginx -s reload
 	nginx_web_on
 }
-
-
-
-
-
-
 list_stream_services() {
-
 	STREAM_DIR="/home/web/stream.d"
 	printf "%-25s %-18s %-25s %-20s\n" "Service name" "Communication type" "Local address" "Backend address"
-
 	if [ -z "$(ls -A "$STREAM_DIR")" ]; then
 		return
 	fi
-
 	for conf in "$STREAM_DIR"/*; do
 		# Service name takes file name
 		service_name=$(basename "$conf" .conf)
-
 		# Get the server backend IP:port in the upstream block
 		backend=$(grep -Po '(?<=server )[^;]+' "$conf" | head -n1)
-
 		# Get listen port
 		listen_port=$(grep -Po '(?<=listen )[^;]+' "$conf" | head -n1)
-
 		# Default local IP
 		ip_address
 		local_ip="$ipv4_address"
-
 		# Get the communication type, first judging from the file name suffix or content
 		if grep -qi 'udp;' "$conf"; then
 			proto="udp"
 		else
 			proto="tcp"
 		fi
-
 		# Splice listening IP:port
 		local_addr="$local_ip:$listen_port"
-
 		printf "%-22s %-14s %-21s %-20s\n" "$service_name" "$proto" "$local_addr" "$backend"
 	done
 }
-
-
-
-
-
-
-
-
-
 stream_panel() {
 	send_stats "Stream four-layer proxy"
 	local app_id="104"
 	local docker_name="nginx"
-
 	while true; do
 		clear
 		check_docker_app
@@ -3690,9 +2822,7 @@ stream_panel() {
 				else
 					echo "The operation has been cancelled."
 				fi
-
 				;;
-
 			4)
 				ldnmp_Proxy_backend_stream
 				add_app_id
@@ -3720,57 +2850,43 @@ stream_panel() {
 		break_end
 	done
 }
-
-
-
 ldnmp_Proxy_backend_stream() {
 	clear
 	webname="Stream four-layer proxy-load balancing"
-
 	send_stats "Install$webname"
 	echo "Start deployment$webname"
-
 	# Get agent name
 	read -erp "Please enter a proxy forwarding name (e.g. mysql_proxy):" proxy_name
 	if [ -z "$proxy_name" ]; then
 		echo "Name cannot be empty"; return 1
 	fi
-
 	# Get listening port
 	read -erp "Please enter the local listening port (such as 3306):" listen_port
 	if ! [[ "$listen_port" =~ ^[0-9]+$ ]]; then
 		echo "Port must be numeric"; return 1
 	fi
-
 	echo "Please select agreement type:"
 	echo "1. TCP    2. UDP"
 	read -erp "Please enter the serial number [1-2]:" proto_choice
-
 	case "$proto_choice" in
 		1) proto="tcp"; listen_suffix="" ;;
 		2) proto="udp"; listen_suffix=" udp" ;;
 		*) echo "Invalid selection"; return 1 ;;
 	esac
-
 	read -e -p "Please enter one or more of your backend IP+ports separated by spaces (for example, 10.13.0.2:3306 10.13.0.3:3306):" reverseproxy_port
-
 	nginx_install_status
 	cd /home && mkdir -p web/stream.d
 	grep -q '^[[:space:]]*stream[[:space:]]*{' /home/web/nginx.conf || echo -e '\nstream {\n    include /etc/nginx/stream.d/*.conf;\n}' | tee -a /home/web/nginx.conf
 	wget -O /home/web/stream.d/$proxy_name.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/reverse-proxy-backend-stream.conf
-
 	backend=$(tr -dc 'A-Za-z' < /dev/urandom | head -c 8)
 	sed -i "s/backend_yuming_com/${proxy_name}_${backend}/g" /home/web/stream.d/"$proxy_name".conf
 	sed -i "s|listen 80|listen $listen_port $listen_suffix|g" /home/web/stream.d/$proxy_name.conf
 	sed -i "s|listen \[::\]:|listen [::]:${listen_port} ${listen_suffix}|g" "/home/web/stream.d/${proxy_name}.conf"
-
 	upstream_servers=""
 	for server in $reverseproxy_port; do
 		upstream_servers="$upstream_servers    server $server;\n"
 	done
-
 	sed -i "s/# dynamically add/$upstream_servers/g" /home/web/stream.d/$proxy_name.conf
-
 	docker exec nginx nginx -s reload
 	clear
 	echo "your$webnameIt's built!"
@@ -3785,11 +2901,6 @@ ldnmp_Proxy_backend_stream() {
 	fi
 	echo ""
 }
-
-
-
-
-
 find_container_by_host_port() {
 	port="$1"
 	docker_name=$(docker ps --format '{{.ID}} {{.Names}}' | while read id name; do
@@ -3799,26 +2910,19 @@ find_container_by_host_port() {
 		fi
 	done)
 }
-
-
-
-
 ldnmp_web_status() {
 	root_use
 	while true; do
 		local cert_count=$(ls /home/web/certs/*_cert.pem 2>/dev/null | wc -l)
 		local output="${gl_lv}${cert_count}${gl_bai}"
-
 		local dbrootpasswd=$(grep -oP 'MYSQL_ROOT_PASSWORD:\s*\K.*' /home/web/docker-compose.yml | tr -d '[:space:]')
 		local db_count=$(docker exec mysql mysql -u root -p"$dbrootpasswd" -e "SHOW DATABASES;" 2> /dev/null | grep -Ev "Database|information_schema|mysql|performance_schema|sys" | wc -l)
 		local db_output="${gl_lv}${db_count}${gl_bai}"
-
 		clear
 		send_stats "LDNMP site management"
 		echo "LDNMP environment"
 		echo "------------------------"
 		ldnmp_v
-
 		echo -e "Site:${output}Certificate expiration time"
 		echo -e "------------------------"
 		for cert_file in /home/web/certs/*_cert.pem; do
@@ -3829,33 +2933,26 @@ ldnmp_web_status() {
 			printf "%-30s%s\n" "$domain" "$formatted_date"
 		  fi
 		done
-
 		for conf_file in /home/web/conf.d/*_*.conf; do
 		  [ -e "$conf_file" ] || continue
 		  basename "$conf_file" .conf
 		done
-
 		for conf_file in /home/web/conf.d/*.conf; do
 		  [ -e "$conf_file" ] || continue
-
 		  filename=$(basename "$conf_file")
-
 		  if [ "$filename" = "map.conf" ] || [ "$filename" = "default.conf" ]; then
 			continue
 		  fi
-
 		  if ! grep -q "ssl_certificate" "$conf_file"; then
 			basename "$conf_file" .conf
 		  fi
 		done
-
 		echo "------------------------"
 		echo ""
 		echo -e "database:${db_output}"
 		echo -e "------------------------"
 		local dbrootpasswd=$(grep -oP 'MYSQL_ROOT_PASSWORD:\s*\K.*' /home/web/docker-compose.yml | tr -d '[:space:]')
 		docker exec mysql mysql -u root -p"$dbrootpasswd" -e "SHOW DATABASES;" 2> /dev/null | grep -Ev "Database|information_schema|mysql|performance_schema|sys"
-
 		echo "------------------------"
 		echo ""
 		echo "site directory"
@@ -3884,9 +2981,7 @@ ldnmp_web_status() {
 				docker run --rm -v /etc/letsencrypt/:/etc/letsencrypt certbot/certbot delete --cert-name "$yuming" -n 2>/dev/null
 				install_ssltls
 				certs_status
-
 				;;
-
 			2)
 				send_stats "Clone site domain name"
 				read -e -p "Please enter the old domain name:" oddyuming
@@ -3894,14 +2989,10 @@ ldnmp_web_status() {
 				install_certbot
 				install_ssltls
 				certs_status
-
-
 				add_db
 				local odd_dbname=$(echo "$oddyuming" | sed -e 's/[^A-Za-z0-9]/_/g')
 				local odd_dbname="${odd_dbname}"
-
 				docker exec mysql mysqldump -u root -p"$dbrootpasswd" $odd_dbname | docker exec -i mysql mysql -u root -p"$dbrootpasswd" $dbname
-
 				local tables=$(docker exec mysql mysql -u root -p"$dbrootpasswd" -D $dbname -e "SHOW TABLES;" | awk '{ if (NR>1) print $1 }')
 				for table in $tables; do
 					columns=$(docker exec mysql mysql -u root -p"$dbrootpasswd" -D $dbname -e "SHOW COLUMNS FROM $table;" | awk '{ if (NR>1) print $1 }')
@@ -3909,21 +3000,14 @@ ldnmp_web_status() {
 						docker exec mysql mysql -u root -p"$dbrootpasswd" -D $dbname -e "UPDATE $table SET $column = REPLACE($column, '$oddyuming', '$yuming') WHERE $column LIKE '%$oddyuming%';"
 					done
 				done
-
 				# Website directory replacement
 				cp -r /home/web/html/$oddyuming /home/web/html/$yuming
-
 				find /home/web/html/$yuming -type f -exec sed -i "s/$odd_dbname/$dbname/g" {} +
 				find /home/web/html/$yuming -type f -exec sed -i "s/$oddyuming/$yuming/g" {} +
-
 				cp /home/web/conf.d/$oddyuming.conf /home/web/conf.d/$yuming.conf
 				sed -i "s/$oddyuming/$yuming/g" /home/web/conf.d/$yuming.conf
-
 				cd /home/web && docker compose restart
-
 				;;
-
-
 			3)
 				web_cache
 				;;
@@ -3935,14 +3019,11 @@ ldnmp_web_status() {
 				install_certbot
 				install_ssltls
 				certs_status
-
 				cp /home/web/conf.d/$oddyuming.conf /home/web/conf.d/$yuming.conf
 				sed -i "s|server_name $oddyuming|server_name $yuming|g" /home/web/conf.d/$yuming.conf
 				sed -i "s|/etc/nginx/certs/${oddyuming}_cert.pem|/etc/nginx/certs/${yuming}_cert.pem|g" /home/web/conf.d/$yuming.conf
 				sed -i "s|/etc/nginx/certs/${oddyuming}_key.pem|/etc/nginx/certs/${yuming}_key.pem|g" /home/web/conf.d/$yuming.conf
-
 				docker exec nginx nginx -s reload
-
 				;;
 			5)
 				send_stats "View access log"
@@ -3960,7 +3041,6 @@ ldnmp_web_status() {
 				nano /home/web/nginx.conf
 				docker exec nginx nginx -s reload
 				;;
-
 			8)
 				send_stats "Edit site configuration"
 				read -e -p "To edit site configuration, please enter the domain name you want to edit:" yuming
@@ -3977,22 +3057,16 @@ ldnmp_web_status() {
 				install goaccess
 				goaccess --log-format=COMBINED /home/web/log/nginx/access.log
 				;;
-
 			20)
 				web_del
 				docker run --rm -v /etc/letsencrypt/:/etc/letsencrypt certbot/certbot delete --cert-name "$yuming" -n 2>/dev/null
-
 				;;
 			*)
 				break  # 跳出循环，退出菜单
 				;;
 		esac
 	done
-
-
 }
-
-
 check_panel_app() {
 if $lujing > /dev/null 2>&1; then
 	check_panel="${gl_lv}Installed${gl_bai}"
@@ -4000,9 +3074,6 @@ else
 	check_panel=""
 fi
 }
-
-
-
 install_panel() {
 send_stats "${panelname}manage"
 while true; do
@@ -4011,7 +3082,6 @@ while true; do
 	echo -e "$panelname $check_panel"
 	echo "${panelname}It is a popular and powerful operation and maintenance management panel."
 	echo "Official website introduction:$panelurl "
-
 	echo ""
 	echo "------------------------"
 	echo "1. Install 2. Manage 3. Uninstall"
@@ -4025,20 +3095,16 @@ while true; do
 			install wget
 			iptables_open
 			panel_app_install
-
 			add_app_id
 			send_stats "${panelname}Install"
 			;;
 		2)
 			panel_app_manage
-
 			add_app_id
 			send_stats "${panelname}control"
-
 			;;
 		3)
 			panel_app_uninstall
-
 			sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
 			send_stats "${panelname}uninstall"
 			;;
@@ -4048,27 +3114,17 @@ while true; do
 	 esac
 	 break_end
 done
-
 }
-
-
-
 check_frp_app() {
-
 if [ -d "/home/frp/" ]; then
 	check_frp="${gl_lv}Installed${gl_bai}"
 else
 	check_frp="${gl_hui}Not installed${gl_bai}"
 fi
-
 }
-
-
-
 donlond_frp() {
   role="$1"
   config_file="/home/frp/${role}.toml"
-
   docker run -d \
 	--name "$role" \
 	--restart=always \
@@ -4076,14 +3132,8 @@ donlond_frp() {
 	-v "$config_file":"/frp/${role}.toml" \
 	kjlion/frp:alpine \
 	"/frp/${role}" -c "/frp/${role}.toml"
-
 }
-
-
-
-
 generate_frps_config() {
-
 	send_stats "Install frp server"
 	# Generate random ports and credentials
 	local bind_port=8055
@@ -4091,7 +3141,6 @@ generate_frps_config() {
 	local token=$(openssl rand -hex 16)
 	local dashboard_user="user_$(openssl rand -hex 4)"
 	local dashboard_pwd=$(openssl rand -hex 8)
-
 	mkdir -p /home/frp
 	touch /home/frp/frps.toml
 	cat <<EOF > /home/frp/frps.toml
@@ -4103,9 +3152,7 @@ dashboard_port = $dashboard_port
 dashboard_user = $dashboard_user
 dashboard_pwd = $dashboard_pwd
 EOF
-
 	donlond_frp frps
-
 	# Output the generated information
 	ip_address
 	echo "------------------------"
@@ -4118,19 +3165,13 @@ EOF
 	echo "FRP panel username:$dashboard_user"
 	echo "FRP panel password:$dashboard_pwd"
 	echo
-
 	open_port 8055 8056
-
 }
-
-
-
 configure_frpc() {
 	send_stats "Install frp client"
 	read -e -p "Please enter the external network docking IP:" server_addr
 	read -e -p "Please enter the external network docking token:" token
 	echo
-
 	mkdir -p /home/frp
 	touch /home/frp/frpc.toml
 	cat <<EOF > /home/frp/frpc.toml
@@ -4138,15 +3179,10 @@ configure_frpc() {
 server_addr = ${server_addr}
 server_port = 8055
 token = ${token}
-
 EOF
-
 	donlond_frp frpc
-
 	open_port 8055
-
 }
-
 add_forwarding_service() {
 	send_stats "Add frp intranet service"
 	# Prompts user for service name and forwarding information
@@ -4157,7 +3193,6 @@ add_forwarding_service() {
 	local local_ip=${local_ip:-127.0.0.1}
 	read -e -p "Please enter the intranet port:" local_port
 	read -e -p "Please enter the external network port:" remote_port
-
 	# Write user input to configuration file
 	cat <<EOF >> /home/frp/frpc.toml
 [$service_name]
@@ -4165,20 +3200,12 @@ type = ${service_type}
 local_ip = ${local_ip}
 local_port = ${local_port}
 remote_port = ${remote_port}
-
 EOF
-
 	# Output the generated information
 	echo "Serve$service_nameSuccessfully added to frpc.toml"
-
 	docker restart frpc
-
 	open_port $local_port
-
 }
-
-
-
 delete_forwarding_service() {
 	send_stats "Delete frp intranet service"
 	# Prompt the user to enter the name of the service that needs to be deleted
@@ -4186,35 +3213,26 @@ delete_forwarding_service() {
 	# Use sed to delete the service and its related configuration
 	sed -i "/\[$service_name\]/,/^$/d" /home/frp/frpc.toml
 	echo "Serve$service_nameSuccessfully removed from frpc.toml"
-
 	docker restart frpc
-
 }
-
-
 list_forwarding_services() {
 	local config_file="$1"
-
 	# Print header
 	printf "%-20s %-25s %-30s %-10s\n" "Service name" "Intranet address" "External network address" "protocol"
-
 	awk '
 	BEGIN {
 		server_addr=""
 		server_port=""
 		current_service=""
 	}
-
 	/^server_addr = / {
 		gsub(/"|'"'"'/, "", $3)
 		server_addr=$3
 	}
-
 	/^server_port = / {
 		gsub(/"|'"'"'/, "", $3)
 		server_port=$3
 	}
-
 	/^\[.*\]/ {
 		# If service information already exists, print the current service before processing the new service
 		if (current_service != "" && current_service != "common" && local_ip != "" && local_port != "") {
@@ -4224,7 +3242,6 @@ list_forwarding_services() {
 				server_addr ":" remote_port, \
 				type
 		}
-
 		# Update current service name
 		if ($1 != "[common]") {
 			gsub(/[\[\]]/, "", $1)
@@ -4236,27 +3253,22 @@ list_forwarding_services() {
 			type=""
 		}
 	}
-
 	/^local_ip = / {
 		gsub(/"|'"'"'/, "", $3)
 		local_ip=$3
 	}
-
 	/^local_port = / {
 		gsub(/"|'"'"'/, "", $3)
 		local_port=$3
 	}
-
 	/^remote_port = / {
 		gsub(/"|'"'"'/, "", $3)
 		remote_port=$3
 	}
-
 	/^type = / {
 		gsub(/"|'"'"'/, "", $3)
 		type=$3
 	}
-
 	END {
 		# Print information about the last service
 		if (current_service != "" && current_service != "common" && local_ip != "" && local_port != "") {
@@ -4268,19 +3280,14 @@ list_forwarding_services() {
 		}
 	}' "$config_file"
 }
-
-
-
 # Get FRP server port
 get_frp_ports() {
 	mapfile -t ports < <(ss -tulnape | grep frps | awk '{print $5}' | awk -F':' '{print $NF}' | sort -u)
 }
-
 # Generate access address
 generate_access_urls() {
 	# First get all ports
 	get_frp_ports
-
 	# Check if there is a port other than 8055/8056
 	local has_valid_ports=false
 	for port in "${ports[@]}"; do
@@ -4289,18 +3296,15 @@ generate_access_urls() {
 			break
 		fi
 	done
-
 	# Show title and content only if there is a valid port
 	if [ "$has_valid_ports" = true ]; then
 		echo "FRP service external access address:"
-
 		# Handling IPv4 addresses
 		for port in "${ports[@]}"; do
 			if [[ $port != "8055" && $port != "8056" ]]; then
 				echo "http://${ipv4_address}:${port}"
 			fi
 		done
-
 		# Handle IPv6 address if present
 		if [ -n "$ipv6_address" ]; then
 			for port in "${ports[@]}"; do
@@ -4309,7 +3313,6 @@ generate_access_urls() {
 				fi
 			done
 		fi
-
 		# Handle HTTPS configuration
 		for port in "${ports[@]}"; do
 			if [[ $port != "8055" && $port != "8056" ]]; then
@@ -4326,16 +3329,10 @@ generate_access_urls() {
 		done
 	fi
 }
-
-
 frps_main_ports() {
 	ip_address
 	generate_access_urls
 }
-
-
-
-
 frps_panel() {
 	send_stats "FRP server"
 	local app_id="55"
@@ -4369,7 +3366,6 @@ frps_panel() {
 				install jq grep ss
 				install_docker
 				generate_frps_config
-
 				add_app_id
 				echo "The FRP server has been installed"
 				;;
@@ -4379,7 +3375,6 @@ frps_panel() {
 				docker rm -f frps && docker rmi kjlion/frp:alpine >/dev/null 2>&1
 				[ -f /home/frp/frps.toml ] || cp /home/frp/frp_0.61.0_linux_amd64/frps.toml /home/frp/frps.toml
 				donlond_frp frps
-
 				add_app_id
 				echo "The FRP server has been updated"
 				;;
@@ -4388,9 +3383,7 @@ frps_panel() {
 				tmux kill-session -t frps >/dev/null 2>&1
 				docker rm -f frps && docker rmi kjlion/frp:alpine
 				rm -rf /home/frp
-
 				close_port 8055 8056
-
 				sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
 				echo "App has been uninstalled"
 				;;
@@ -4406,25 +3399,21 @@ frps_panel() {
 				echo "Domain name format example.com without https://"
 				web_del
 				;;
-
 			7)
 				send_stats "Allow IP access"
 				read -e -p "Please enter the port that needs to be released:" frps_port
 				clear_host_port_rules "$frps_port" "$ipv4_address"
 				;;
-
 			8)
 				send_stats "Block IP access"
 				echo "If you have reversed domain name access, you can use this function to block IP+port access, which is safer."
 				read -e -p "Please enter the port to be blocked:" frps_port
 				block_host_port "$frps_port" "$ipv4_address"
 				;;
-
 			00)
 				send_stats "Refresh FRP service status"
 				echo "FRP service status has been refreshed"
 				;;
-
 			*)
 				break
 				;;
@@ -4432,8 +3421,6 @@ frps_panel() {
 		break_end
 	done
 }
-
-
 frpc_panel() {
 	send_stats "FRP client"
 	local app_id="56"
@@ -4466,7 +3453,6 @@ frpc_panel() {
 				install jq grep ss
 				install_docker
 				configure_frpc
-
 				add_app_id
 				echo "The FRP client has been installed"
 				;;
@@ -4476,36 +3462,29 @@ frpc_panel() {
 				docker rm -f frpc && docker rmi kjlion/frp:alpine >/dev/null 2>&1
 				[ -f /home/frp/frpc.toml ] || cp /home/frp/frp_0.61.0_linux_amd64/frpc.toml /home/frp/frpc.toml
 				donlond_frp frpc
-
 				add_app_id
 				echo "The FRP client has been updated"
 				;;
-
 			3)
 				crontab -l | grep -v 'frpc' | crontab - > /dev/null 2>&1
 				tmux kill-session -t frpc >/dev/null 2>&1
 				docker rm -f frpc && docker rmi kjlion/frp:alpine
 				rm -rf /home/frp
 				close_port 8055
-
 				sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
 				echo "App has been uninstalled"
 				;;
-
 			4)
 				add_forwarding_service
 				;;
-
 			5)
 				delete_forwarding_service
 				;;
-
 			6)
 				install nano
 				nano /home/frp/frpc.toml
 				docker restart frpc
 				;;
-
 			*)
 				break
 				;;
@@ -4513,27 +3492,18 @@ frpc_panel() {
 		break_end
 	done
 }
-
-
-
-
 yt_menu_pro() {
-
 	local app_id="66"
 	local VIDEO_DIR="/home/yt-dlp"
 	local URL_FILE="$VIDEO_DIR/urls.txt"
 	local ARCHIVE_FILE="$VIDEO_DIR/archive.txt"
-
 	mkdir -p "$VIDEO_DIR"
-
 	while true; do
-
 		if [ -x "/usr/local/bin/yt-dlp" ]; then
 		   local YTDLP_STATUS="${gl_lv}Installed${gl_bai}"
 		else
 		   local YTDLP_STATUS="${gl_hui}Not installed${gl_bai}"
 		fi
-
 		clear
 		send_stats "yt-dlp download tool"
 		echo -e "yt-dlp $YTDLP_STATUS"
@@ -4551,7 +3521,6 @@ yt_menu_pro() {
 		echo "0. Return to the previous menu"
 		echo "-------------------------"
 		read -e -p "Please enter option number:" choice
-
 		case $choice in
 			1)
 				send_stats "Installing yt-dlp..."
@@ -4559,7 +3528,6 @@ yt_menu_pro() {
 				install ffmpeg
 				curl -L ${gh_https_url}github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
 				chmod a+rx /usr/local/bin/yt-dlp
-
 				add_app_id
 				echo "The installation is complete. Press any key to continue..."
 				read ;;
@@ -4567,7 +3535,6 @@ yt_menu_pro() {
 				send_stats "Updating yt-dlp..."
 				echo "Updating yt-dlp..."
 				yt-dlp -U
-
 				add_app_id
 				echo "Update completed. Press any key to continue..."
 				read ;;
@@ -4575,7 +3542,6 @@ yt_menu_pro() {
 				send_stats "Uninstalling yt-dlp..."
 				echo "Uninstalling yt-dlp..."
 				rm -f /usr/local/bin/yt-dlp
-
 				sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
 				echo "Uninstallation completed. Press any key to continue..."
 				read ;;
@@ -4625,7 +3591,6 @@ yt_menu_pro() {
 					-o "$VIDEO_DIR/%(title)s/%(title)s.%(ext)s" \
 					--no-overwrites --no-post-overwrites "$url"
 				read -e -p "Audio download complete, press any key to continue..." ;;
-
 			9)
 				send_stats "Delete video"
 				read -e -p "Please enter the name of the deleted video:" rmdir
@@ -4636,21 +3601,13 @@ yt_menu_pro() {
 		esac
 	done
 }
-
-
-
-
-
 current_timezone() {
 	if grep -q 'Alpine' /etc/issue; then
 	   date +"%Z %z"
 	else
 	   timedatectl | grep "Time zone" | awk '{print $3}'
 	fi
-
 }
-
-
 set_timedate() {
 	local shiqu="$1"
 	if grep -q 'Alpine' /etc/issue; then
@@ -4661,17 +3618,12 @@ set_timedate() {
 		timedatectl set-timezone ${shiqu}
 	fi
 }
-
-
-
 # Fix dpkg interruption problem
 fix_dpkg() {
 	pkill -9 -f 'apt|dpkg'
 	rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock
 	DEBIAN_FRONTEND=noninteractive dpkg --configure -a
 }
-
-
 linux_update() {
 	echo -e "${gl_kjlan}System update in progress...${gl_bai}"
 	if command -v dnf &>/dev/null; then
@@ -4696,9 +3648,6 @@ linux_update() {
 		return
 	fi
 }
-
-
-
 linux_clean() {
 	echo -e "${gl_kjlan}System cleaning in progress...${gl_bai}"
 	if command -v dnf &>/dev/null; then
@@ -4709,7 +3658,6 @@ linux_clean() {
 		journalctl --rotate
 		journalctl --vacuum-time=1s
 		journalctl --vacuum-size=500M
-
 	elif command -v yum &>/dev/null; then
 		rpm --rebuilddb
 		yum autoremove -y
@@ -4718,7 +3666,6 @@ linux_clean() {
 		journalctl --rotate
 		journalctl --vacuum-time=1s
 		journalctl --vacuum-size=500M
-
 	elif command -v apt &>/dev/null; then
 		fix_dpkg
 		apt autoremove --purge -y
@@ -4727,7 +3674,6 @@ linux_clean() {
 		journalctl --rotate
 		journalctl --vacuum-time=1s
 		journalctl --vacuum-size=500M
-
 	elif command -v apk &>/dev/null; then
 		echo "Clean package manager cache..."
 		apk cache clean
@@ -4737,27 +3683,23 @@ linux_clean() {
 		rm -rf /var/cache/apk/*
 		echo "Delete temporary files..."
 		rm -rf /tmp/*
-
 	elif command -v pacman &>/dev/null; then
 		pacman -Rns $(pacman -Qdtq) --noconfirm
 		pacman -Scc --noconfirm
 		journalctl --rotate
 		journalctl --vacuum-time=1s
 		journalctl --vacuum-size=500M
-
 	elif command -v zypper &>/dev/null; then
 		zypper clean --all
 		zypper refresh
 		journalctl --rotate
 		journalctl --vacuum-time=1s
 		journalctl --vacuum-size=500M
-
 	elif command -v opkg &>/dev/null; then
 		echo "Delete system log..."
 		rm -rf /var/log/*
 		echo "Delete temporary files..."
 		rm -rf /tmp/*
-
 	elif command -v pkg &>/dev/null; then
 		echo "Clean up unused dependencies..."
 		pkg autoremove -y
@@ -4767,60 +3709,41 @@ linux_clean() {
 		rm -rf /var/log/*
 		echo "Delete temporary files..."
 		rm -rf /tmp/*
-
 	else
 		echo "Unknown package manager!"
 		return
 	fi
 	return
 }
-
-
-
 bbr_on() {
-
 # Unified writing to sysctl.d to prevent conflicts with the kernel tuning module
 local CONF="/etc/sysctl.d/99-harvey-bbr.conf"
 mkdir -p /etc/sysctl.d
 echo "net.core.default_qdisc=fq" > "$CONF"
 echo "net.ipv4.tcp_congestion_control=bbr" >> "$CONF"
-
 # Clean up remnants of old sysctl.conf that may cause conflicts
 sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf 2>/dev/null
 sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf 2>/dev/null
-
 sysctl -p "$CONF" >/dev/null 2>&1 || sysctl --system >/dev/null 2>&1
-
 }
-
-
 set_dns() {
-
 ip_address
-
 chattr -i /etc/resolv.conf
 > /etc/resolv.conf
-
 if [ -n "$ipv4_address" ]; then
 	echo "nameserver $dns1_ipv4" >> /etc/resolv.conf
 	echo "nameserver $dns2_ipv4" >> /etc/resolv.conf
 fi
-
 if [ -n "$ipv6_address" ]; then
 	echo "nameserver $dns1_ipv6" >> /etc/resolv.conf
 	echo "nameserver $dns2_ipv6" >> /etc/resolv.conf
 fi
-
 if [ ! -s /etc/resolv.conf ]; then
 	echo "nameserver 223.5.5.5" >> /etc/resolv.conf
 	echo "nameserver 8.8.8.8" >> /etc/resolv.conf
 fi
-
 chattr +i /etc/resolv.conf
-
 }
-
-
 set_dns_ui() {
 root_use
 send_stats "Optimize DNS"
@@ -4872,23 +3795,12 @@ while true; do
 		;;
 	esac
 done
-
 }
-
-
-
 restart_ssh() {
 	restart sshd ssh > /dev/null 2>&1
-
 }
-
-
-
 correct_ssh_config() {
-
 	local sshd_config="/etc/ssh/sshd_config"
-
-
 	if grep -Eq "^\s*PasswordAuthentication\s+no" "$sshd_config"; then
 		sed -i -e 's/^\s*#\?\s*PermitRootLogin .*/PermitRootLogin prohibit-password/' \
 			   -e 's/^\s*#\?\s*PasswordAuthentication .*/PasswordAuthentication no/' \
@@ -4899,36 +3811,21 @@ correct_ssh_config() {
 			   -e 's/^\s*#\?\s*PasswordAuthentication .*/PasswordAuthentication yes/' \
 			   -e 's/^\s*#\?\s*PubkeyAuthentication .*/PubkeyAuthentication yes/' "$sshd_config"
 	fi
-
 	rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
 }
-
-
 new_ssh_port() {
-
   local new_port=$1
-
   cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
-
   sed -i '/^\s*#\?\s*Port\s\+/d' /etc/ssh/sshd_config
   echo "Port $new_port" >> /etc/ssh/sshd_config
-
   correct_ssh_config
-
   restart_ssh
   open_port $new_port
   remove iptables-persistent ufw firewalld iptables-services > /dev/null 2>&1
-
   echo "The SSH port has been modified to:$new_port"
-
   sleep 1
-
 }
-
-
-
 sshkey_on() {
-
 	sed -i -e 's/^\s*#\?\s*PermitRootLogin .*/PermitRootLogin prohibit-password/' \
 		   -e 's/^\s*#\?\s*PasswordAuthentication .*/PasswordAuthentication no/' \
 		   -e 's/^\s*#\?\s*PubkeyAuthentication .*/PubkeyAuthentication yes/' \
@@ -4936,94 +3833,65 @@ sshkey_on() {
 	rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
 	restart_ssh
 	echo -e "${gl_lv}The user key login mode has been turned on and the password login mode has been turned off. Reconnection will take effect.${gl_bai}"
-
 }
-
-
-
 add_sshkey() {
 	chmod 700 "${HOME}"
 	mkdir -p "${HOME}/.ssh"
 	chmod 700 "${HOME}/.ssh"
 	touch "${HOME}/.ssh/authorized_keys"
-
 	ssh-keygen -t ed25519 -C "xxxx@gmail.com" -f "${HOME}/.ssh/sshkey" -N ""
-
 	cat "${HOME}/.ssh/sshkey.pub" >> "${HOME}/.ssh/authorized_keys"
 	chmod 600 "${HOME}/.ssh/authorized_keys"
-
 	ip_address
 	echo -e "The private key information has been generated. Be sure to copy and save it. It can be saved as${gl_huang}${ipv4_address}_ssh.key${gl_bai}file for future SSH logins"
-
 	echo "--------------------------------"
 	cat "${HOME}/.ssh/sshkey"
 	echo "--------------------------------"
-
 	sshkey_on
 }
-
-
-
-
-
 import_sshkey() {
-
 	local public_key="$1"
 	local base_dir="${2:-$HOME}"
 	local ssh_dir="${base_dir}/.ssh"
 	local auth_keys="${ssh_dir}/authorized_keys"
-
 	if [[ -z "$public_key" ]]; then
 		read -e -p "Please enter the contents of your SSH public key (usually starts with 'ssh-rsa' or 'ssh-ed25519'):" public_key
 	fi
-
 	if [[ -z "$public_key" ]]; then
 		echo -e "${gl_hong}Error: Public key content not entered.${gl_bai}"
 		return 1
 	fi
-
 	if [[ ! "$public_key" =~ ^ssh-(rsa|ed25519|ecdsa) ]]; then
 		echo -e "${gl_hong}Error: Does not look like a legitimate SSH public key.${gl_bai}"
 		return 1
 	fi
-
 	if grep -Fxq "$public_key" "$auth_keys" 2>/dev/null; then
 		echo "The public key already exists, no need to add it again"
 		return 0
 	fi
-
 	mkdir -p "$ssh_dir"
 	chmod 700 "$ssh_dir"
 	touch "$auth_keys"
 	echo "$public_key" >> "$auth_keys"
 	chmod 600 "$auth_keys"
-
 	sshkey_on
 }
-
-
-
 fetch_remote_ssh_keys() {
-
 	local keys_url="$1"
 	local base_dir="${2:-$HOME}"
 	local ssh_dir="${base_dir}/.ssh"
 	local authorized_keys="${ssh_dir}/authorized_keys"
 	local temp_file
-
 	if [[ -z "${keys_url}" ]]; then
 		read -e -p "Please enter your remote public key URL:" keys_url
 	fi
-
 	echo "This script will pull the SSH public key from the remote URL and add it to${authorized_keys}"
 	echo ""
 	echo "Remote public key address:"
 	echo "  ${keys_url}"
 	echo ""
-
 	# Create temporary files
 	temp_file=$(mktemp)
-
 	# Download public key
 	if command -v curl >/dev/null 2>&1; then
 		curl -fsSL --connect-timeout 10 "${keys_url}" -o "${temp_file}" || {
@@ -5042,38 +3910,31 @@ fetch_remote_ssh_keys() {
 		rm -f "${temp_file}"
 		return 1
 	fi
-
 	# Check if content is valid
 	if [[ ! -s "${temp_file}" ]]; then
 		echo "Error: The downloaded file is empty and the URL may not contain any public key" >&2
 		rm -f "${temp_file}"
 		return 1
 	fi
-
 	mkdir -p "${ssh_dir}"
 	chmod 700 "${ssh_dir}"
 	touch "${authorized_keys}"
 	chmod 600 "${authorized_keys}"
-
 	# Back up original authorized_keys
 	if [[ -f "${authorized_keys}" ]]; then
 		cp "${authorized_keys}" "${authorized_keys}.bak.$(date +%Y%m%d-%H%M%S)"
 		echo "The original authorized_keys file has been backed up"
 	fi
-
 	# Append public key (avoid duplication)
 	local added=0
 	while IFS= read -r line; do
 		[[ -z "${line}" || "${line}" =~ ^# ]] && continue
-
 		if ! grep -Fxq "${line}" "${authorized_keys}" 2>/dev/null; then
 			echo "${line}" >> "${authorized_keys}"
 			((added++))
 		fi
 	done < "${temp_file}"
-
 	rm -f "${temp_file}"
-
 	echo ""
 	if (( added > 0 )); then
 		echo "successfully added${added}A new public key arrives${authorized_keys}"
@@ -5081,18 +3942,11 @@ fetch_remote_ssh_keys() {
 	else
 		echo "No new public keys need to be added (all may already exist)"
 	fi
-
 	echo ""
 }
-
-
-
-
 fetch_github_ssh_keys() {
-
 	local username="$1"
 	local base_dir="${2:-$HOME}"
-
 	echo "Before proceeding, make sure you have added your SSH public key to your GitHub account:"
 	echo "1. Log in${gh_https_url}github.com/settings/keys"
 	echo "2. Click New SSH key or Add SSH key"
@@ -5103,24 +3957,16 @@ fetch_github_ssh_keys() {
 	echo "Once added, all your public keys will be publicly available on GitHub at:"
 	echo "  ${gh_https_url}github.com/yourusername.keys"
 	echo ""
-
-
 	if [[ -z "${username}" ]]; then
 		read -e -p "Please enter your GitHub username (username without @):" username
 	fi
-
 	if [[ -z "${username}" ]]; then
 		echo "Error: GitHub username cannot be empty" >&2
 		return 1
 	fi
-
 	keys_url="${gh_https_url}github.com/${username}.keys"
-
 	fetch_remote_ssh_keys "${keys_url}" "${base_dir}"
-
 }
-
-
 sshkey_panel() {
   root_use
   send_stats "User key login"
@@ -5166,14 +4012,12 @@ sshkey_panel() {
 			fetch_remote_ssh_keys "${keys_url}"
 			break_end
 			  ;;
-
 		  5)
 			send_stats "Edit public key file"
 			install nano
 			nano ${HOME}/.ssh/authorized_keys
 			break_end
 			  ;;
-
 		  6)
 			send_stats "View local key"
 			echo "------------------------"
@@ -5190,91 +4034,44 @@ sshkey_panel() {
 			  ;;
 	  esac
   done
-
-
 }
-
-
-
-
-
-
 add_sshpasswd() {
-
 	root_use
 	send_stats "Set password login mode"
 	echo "Set password login mode"
-
 	local target_user="$1"
-
 	# If no parameters are passed in, enter interactively
 	if [[ -z "$target_user" ]]; then
 		read -e -p "Please enter the user name whose password you want to change (default root):" target_user
 	fi
-
 	# Press Enter and do not enter, the default is root
 	target_user=${target_user:-root}
-
 	# Verify that the user exists
 	if ! id "$target_user" >/dev/null 2>&1; then
 		echo "Error: user$target_userdoes not exist"
 		return 1
 	fi
-
 	passwd "$target_user"
-
 	if [[ "$target_user" == "root" ]]; then
 		sed -i 's/^\s*#\?\s*PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config
 	fi
-
 	sed -i 's/^\s*#\?\s*PasswordAuthentication.*/PasswordAuthentication yes/g' /etc/ssh/sshd_config
 	rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
-
 	restart_ssh
-
 	echo -e "${gl_lv}The password is set and has been changed to password login mode!${gl_bai}"
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 root_use() {
 clear
 [ "$EUID" -ne 0 ] && echo -e "${gl_huang}hint:${gl_bai}This function requires root user to run!" && break_end && harvey
 }
-
-
-
-
-
-
-
-
-
-
-
-
 dd_xitong() {
 		send_stats "Reinstall the system"
 		dd_xitong_MollyLau() {
 			wget --no-check-certificate -qO InstallNET.sh "${gh_proxy}raw.githubusercontent.com/leitbogioro/Tools/master/Linux_reinstall/InstallNET.sh" && chmod a+x InstallNET.sh
-
 		}
-
 		dd_xitong_bin456789() {
 			curl -O ${gh_proxy}raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh
 		}
-
 		dd_xitong_1() {
 		  echo -e "Initial username after reinstallation:${gl_huang}root${gl_bai}Initial password:${gl_huang}LeitboGi0ro${gl_bai}Initial port:${gl_huang}22${gl_bai}"
 		  echo -e "${gl_huang}After reinstallation, please change the initial password in time to prevent violent intrusion. Enter passwd on the command line to change the password.${gl_bai}"
@@ -5283,7 +4080,6 @@ dd_xitong() {
 		  install wget
 		  dd_xitong_MollyLau
 		}
-
 		dd_xitong_2() {
 		  echo -e "Initial username after reinstallation:${gl_huang}Administrator${gl_bai}Initial password:${gl_huang}Teddysun.com${gl_bai}Initial port:${gl_huang}3389${gl_bai}"
 		  echo -e "Press any key to continue..."
@@ -5291,21 +4087,18 @@ dd_xitong() {
 		  install wget
 		  dd_xitong_MollyLau
 		}
-
 		dd_xitong_3() {
 		  echo -e "Initial username after reinstallation:${gl_huang}root${gl_bai}Initial password:${gl_huang}123@@@${gl_bai}Initial port:${gl_huang}22${gl_bai}"
 		  echo -e "Press any key to continue..."
 		  read -n 1 -s -r -p ""
 		  dd_xitong_bin456789
 		}
-
 		dd_xitong_4() {
 		  echo -e "Initial username after reinstallation:${gl_huang}Administrator${gl_bai}Initial password:${gl_huang}123@@@${gl_bai}Initial port:${gl_huang}3389${gl_bai}"
 		  echo -e "Press any key to continue..."
 		  read -n 1 -s -r -p ""
 		  dd_xitong_bin456789
 		}
-
 		  while true; do
 			root_use
 			echo "Reinstall the system"
@@ -5340,8 +4133,6 @@ dd_xitong() {
 			echo "------------------------"
 			read -e -p "Please select the system you want to reinstall:" sys_choice
 			case "$sys_choice" in
-
-
 			  1)
 				send_stats "Reinstall debian 13"
 				dd_xitong_3
@@ -5349,7 +4140,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  2)
 				send_stats "Reinstall debian 12"
 				dd_xitong_1
@@ -5399,7 +4189,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  21)
 				send_stats "Reinstall rockylinux10"
 				dd_xitong_3
@@ -5407,7 +4196,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  22)
 				send_stats "Reinstall rockylinux9"
 				dd_xitong_3
@@ -5415,7 +4203,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  23)
 				send_stats "Reinstall alma10"
 				dd_xitong_3
@@ -5423,7 +4210,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  24)
 				send_stats "Reinstall alma9"
 				dd_xitong_3
@@ -5431,7 +4217,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  25)
 				send_stats "Reinstall oracle10"
 				dd_xitong_3
@@ -5439,7 +4224,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  26)
 				send_stats "Reinstall oracle9"
 				dd_xitong_3
@@ -5447,7 +4231,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  27)
 				send_stats "Reinstall fedora44"
 				dd_xitong_3
@@ -5455,7 +4238,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  28)
 				send_stats "Reinstall fedora43"
 				dd_xitong_3
@@ -5463,7 +4245,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  29)
 				send_stats "Reinstall centos10"
 				dd_xitong_3
@@ -5471,7 +4252,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  30)
 				send_stats "Reinstall centos9"
 				dd_xitong_3
@@ -5479,7 +4259,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  31)
 				send_stats "Reinstall alpine"
 				dd_xitong_1
@@ -5487,7 +4266,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  32)
 				send_stats "Reinstall arch"
 				dd_xitong_3
@@ -5495,7 +4273,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  33)
 				send_stats "Reinstall kali"
 				dd_xitong_3
@@ -5503,7 +4280,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  34)
 				send_stats "Reinstall openeuler"
 				dd_xitong_3
@@ -5511,7 +4287,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  35)
 				send_stats "Reinstall opensuse"
 				dd_xitong_3
@@ -5519,7 +4294,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  36)
 				send_stats "Reinstall Feiniu"
 				dd_xitong_3
@@ -5527,7 +4301,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  41)
 				send_stats "Reinstall Windows 11"
 				dd_xitong_2
@@ -5535,7 +4308,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  42)
 				dd_xitong_2
 				send_stats "Reinstall Windows 10"
@@ -5543,7 +4315,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  43)
 				send_stats "Reinstall windows7"
 				dd_xitong_4
@@ -5551,7 +4322,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  44)
 				send_stats "Reinstall windows server 25"
 				dd_xitong_2
@@ -5559,7 +4329,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  45)
 				send_stats "Reinstall windows server 22"
 				dd_xitong_2
@@ -5567,7 +4336,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  46)
 				send_stats "Reinstall windows server 19"
 				dd_xitong_2
@@ -5575,7 +4343,6 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  47)
 				send_stats "Reinstall windows11 ARM"
 				dd_xitong_4
@@ -5583,48 +4350,39 @@ dd_xitong() {
 				reboot
 				exit
 				;;
-
 			  *)
 				break
 				;;
 			esac
 		  done
 }
-
-
 bbrv3() {
 		  root_use
 		  send_stats "bbrv3 management"
-
 		  xanmod_add_repo() {
 				local keyring="/usr/share/keyrings/xanmod-archive-keyring.gpg"
 				local list_file="/etc/apt/sources.list.d/xanmod-release.list"
 				local key_url="https://dl.xanmod.org/archive.key"
 				local fallback_key_url="${gh_proxy}raw.githubusercontent.com/harvey/sh/main/archive.key"
 				local os_codename=""
-
 				if command -v lsb_release >/dev/null 2>&1; then
 					os_codename=$(lsb_release -sc)
 				elif [ -r /etc/os-release ]; then
 					os_codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
 				fi
-				
 				# Compatible with the old system codenames that have been officially removed (fall back to using releases to try the old package library)
 				if ! echo "bookworm trixie forky sid noble plucky questing resolute faye gigi wilma xia zara zena" | grep -qw "$os_codename"; then
 					os_codename="releases"
 				fi
-				
 				# Officially, apt support for jammy, focal, bullseye and other old systems has been completely removed.
 				if echo "jammy focal bullseye buster" | grep -qw "$os_codename" || [ "$os_codename" = "releases" ]; then
 					echo -e "${gl_hong}XanMod has officially stopped supporting the current system ($os_codename), please upgrade to Debian12/Ubuntu24 or higher.${gl_bai}"
 					return 1
 				fi
-
 				if [ -z "$os_codename" ]; then
 					echo "Unable to obtain system codename, unable to configure XanMod source"
 					return 1
 				fi
-
 				install wget gnupg ca-certificates
 				mkdir -p /usr/share/keyrings /etc/apt/sources.list.d
 				if ! wget -qO - "$key_url" | gpg --dearmor -o "$keyring" --yes; then
@@ -5634,7 +4392,6 @@ bbrv3() {
 				chmod 644 "$keyring"
 				echo "deb [signed-by=$keyring] http://deb.xanmod.org $os_codename main" > "$list_file"
 		  }
-
 		  xanmod_detect_psabi_level() {
 				local psabi_output=""
 				psabi_output=$(awk 'BEGIN {
@@ -5648,24 +4405,19 @@ bbrv3() {
 				}' /proc/cpuinfo 2>/dev/null) || return 1
 				printf '%s' "$psabi_output" | tr -dc '0-9' | head -c 1
 		  }
-
 		  xanmod_package_available() {
 				local package="$1"
 				apt-cache policy "$package" 2>/dev/null | grep -q 'Candidate: [^ ]'
 		  }
-
 		  xanmod_detect_package() {
 				local psabi_level=""
 				local level=""
 				local package=""
 				local prefix_list="linux-xanmod linux-xanmod-lts"
-
 				psabi_level=$(xanmod_detect_psabi_level) || return 1
 				[ -n "$psabi_level" ] || return 1
 				[ "$psabi_level" -gt 3 ] && psabi_level=3
-
 				apt update -y >/dev/null 2>&1
-
 				for prefix in $prefix_list; do
 					level="$psabi_level"
 					while [ "$level" -ge 1 ]; do
@@ -5680,31 +4432,25 @@ bbrv3() {
 						level=$((level - 1))
 					done
 				done
-
 				echo "The XanMod kernel package adapted to this CPU was not found in the software source." >&2
 				return 1
 		  }
-
 		  xanmod_installed() {
 				dpkg-query -W -f='${Package}\n' 'linux-*xanmod*' 2>/dev/null | grep -q '^linux-.*xanmod'
 		  }
-
 		  xanmod_install_or_update() {
 				local action="$1"
 				local package=""
-
 				check_disk_space 3
 				check_swap
 				xanmod_add_repo || {
 					echo "XanMod official warehouse configuration failed, please try again later."
 					return 1
 				}
-
 				package=$(xanmod_detect_package) || {
 					echo "The current CPU cannot be recognized or a matching kernel package cannot be found. The installation has been cancelled."
 					return 1
 				}
-
 				apt update -y
 				if [ "$action" = "update" ]; then
 					apt install -y --only-upgrade "$package" || apt install -y "$package" || {
@@ -5717,7 +4463,6 @@ bbrv3() {
 						return 1
 					}
 				fi
-
 				bbr_on || {
 					echo "BBR3 parameter writing failed, please check the system configuration"
 					return 1
@@ -5725,7 +4470,6 @@ bbrv3() {
 				echo "XanMod BBRv3 kernel processing completed. Take effect after restart"
 				server_reboot
 		  }
-
 		  xanmod_uninstall() {
 				apt purge -y 'linux-*xanmod*'
 				apt autoremove -y
@@ -5735,14 +4479,12 @@ bbrv3() {
 				echo "The XanMod kernel has been uninstalled. Take effect after restart"
 				server_reboot
 		  }
-
 		  local cpu_arch=$(uname -m)
 		  if [ "$cpu_arch" = "aarch64" ]; then
 			bash <(curl -sL jhb.ovh/jb/bbrv3arm.sh)
 			break_end
 			linux_Settings
 		  fi
-
 		  if [ -r /etc/os-release ]; then
 			. /etc/os-release
 			if [ "$ID" != "debian" ] && [ "$ID" != "ubuntu" ]; then
@@ -5755,14 +4497,12 @@ bbrv3() {
 			break_end
 			linux_Settings
 		  fi
-
 		  if xanmod_installed; then
 			while true; do
 				  clear
 				  local kernel_version=$(uname -r)
 				  echo "You have xanmod's BBRv3 kernel installed"
 				  echo "Current kernel version:$kernel_version"
-
 				  echo ""
 				  echo "Kernel management"
 				  echo "------------------------"
@@ -5771,7 +4511,6 @@ bbrv3() {
 				  echo "0. Return to the previous menu"
 				  echo "------------------------"
 				  read -e -p "Please enter your choice:" sub_choice
-
 				  case $sub_choice in
 					  1)
 						xanmod_install_or_update update
@@ -5782,11 +4521,9 @@ bbrv3() {
 					  *)
 						break
 						;;
-
 				  esac
 			done
 		else
-
 		  clear
 		  echo "Set up BBR3 acceleration"
 		  echo "Video introduction: https://www.bilibili.com/video/BV14K421x7BS?t=0.1"
@@ -5795,7 +4532,6 @@ bbrv3() {
 		  echo "Please back up your data and we will upgrade your Linux kernel and enable BBR3."
 		  echo "------------------------------------------------"
 		  read -e -p "Are you sure you want to continue? (Y/N):" choice
-
 		  case "$choice" in
 			[Yy])
 			xanmod_install_or_update install
@@ -5808,9 +4544,7 @@ bbrv3() {
 			  ;;
 		  esac
 		fi
-
 }
-
 elrepo_install() {
 	# Import the ELRepo GPG public key
 	echo "Import the ELRepo GPG public key..."
@@ -5847,10 +4581,7 @@ elrepo_install() {
 	yum --nogpgcheck -y --enablerepo=elrepo-kernel install kernel-ml
 	echo "Installed ELRepo repository configuration and updated to latest mainline kernel."
 	server_reboot
-
 }
-
-
 elrepo() {
 		  root_use
 		  send_stats "Red Hat Kernel Management"
@@ -5860,7 +4591,6 @@ elrepo() {
 				  kernel_version=$(uname -r)
 				  echo "You have installed elrepo kernel"
 				  echo "Current kernel version:$kernel_version"
-
 				  echo ""
 				  echo "Kernel management"
 				  echo "------------------------"
@@ -5869,7 +4599,6 @@ elrepo() {
 				  echo "0. Return to the previous menu"
 				  echo "------------------------"
 				  read -e -p "Please enter your choice:" sub_choice
-
 				  case $sub_choice in
 					  1)
 						dnf remove -y elrepo-release
@@ -5877,7 +4606,6 @@ elrepo() {
 						elrepo_install
 						send_stats "Update Red Hat Kernel"
 						server_reboot
-
 						  ;;
 					  2)
 						dnf remove -y elrepo-release
@@ -5885,16 +4613,13 @@ elrepo() {
 						echo "The elrepo kernel has been uninstalled. Take effect after restart"
 						send_stats "Uninstall Red Hat Kernel"
 						server_reboot
-
 						  ;;
 					  *)
 						  break  # 跳出循环，退出菜单
 						  ;;
-
 				  esac
 			done
 		else
-
 		  clear
 		  echo "Please back up your data and we will upgrade the Linux kernel for you."
 		  echo "Video introduction: https://www.bilibili.com/video/BV1mH4y1w7qA?t=529.2"
@@ -5903,7 +4628,6 @@ elrepo() {
 		  echo "Upgrading the Linux kernel can improve system performance and security. It is recommended to try it if possible, and upgrade the production environment with caution!"
 		  echo "------------------------------------------------"
 		  read -e -p "Are you sure you want to continue? (Y/N):" choice
-
 		  case "$choice" in
 			[Yy])
 			  check_swap
@@ -5919,12 +4643,7 @@ elrepo() {
 			  ;;
 		  esac
 		fi
-
 }
-
-
-
-
 clamav_freshclam() {
 	echo -e "${gl_kjlan}Updating virus database...${gl_bai}"
 	docker run --rm \
@@ -5933,30 +4652,24 @@ clamav_freshclam() {
 		clamav/clamav-debian:latest \
 		freshclam
 }
-
 clamav_scan() {
 	if [ $# -eq 0 ]; then
 		echo "Please specify the directories to scan."
 		return
 	fi
-
 	echo -e "${gl_kjlan}Scanning directory $@...${gl_bai}"
-
 	# Build mount parameters
 	local MOUNT_PARAMS=""
 	for dir in "$@"; do
 		MOUNT_PARAMS+="--mount type=bind,source=${dir},target=/mnt/host${dir} "
 	done
-
 	# Build clamscan command parameters
 	local SCAN_PARAMS=""
 	for dir in "$@"; do
 		SCAN_PARAMS+="/mnt/host${dir} "
 	done
-
 	mkdir -p /home/docker/clamav/log/ > /dev/null 2>&1
 	> /home/docker/clamav/log/scan.log > /dev/null 2>&1
-
 	# Execute Docker command
 	docker run --rm \
 		--name clamav \
@@ -5965,18 +4678,9 @@ clamav_scan() {
 		-v /home/docker/clamav/log/:/var/log/clamav/ \
 		clamav/clamav-debian:latest \
 		clamscan -r --log=/var/log/clamav/scan.log $SCAN_PARAMS
-
 	echo -e "${gl_lv}$@ 扫描完成，病毒报告存放在${gl_huang}/home/docker/clamav/log/scan.log${gl_bai}"
 	echo -e "${gl_lv}If there is a virus please${gl_huang}scan.log${gl_lv}Search the file for the FOUND keyword to confirm the location of the virus${gl_bai}"
-
 }
-
-
-
-
-
-
-
 clamav() {
 		  root_use
 		  send_stats "Virus scan management"
@@ -6001,7 +4705,6 @@ clamav() {
 					  clamav_freshclam
 					  clamav_scan /
 					  break_end
-
 						;;
 					2)
 					  send_stats "Important directory scan"
@@ -6024,21 +4727,16 @@ clamav() {
 						;;
 				esac
 		  done
-
 }
-
-
 # ============================================================================
 # Linux kernel tuning module (refactored version)
 # Unified core functions + scene differentiation parameters + persistence to configuration files + hardware adaptation
 # Replace the original optimize_high_performance / optimize_balanced / optimize_web_server / restore_defaults
 # ============================================================================
-
 # Get memory size (MB)
 _get_mem_mb() {
 	awk '/MemTotal/{printf "%d", $2/1024}' /proc/meminfo
 }
-
 # Unified kernel tuning core functions
 # Parameters: $1 = mode name, $2 = scene (high/balanced/web/stream/game)
 _kernel_optimize_core() {
@@ -6046,16 +4744,13 @@ _kernel_optimize_core() {
 	local scene="${2:-high}"
 	local CONF="/etc/sysctl.d/99-harvey-optimize.conf"
 	local MEM_MB=$(_get_mem_mb)
-
 	echo -e "${gl_lv}switch to${mode_name}...${gl_bai}"
-
 	# ──Set parameters according to the scene──
 	local SWAPPINESS DIRTY_RATIO DIRTY_BG_RATIO OVERCOMMIT MIN_FREE_KB VFS_PRESSURE
 	local RMEM_MAX WMEM_MAX TCP_RMEM TCP_WMEM
 	local SOMAXCONN BACKLOG SYN_BACKLOG
 	local PORT_RANGE SCHED_AUTOGROUP THP NUMA FIN_TIMEOUT
 	local KEEPALIVE_TIME KEEPALIVE_INTVL KEEPALIVE_PROBES
-
 	case "$scene" in
 		high|stream|game)
 			# High Performance/Live Broadcasting/Gaming: Radical Parameters
@@ -6127,7 +4822,6 @@ _kernel_optimize_core() {
 			KEEPALIVE_PROBES=5
 			;;
 	esac
-
 	# ── Adaptively adjust according to memory size ──
 	if [ "$MEM_MB" -ge 16384 ]; then
 		MIN_FREE_KB=131072
@@ -6154,7 +4848,6 @@ _kernel_optimize_core() {
 		SOMAXCONN=1024
 		BACKLOG=1000
 	fi
-
 	# ── Additional live broadcast scenarios: UDP buffer enlarged ──
 	local STREAM_EXTRA=""
 	if [ "$scene" = "stream" ]; then
@@ -6164,7 +4857,6 @@ net.ipv4.udp_rmem_min = 16384
 net.ipv4.udp_wmem_min = 16384
 net.ipv4.tcp_notsent_lowat = 16384"
 	fi
-
 	# ── Game server scene extra: low latency priority ──
 	local GAME_EXTRA=""
 	if [ "$scene" = "game" ]; then
@@ -6175,7 +4867,6 @@ net.ipv4.udp_wmem_min = 16384
 net.ipv4.tcp_notsent_lowat = 16384
 net.ipv4.tcp_slow_start_after_idle = 0"
 	fi
-
 	# ── Load BBR module ──
 	local CC="bbr"
 	local QDISC="fq"
@@ -6193,21 +4884,17 @@ net.ipv4.tcp_slow_start_after_idle = 0"
 		CC="cubic"
 		QDISC="fq_codel"
 	fi
-
 	# ── Back up existing configuration ──
 	[ -f "$CONF" ] && cp "$CONF" "${CONF}.bak.$(date +%s)"
-
 	# ── Write configuration file (persistence) ──
 	echo -e "${gl_lv}Write optimization configuration...${gl_bai}"
 	cat > "$CONF" << SYSCTL
 # harvey kernel tuning configuration
 # Mode: $mode_name | Scene: $scene
 # Memory: ${MEM_MB}MB | Generation time: $(date '+%Y-%m-%d %H:%M:%S')
-
 # ──TCP Congestion Control──
 net.core.default_qdisc = $QDISC
 net.ipv4.tcp_congestion_control = $CC
-
 # ── TCP buffer ──
 net.core.rmem_max = $RMEM_MAX
 net.core.wmem_max = $WMEM_MAX
@@ -6215,12 +4902,10 @@ net.core.rmem_default = $(echo "$TCP_RMEM" | awk '{print $2}')
 net.core.wmem_default = $(echo "$TCP_WMEM" | awk '{print $2}')
 net.ipv4.tcp_rmem = $TCP_RMEM
 net.ipv4.tcp_wmem = $TCP_WMEM
-
 # ── Connection queue ──
 net.core.somaxconn = $SOMAXCONN
 net.core.netdev_max_backlog = $BACKLOG
 net.ipv4.tcp_max_syn_backlog = $SYN_BACKLOG
-
 # ── TCP connection optimization ──
 net.ipv4.tcp_fastopen = 3
 net.ipv4.tcp_tw_reuse = 1
@@ -6236,12 +4921,10 @@ net.ipv4.tcp_mtu_probing = 1
 net.ipv4.tcp_sack = 1
 net.ipv4.tcp_timestamps = 1
 net.ipv4.tcp_window_scaling = 1
-
 # ── Ports and Memory ──
 net.ipv4.ip_local_port_range = $PORT_RANGE
 net.ipv4.tcp_mem = $((MEM_MB * 1024 / 8)) $((MEM_MB * 1024 / 4)) $((MEM_MB * 1024 / 2))
 net.ipv4.tcp_max_orphans = 32768
-
 # ── Virtual memory ──
 vm.swappiness = $SWAPPINESS
 vm.dirty_ratio = $DIRTY_RATIO
@@ -6249,11 +4932,9 @@ vm.dirty_background_ratio = $DIRTY_BG_RATIO
 vm.overcommit_memory = $OVERCOMMIT
 vm.min_free_kbytes = $MIN_FREE_KB
 vm.vfs_cache_pressure = $VFS_PRESSURE
-
 # ──CPU/kernel scheduling──
 kernel.sched_autogroup_enabled = $SCHED_AUTOGROUP
 $([ -f /proc/sys/kernel/numa_balancing ] && echo "kernel.numa_balancing = $NUMA" || echo "# numa_balancing not supported")
-
 # ──Safety protection──
 net.ipv4.conf.all.rp_filter = 1
 net.ipv4.conf.default.rp_filter = 1
@@ -6265,11 +4946,9 @@ net.ipv4.conf.all.send_redirects = 0
 net.ipv4.conf.default.send_redirects = 0
 net.ipv6.conf.all.accept_redirects = 0
 net.ipv6.conf.default.accept_redirects = 0
-
 # ── File descriptor ──
 fs.file-max = 1048576
 fs.nr_open = 1048576
-
 # ── Connection tracking ──
 $(if [ -f /proc/sys/net/netfilter/nf_conntrack_max ]; then
 echo "net.netfilter.nf_conntrack_max = $((SOMAXCONN * 32))"
@@ -6283,7 +4962,6 @@ fi)
 $STREAM_EXTRA
 $GAME_EXTRA
 SYSCTL
-
 	# ── Apply configuration (line by line, skip unsupported parameters) ──
 	echo -e "${gl_lv}Apply optimization parameters...${gl_bai}"
 	local applied=0 skipped=0
@@ -6298,16 +4976,13 @@ SYSCTL
 		fi
 	done < "$CONF"
 	echo -e "${gl_lv}Applied${applied}Item parameter ${skipped:+, skip${skipped}Item unsupported parameter}${gl_bai}"
-
 	# ── Transparent large page ──
 	if [ -f /sys/kernel/mm/transparent_hugepage/enabled ]; then
 		echo "$THP" > /sys/kernel/mm/transparent_hugepage/enabled 2>/dev/null
 	fi
-
 	# ── File descriptor restrictions ──
 	if ! grep -q "# harvey-optimize" /etc/security/limits.conf 2>/dev/null; then
 		cat >> /etc/security/limits.conf << 'LIMITS'
-
 # harvey-optimize
 * soft nofile 1048576
 * hard nofile 1048576
@@ -6315,64 +4990,47 @@ root soft nofile 1048576
 root hard nofile 1048576
 LIMITS
 	fi
-
 	# ── BBR persistence ──
 	if [ "$CC" = "bbr" ]; then
 		echo "tcp_bbr" > /etc/modules-load.d/bbr.conf 2>/dev/null
 		# Clean up the bbr configuration in the old sysctl.conf (to avoid conflicts)
 		sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf 2>/dev/null
 	fi
-
 	echo -e "${gl_lv}${mode_name}Optimization completed! The configuration has been persisted to${CONF}${gl_bai}"
 	echo -e "${gl_lv}Memory:${MEM_MB}MB | Congestion algorithm:${CC}| Queue:${QDISC}${gl_bai}"
 }
-
 # ── Entry functions of each mode (keep the original calling interface unchanged) ──
-
 optimize_high_performance() {
 	_kernel_optimize_core "${tiaoyou_moshi:-高性能优化模式}" "high"
 }
-
 optimize_balanced() {
 	_kernel_optimize_core "Balanced optimization mode" "balanced"
 }
-
 optimize_web_server() {
 	_kernel_optimize_core "Website construction optimization mode" "web"
 }
-
 # ── Restore default settings (complete clean) ──
 restore_defaults() {
 	echo -e "${gl_lv}Revert to default settings...${gl_bai}"
-
 	local CONF="/etc/sysctl.d/99-harvey-optimize.conf"
-
 	# Delete the optimization configuration file (including external link automatic tuning configuration)
 	rm -f "$CONF"
 	rm -f /etc/sysctl.d/99-network-optimize.conf
-
 	# Clean up possible remaining bbr configuration in sysctl.conf
 	sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf 2>/dev/null
-
 	# Reload system default configuration
 	sysctl --system 2>/dev/null | tail -1
-
 	# Restore transparent huge pages
 	[ -f /sys/kernel/mm/transparent_hugepage/enabled ] && \
 		echo always > /sys/kernel/mm/transparent_hugepage/enabled 2>/dev/null
-
 	# Clean file descriptor configuration
 	if grep -q "# harvey-optimize" /etc/security/limits.conf 2>/dev/null; then
 		sed -i '/# harvey-optimize/,+4d' /etc/security/limits.conf
 	fi
-
 	# Clean up BBR persistence
 	rm -f /etc/modules-load.d/bbr.conf 2>/dev/null
-
 	echo -e "${gl_lv}System has been restored to default settings${gl_bai}"
 }
-
-
 Kernel_optimize() {
 	root_use
 	while true; do
@@ -6441,14 +5099,12 @@ Kernel_optimize() {
 			  curl -sS ${gh_proxy}raw.githubusercontent.com/harvey/sh/refs/heads/main/network-optimize.sh -o /tmp/network-optimize.sh && source /tmp/network-optimize.sh && restore_network_defaults
 			  send_stats "Restore default settings"
 			  ;;
-
 		  7)
 			  cd ~
 			  clear
 			  curl -sS ${gh_proxy}raw.githubusercontent.com/harvey/sh/refs/heads/main/network-optimize.sh | bash
 			  send_stats "Kernel automatic tuning"
 			  ;;
-
 		  *)
 			  break
 			  ;;
@@ -6456,17 +5112,9 @@ Kernel_optimize() {
 	  break_end
 	done
 }
-
-
-
-
-
-
-
 update_locale() {
 	local lang=$1
 	local locale_file=$2
-
 	if [ -f /etc/os-release ]; then
 		. /etc/os-release
 		case $ID in
@@ -6479,7 +5127,6 @@ update_locale() {
 				echo -e "${gl_lv}The system language has been modified to:$langReconnect to SSH to take effect.${gl_bai}"
 				hash -r
 				break_end
-
 				;;
 			centos|rhel|almalinux|rocky|fedora)
 				install glibc-langpack-zh
@@ -6499,10 +5146,6 @@ update_locale() {
 		break_end
 	fi
 }
-
-
-
-
 linux_language() {
 root_use
 send_stats "Switch system language"
@@ -6515,7 +5158,6 @@ while true; do
   echo "0. Return to the previous menu"
   echo "------------------------"
   read -e -p "Enter your selection:" choice
-
   case $choice in
 	  1)
 		  update_locale "en_US.UTF-8" "en_US.UTF-8"
@@ -6535,11 +5177,7 @@ while true; do
   esac
 done
 }
-
-
-
 shell_bianse_profile() {
-
 if command -v dnf &>/dev/null || command -v yum &>/dev/null; then
 	sed -i '/^PS1=/d' ~/.bashrc
 	echo "${bianse}" >> ~/.bashrc
@@ -6550,14 +5188,9 @@ else
 	# source ~/.profile
 fi
 echo -e "${gl_lv}Change completed. Reconnect to SSH to see the changes!${gl_bai}"
-
 hash -r
 break_end
-
 }
-
-
-
 shell_bianse() {
   root_use
   send_stats "Command line beautification tool"
@@ -6576,12 +5209,10 @@ shell_bianse() {
 	echo "0. Return to the previous menu"
 	echo "------------------------"
 	read -e -p "Enter your selection:" choice
-
 	case $choice in
 	  1)
 		local bianse="PS1='\[\033[1;32m\]\u\[\033[0m\]@\[\033[1;34m\]\h\[\033[0m\] \[\033[1;31m\]\w\[\033[0m\] # '"
 		shell_bianse_profile
-
 		;;
 	  2)
 		local bianse="PS1='\[\033[1;35m\]\u\[\033[0m\]@\[\033[1;36m\]\h\[\033[0m\] \[\033[1;33m\]\w\[\033[0m\] # '"
@@ -6611,29 +5242,20 @@ shell_bianse() {
 		break
 		;;
 	esac
-
   done
 }
-
-
-
-
 linux_trash() {
   root_use
   send_stats "System Recycle Bin"
-
   local bashrc_profile="/root/.bashrc"
   local TRASH_DIR="$HOME/.local/share/Trash/files"
-
   while true; do
-
 	local trash_status
 	if ! grep -q "trash-put" "$bashrc_profile"; then
 		trash_status="${gl_hui}Not enabled${gl_bai}"
 	else
 		trash_status="${gl_lv}Enabled${gl_bai}"
 	fi
-
 	clear
 	echo -e "Current recycle bin${trash_status}"
 	echo -e "After enabling it, files deleted by rm will be put into the recycle bin first to prevent accidental deletion of important files!"
@@ -6646,7 +5268,6 @@ linux_trash() {
 	echo "0. Return to the previous menu"
 	echo "------------------------"
 	read -e -p "Enter your selection:" choice
-
 	case $choice in
 	  1)
 		install trash-cli
@@ -6686,24 +5307,20 @@ linux_trash() {
 	esac
   done
 }
-
 linux_fav() {
 send_stats "Command Favorites"
 bash <(curl -l -s ${gh_proxy}raw.githubusercontent.com/byJoey/cmdbox/refs/heads/main/install.sh)
 }
-
 # Create a backup
 create_backup() {
 	send_stats "Create a backup"
 	local TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-
 	# Prompt user for backup directory
 	echo "Example of creating a backup:"
 	echo "- Back up a single directory: /var/www"
 	echo "- Back up multiple directories: /etc /home /var/log"
 	echo "- Press Enter to use the default directory (/etc /usr /home)"
 	read -e -p "Please enter the directory to be backed up (separate multiple directories with spaces, and press Enter to use the default directory):" input
-
 	# If the user does not enter a directory, the default directory is used
 	if [ -z "$input" ]; then
 		BACKUP_PATHS=(
@@ -6715,7 +5332,6 @@ create_backup() {
 		# Separate the directories entered by the user into an array by spaces
 		IFS=' ' read -r -a BACKUP_PATHS <<< "$input"
 	fi
-
 	# Generate backup file prefix
 	local PREFIX=""
 	for path in "${BACKUP_PATHS[@]}"; do
@@ -6723,24 +5339,19 @@ create_backup() {
 		dir_name=$(basename "$path")
 		PREFIX+="${dir_name}_"
 	done
-
 	# Remove the last underscore
 	local PREFIX=${PREFIX%_}
-
 	# Generate backup file name
 	local BACKUP_NAME="${PREFIX}_$TIMESTAMP.tar.gz"
-
 	# Print directory selected by user
 	echo "The backup directory you selected is:"
 	for path in "${BACKUP_PATHS[@]}"; do
 		echo "- $path"
 	done
-
 	# Create a backup
 	echo "Creating backup$BACKUP_NAME..."
 	install tar
 	tar -czvf "$BACKUP_DIR/$BACKUP_NAME" "${BACKUP_PATHS[@]}"
-
 	# Check if the command was successful
 	if [ $? -eq 0 ]; then
 		echo "Backup created successfully:$BACKUP_DIR/$BACKUP_NAME"
@@ -6749,22 +5360,18 @@ create_backup() {
 		exit 1
 	fi
 }
-
 # Restore backup
 restore_backup() {
 	send_stats "Restore backup"
 	# Select the backup to restore
 	read -e -p "Please enter the backup file name to be restored:" BACKUP_NAME
-
 	# Check if the backup file exists
 	if [ ! -f "$BACKUP_DIR/$BACKUP_NAME" ]; then
 		echo "The backup file does not exist!"
 		exit 1
 	fi
-
 	echo "Restoring backup$BACKUP_NAME..."
 	tar -xzvf "$BACKUP_DIR/$BACKUP_NAME" -C /
-
 	if [ $? -eq 0 ]; then
 		echo "Backup and restore successful!"
 	else
@@ -6772,28 +5379,22 @@ restore_backup() {
 		exit 1
 	fi
 }
-
 # List backups
 list_backups() {
 	echo "Available backups:"
 	ls -1 "$BACKUP_DIR"
 }
-
 # Delete backup
 delete_backup() {
 	send_stats "Delete backup"
-
 	read -e -p "Please enter the backup file name to be deleted:" BACKUP_NAME
-
 	# Check if the backup file exists
 	if [ ! -f "$BACKUP_DIR/$BACKUP_NAME" ]; then
 		echo "The backup file does not exist!"
 		exit 1
 	fi
-
 	# Delete backup
 	rm -f "$BACKUP_DIR/$BACKUP_NAME"
-
 	if [ $? -eq 0 ]; then
 		echo "Backup deleted successfully!"
 	else
@@ -6801,7 +5402,6 @@ delete_backup() {
 		exit 1
 	fi
 }
-
 # Backup main menu
 linux_backup() {
 	BACKUP_DIR="/backups"
@@ -6827,36 +5427,23 @@ linux_backup() {
 		read -e -p "Press Enter to continue..."
 	done
 }
-
-
-
-
-
-
-
-
-
 # SSH input normalization function
 kj_ssh_validate_host() {
 	local host="$1"
 	[[ -n "$host" && ! "$host" =~ [[:space:]] && "$host" =~ ^[A-Za-z0-9._:-]+$ ]]
 }
-
 kj_ssh_validate_port() {
 	local port="$1"
 	[[ "$port" =~ ^[0-9]+$ ]] && [ "$port" -ge 1 ] && [ "$port" -le 65535 ]
 }
-
 kj_ssh_validate_user() {
 	local user="$1"
 	[[ -n "$user" && "$user" =~ ^[A-Za-z_][A-Za-z0-9._-]*$ ]]
 }
-
 kj_ssh_read_host_port() {
 	local host_prompt="$1"
 	local port_prompt="$2"
 	local default_port="${3:-22}"
-
 	while true; do
 		read -e -p "$host_prompt" KJ_SSH_HOST
 		if kj_ssh_validate_host "$KJ_SSH_HOST"; then
@@ -6864,7 +5451,6 @@ kj_ssh_read_host_port() {
 		fi
 		echo "Error: Please enter a valid server address."
 	done
-
 	while true; do
 		read -e -p "$port_prompt" KJ_SSH_PORT
 		KJ_SSH_PORT=${KJ_SSH_PORT:-$default_port}
@@ -6874,16 +5460,13 @@ kj_ssh_read_host_port() {
 		echo "Error: Port must be a number between 1-65535."
 	done
 }
-
 kj_ssh_read_host_user_port() {
 	local host_prompt="$1"
 	local user_prompt="$2"
 	local port_prompt="$3"
 	local default_user="${4:-root}"
 	local default_port="${5:-22}"
-
 	kj_ssh_read_host_port "$host_prompt" "$port_prompt" "$default_port"
-
 	while true; do
 		read -e -p "$user_prompt" KJ_SSH_USER
 		KJ_SSH_USER=${KJ_SSH_USER:-$default_user}
@@ -6893,12 +5476,10 @@ kj_ssh_read_host_user_port() {
 		echo "Error: Username format is incorrect."
 	done
 }
-
 kj_ssh_parse_remote() {
 	local remote_raw="$1"
 	local default_user="${2:-root}"
 	local remote_user remote_host
-
 	if [[ "$remote_raw" == *@* ]]; then
 		remote_user="${remote_raw%@*}"
 		remote_host="${remote_raw#*@}"
@@ -6906,31 +5487,25 @@ kj_ssh_parse_remote() {
 		remote_user="$default_user"
 		remote_host="$remote_raw"
 	fi
-
 	if ! kj_ssh_validate_user "$remote_user"; then
 		echo "Error: SSH username format is incorrect."
 		return 1
 	fi
-
 	if ! kj_ssh_validate_host "$remote_host"; then
 		echo "Error: SSH host address format is incorrect."
 		return 1
 	fi
-
 	KJ_SSH_USER="$remote_user"
 	KJ_SSH_HOST="$remote_host"
 	KJ_SSH_REMOTE="$remote_user@$remote_host"
 }
-
 kj_ssh_read_auth() {
 	local key_file="$1"
 	local password_or_key=""
-
 	echo "Please select an authentication method:"
 	echo "1. Password"
 	echo "2. Key"
 	read -e -p "Please enter your choice (1/2):" auth_choice
-
 	case $auth_choice in
 		1)
 			read -s -p "Please enter password:" password_or_key
@@ -6952,12 +5527,10 @@ kj_ssh_read_auth() {
 					password_or_key+="${line}"$'\n'
 				fi
 			done
-
 			if [[ "$password_or_key" != *"-----BEGIN"* || "$password_or_key" != *"PRIVATE KEY-----"* ]]; then
 				echo "Invalid key content!"
 				return 1
 			fi
-
 			mkdir -p "$(dirname "$key_file")"
 			echo -n "$password_or_key" > "$key_file"
 			chmod 600 "$key_file"
@@ -6970,7 +5543,6 @@ kj_ssh_read_auth() {
 			;;
 	esac
 }
-
 kj_ssh_read_password() {
 	local prompt="${1:-请输入密码: }"
 	while true; do
@@ -6980,7 +5552,6 @@ kj_ssh_read_password() {
 		echo "Error: Password cannot be empty."
 	done
 }
-
 kj_ssh_read_port() {
 	local port_prompt="$1"
 	local default_port="${2:-22}"
@@ -6993,7 +5564,6 @@ kj_ssh_read_port() {
 		echo "Error: Port must be a number between 1-65535."
 	done
 }
-
 # Show connection list
 list_connections() {
 	echo "Saved connections:"
@@ -7001,8 +5571,6 @@ list_connections() {
 	cat "$CONFIG_FILE" | awk -F'|' '{print NR " - " $1 " (" $2 ")"}'
 	echo "------------------------"
 }
-
-
 # Add new connection
 add_connection() {
 	send_stats "Add new connection"
@@ -7013,53 +5581,40 @@ add_connection() {
 	echo "- Port: 22"
 	echo "------------------------"
 	read -e -p "Please enter a connection name:" name
-
 	kj_ssh_read_host_user_port "Please enter IP address:" "Please enter username (default: root):" "Please enter the port number (default: 22):" "root" "22"
 	if ! kj_ssh_read_auth "$KEY_DIR/$name.key"; then
 		return
 	fi
-
 	echo "$name|$KJ_SSH_HOST|$KJ_SSH_USER|$KJ_SSH_PORT|$KJ_SSH_AUTH_SECRET" >> "$CONFIG_FILE"
 	echo "Connection saved!"
 }
-
-
-
 # Delete connection
 delete_connection() {
 	send_stats "Delete connection"
 	read -e -p "Please enter the connection number to be deleted:" num
-
 	local connection=$(sed -n "${num}p" "$CONFIG_FILE")
 	if [[ -z "$connection" ]]; then
 		echo "Error: Corresponding connection not found."
 		return
 	fi
-
 	IFS='|' read -r name ip user port password_or_key <<< "$connection"
-
 	# If the connection is using a key file, delete the key file
 	if [[ "$password_or_key" == "$KEY_DIR"* ]]; then
 		rm -f "$password_or_key"
 	fi
-
 	sed -i "${num}d" "$CONFIG_FILE"
 	echo "Connection deleted!"
 }
-
 # Use connection
 use_connection() {
 	send_stats "Use connection"
 	read -e -p "Please enter the connection number to use:" num
-
 	local connection=$(sed -n "${num}p" "$CONFIG_FILE")
 	if [[ -z "$connection" ]]; then
 		echo "Error: Corresponding connection not found."
 		return
 	fi
-
 	IFS='|' read -r name ip user port password_or_key <<< "$connection"
-
 	echo "Connecting to$name ($ip)..."
 	if [[ -f "$password_or_key" ]]; then
 		# Connect using a key
@@ -7088,24 +5643,18 @@ use_connection() {
 		fi
 	fi
 }
-
-
 ssh_manager() {
 	send_stats "ssh remote connection tool"
-
 	CONFIG_FILE="$HOME/.ssh_connections"
 	KEY_DIR="$HOME/.ssh/ssh_manager_keys"
-
 	# Check if the configuration file and key directory exist, create them if they do not exist
 	if [[ ! -f "$CONFIG_FILE" ]]; then
 		touch "$CONFIG_FILE"
 	fi
-
 	if [[ ! -d "$KEY_DIR" ]]; then
 		mkdir -p "$KEY_DIR"
 		chmod 700 "$KEY_DIR"
 	fi
-
 	while true; do
 		clear
 		echo "SSH remote connection tool"
@@ -7126,99 +5675,69 @@ ssh_manager() {
 		esac
 	done
 }
-
-
-
-
-
-
-
-
-
-
-
-
 # List available hard disk partitions
 list_partitions() {
 	echo "Available hard drive partitions:"
 	lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT | grep -v "sr\|loop"
 }
-
-
 # Persistently mounted partition
 mount_partition() {
 	send_stats "Mount partition"
 	read -e -p "Please enter the name of the partition to be mounted (e.g. sda1):" PARTITION
-
 	DEVICE="/dev/$PARTITION"
 	MOUNT_POINT="/mnt/$PARTITION"
-
 	# Check if the partition exists
 	if ! lsblk -no NAME | grep -qw "$PARTITION"; then
 		echo "The partition does not exist!"
 		return 1
 	fi
-
 	# Check if it is mounted
 	if mount | grep -qw "$DEVICE"; then
 		echo "The partition has been mounted!"
 		return 1
 	fi
-
 	# Get UUID
 	UUID=$(blkid -s UUID -o value "$DEVICE")
 	if [ -z "$UUID" ]; then
 		echo "Unable to get UUID!"
 		return 1
 	fi
-
 	# Get file system type
 	FSTYPE=$(blkid -s TYPE -o value "$DEVICE")
 	if [ -z "$FSTYPE" ]; then
 		echo "Unable to get file system type!"
 		return 1
 	fi
-
 	# Create mount point
 	mkdir -p "$MOUNT_POINT"
-
 	# mount
 	if ! mount "$DEVICE" "$MOUNT_POINT"; then
 		echo "Partition mount failed!"
 		rmdir "$MOUNT_POINT"
 		return 1
 	fi
-
 	echo "Partition successfully mounted to$MOUNT_POINT"
-
 	# Check /etc/fstab to see if the UUID or mount point already exists
 	if grep -qE "UUID=$UUID|[[:space:]]$MOUNT_POINT[[:space:]]" /etc/fstab; then
 		echo "The partition record already exists in /etc/fstab, skip writing"
 		return 0
 	fi
-
 	# Write to /etc/fstab
 	echo "UUID=$UUID $MOUNT_POINT $FSTYPE defaults,nofail 0 2" >> /etc/fstab
-
 	echo "Written to /etc/fstab to achieve persistent mounting"
 }
-
-
 # Unmount partition
 unmount_partition() {
 	send_stats "Unmount partition"
 	read -e -p "Please enter the name of the partition to be unmounted (e.g. sda1):" PARTITION
-
 	# Check whether the partition is mounted
 	MOUNT_POINT=$(lsblk -o MOUNTPOINT | grep -w "$PARTITION")
 	if [ -z "$MOUNT_POINT" ]; then
 		echo "The partition is not mounted!"
 		return
 	fi
-
 	# Unmount partition
 	umount "/dev/$PARTITION"
-
 	if [ $? -eq 0 ]; then
 		echo "Partition uninstalled successfully:$MOUNT_POINT"
 		rmdir "$MOUNT_POINT"
@@ -7226,30 +5745,25 @@ unmount_partition() {
 		echo "Partition uninstall failed!"
 	fi
 }
-
 # List mounted partitions
 list_mounted_partitions() {
 	echo "Mounted partition:"
 	df -h | grep -v "tmpfs\|udev\|overlay"
 }
-
 # Format partition
 format_partition() {
 	send_stats "Format partition"
 	read -e -p "Please enter the name of the partition to be formatted (e.g. sda1):" PARTITION
-
 	# Check if the partition exists
 	if ! lsblk -o NAME | grep -w "$PARTITION" > /dev/null; then
 		echo "The partition does not exist!"
 		return
 	fi
-
 	# Check whether the partition is mounted
 	if lsblk -o MOUNTPOINT | grep -w "$PARTITION" > /dev/null; then
 		echo "The partition has been mounted, please unmount it first!"
 		return
 	fi
-
 	# Select file system type
 	echo "Please select a file system type:"
 	echo "1. ext4"
@@ -7257,7 +5771,6 @@ format_partition() {
 	echo "3. ntfs"
 	echo "4. vfat"
 	read -e -p "Please enter your choice:" FS_CHOICE
-
 	case $FS_CHOICE in
 		1) FS_TYPE="ext4" ;;
 		2) FS_TYPE="xfs" ;;
@@ -7265,41 +5778,34 @@ format_partition() {
 		4) FS_TYPE="vfat" ;;
 		*) echo "Invalid choice!"; return ;;
 	esac
-
 	# Confirm formatting
 	read -e -p "Confirm formatted partition /dev/$PARTITIONfor$FS_TYPE? (y/n):" CONFIRM
 	if [ "$CONFIRM" != "y" ]; then
 		echo "The operation has been cancelled."
 		return
 	fi
-
 	# Format partition
 	echo "Formatting partition /dev/$PARTITIONfor$FS_TYPE ..."
 	mkfs.$FS_TYPE "/dev/$PARTITION"
-
 	if [ $? -eq 0 ]; then
 		echo "Partition formatted successfully!"
 	else
 		echo "Partition formatting failed!"
 	fi
 }
-
 # Check partition status
 check_partition() {
 	send_stats "Check partition status"
 	read -e -p "Please enter the partition name to check (for example sda1):" PARTITION
-
 	# Check if the partition exists
 	if ! lsblk -o NAME | grep -w "$PARTITION" > /dev/null; then
 		echo "The partition does not exist!"
 		return
 	fi
-
 	# Check partition status
 	echo "Check partition /dev/$PARTITIONstatus:"
 	fsck "/dev/$PARTITION"
 }
-
 # Main menu
 disk_manager() {
 	send_stats "Hard disk management function"
@@ -7327,10 +5833,6 @@ disk_manager() {
 		read -e -p "Press Enter to continue..."
 	done
 }
-
-
-
-
 # Show task list
 list_tasks() {
 	echo "Saved sync tasks:"
@@ -7338,7 +5840,6 @@ list_tasks() {
 	awk -F'|' '{print NR " - " $1 " ( " $2 " -> " $3":"$4 " )"}' "$CONFIG_FILE"
 	echo "---------------------------------"
 }
-
 # Add new task
 add_task() {
 	send_stats "Add new sync task"
@@ -7352,7 +5853,6 @@ add_task() {
 	read -e -p "Please enter the task name:" name
 	read -e -p "Please enter the local directory:" local_path
 	read -e -p "Please enter the remote directory:" remote_path
-
 	while true; do
 		read -e -p "Please enter remote user@IP:" remote
 		if kj_ssh_parse_remote "$remote" "root"; then
@@ -7360,16 +5860,13 @@ add_task() {
 			break
 		fi
 	done
-
 	kj_ssh_read_port "Please enter the SSH port (default 22):" "22"
 	port="$KJ_SSH_PORT"
-
 	if ! kj_ssh_read_auth "$KEY_DIR/${name}_sync.key"; then
 		return
 	fi
 	auth_method="$KJ_SSH_AUTH_METHOD"
 	password_or_key="$KJ_SSH_AUTH_SECRET"
-
 	echo "Please select synchronization mode:"
 	echo "1. Standard mode (-avz)"
 	echo "2. Delete the target file (-avz --delete)"
@@ -7379,68 +5876,50 @@ add_task() {
 		2) options="-avz --delete" ;;
 		*) echo "Invalid selection, use default -avz"; options="-avz" ;;
 	esac
-
 	echo "$name|$local_path|$remote|$remote_path|$port|$options|$auth_method|$password_or_key" >> "$CONFIG_FILE"
-
 	install rsync rsync
-
 	echo "Mission saved!"
 }
-
-
 # Delete task
 delete_task() {
 	send_stats "Delete sync task"
 	read -e -p "Please enter the task number to be deleted:" num
-
 	local task=$(sed -n "${num}p" "$CONFIG_FILE")
 	if [[ -z "$task" ]]; then
 		echo "Error: The corresponding task was not found."
 		return
 	fi
-
 	IFS='|' read -r name local_path remote remote_path port options auth_method password_or_key <<< "$task"
-
 	# If the task is using a key file, delete the key file
 	if [[ "$auth_method" == "key" && "$password_or_key" == "$KEY_DIR"* ]]; then
 		rm -f "$password_or_key"
 	fi
-
 	sed -i "${num}d" "$CONFIG_FILE"
 	echo "Task has been deleted!"
 }
-
-
 run_task() {
 	send_stats "Perform synchronization tasks"
-
 	CONFIG_FILE="$HOME/.rsync_tasks"
 	CRON_FILE="$HOME/.rsync_cron"
-
 	# Parse parameters
 	local direction="push"  # 默认是推送到远端
 	local num
-
 	if [[ "$1" == "push" || "$1" == "pull" ]]; then
 		direction="$1"
 		num="$2"
 	else
 		num="$1"
 	fi
-
 	# If no task number is passed in, the user is prompted to enter
 	if [[ -z "$num" ]]; then
 		read -e -p "Please enter the task number to be executed:" num
 	fi
-
 	local task=$(sed -n "${num}p" "$CONFIG_FILE")
 	if [[ -z "$task" ]]; then
 		echo "Error: The task was not found!"
 		return
 	fi
-
 	IFS='|' read -r name local_path remote remote_path port options auth_method password_or_key <<< "$task"
-
 	# Adjust source and destination paths based on synchronization direction
 	if [[ "$direction" == "pull" ]]; then
 		echo "Pulling and synchronizing to local:$remote:$local_path -> $remote_path"
@@ -7451,10 +5930,8 @@ run_task() {
 		source="$local_path"
 		destination="$remote:$remote_path"
 	fi
-
 	# Add SSH connection common parameters
 	local ssh_options="-p $port -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-
 	if [[ "$auth_method" == "password" ]]; then
 		if ! command -v sshpass &> /dev/null; then
 			echo "Error: sshpass is not installed, please install sshpass first."
@@ -7470,15 +5947,12 @@ run_task() {
 			echo "Error: Key file does not exist:$password_or_key"
 			return
 		fi
-
 		if [[ "$(stat -c %a "$password_or_key")" != "600" ]]; then
 			echo "Warning: Incorrect key file permissions, fixing..."
 			chmod 600 "$password_or_key"
 		fi
-
 		rsync $options -e "ssh -i $password_or_key $ssh_options" "$source" "$destination"
 	fi
-
 	if [[ $? -eq 0 ]]; then
 		echo "Synchronization completed!"
 	else
@@ -7489,24 +5963,19 @@ run_task() {
 		echo "4. Do the local and remote directories have correct access permissions?"
 	fi
 }
-
-
 # Create a scheduled task
 schedule_task() {
 	send_stats "Add synchronization scheduled tasks"
-
 	read -e -p "Please enter the task number to be synchronized regularly:" num
 	if ! [[ "$num" =~ ^[0-9]+$ ]]; then
 		echo "Error: Please enter a valid task number!"
 		return
 	fi
-
 	echo "Please select the scheduled execution interval:"
 	echo "1) Execute once every hour"
 	echo "2) Execute once a day"
 	echo "3) Execute once a week"
 	read -e -p "Please enter options (1/2/3):" interval
-
 	local random_minute=$(shuf -i 0-59 -n 1)  # 生成 0-59 之间的随机分钟数
 	local cron_time=""
 	case "$interval" in
@@ -7515,21 +5984,17 @@ schedule_task() {
 		3) cron_time="$random_minute 0 * * 1" ;;  # 每周，随机分钟执行
 		*) echo "Error: Please enter valid options!" ; return ;;
 	esac
-
 	local cron_job="$cron_time k rsync_run $num"
 	local cron_job="$cron_time k rsync_run $num"
-
 	# Check if the same task already exists
 	if crontab -l | grep -q "k rsync_run $num"; then
 		echo "Error: The scheduled synchronization for this task already exists!"
 		return
 	fi
-
 	# Create to user's crontab
 	(crontab -l 2>/dev/null; echo "$cron_job") | crontab -
 	echo "Scheduled task has been created:$cron_job"
 }
-
 # View scheduled tasks
 view_tasks() {
 	echo "Current scheduled tasks:"
@@ -7537,7 +6002,6 @@ view_tasks() {
 	crontab -l | grep "k rsync_run"
 	echo "---------------------------------"
 }
-
 # Delete scheduled tasks
 delete_task_schedule() {
 	send_stats "Delete synchronization scheduled tasks"
@@ -7546,17 +6010,13 @@ delete_task_schedule() {
 		echo "Error: Please enter a valid task number!"
 		return
 	fi
-
 	crontab -l | grep -v "k rsync_run $num" | crontab -
 	echo "Task number deleted$numscheduled tasks"
 }
-
-
 # Task management main menu
 rsync_manager() {
 	CONFIG_FILE="$HOME/.rsync_tasks"
 	CRON_FILE="$HOME/.rsync_cron"
-
 	while true; do
 		clear
 		echo "Rsync remote synchronization tool"
@@ -7586,72 +6046,37 @@ rsync_manager() {
 		read -e -p "Press Enter to continue..."
 	done
 }
-
-
-
-
-
-
-
-
-
 linux_info() {
-
-
-
 	clear
 	echo -e "${gl_kjlan}Querying system information...${gl_bai}"
 	send_stats "System information query"
-
 	ip_address
-
 	local cpu_info=$(lscpu | awk -F': +' '/Model name:/ {print $2; exit}')
-
 	local cpu_usage_percent=$(awk '{u=$2+$4; t=$2+$4+$5; if (NR==1){u1=u; t1=t;} else printf "%.0f\n", (($2+$4-u1) * 100 / (t-t1))}' \
 		<(grep 'cpu ' /proc/stat) <(sleep 1; grep 'cpu ' /proc/stat))
-
 	local cpu_cores=$(nproc)
-
 	local cpu_freq=$(cat /proc/cpuinfo | grep "MHz" | head -n 1 | awk '{printf "%.1f GHz\n", $4/1000}')
-
 	local mem_info=$(free -b | awk 'NR==2{printf "%.2f/%.2fM (%.2f%%)", $3/1024/1024, $2/1024/1024, $3*100/$2}')
-
 	local disk_info=$(df -h | awk '$NF=="/"{printf "%s/%s (%s)", $3, $2, $5}')
-
 	local ipinfo=$(curl -s ipinfo.io)
 	local country=$(echo "$ipinfo" | grep 'country' | awk -F': ' '{print $2}' | tr -d '",')
 	local city=$(echo "$ipinfo" | grep 'city' | awk -F': ' '{print $2}' | tr -d '",')
 	local isp_info=$(echo "$ipinfo" | grep 'org' | awk -F': ' '{print $2}' | tr -d '",')
-
 	local load=$(uptime | awk '{print $(NF-2), $(NF-1), $NF}')
 	local dns_addresses=$(awk '/^nameserver/{printf "%s ", $2} END {print ""}' /etc/resolv.conf)
-
-
 	local cpu_arch=$(uname -m)
-
 	local hostname=$(uname -n)
-
 	local kernel_version=$(uname -r)
-
 	local congestion_algorithm=$(sysctl -n net.ipv4.tcp_congestion_control)
 	local queue_algorithm=$(sysctl -n net.core.default_qdisc)
-
 	local os_info=$(grep PRETTY_NAME /etc/os-release | cut -d '=' -f2 | tr -d '"')
-
 	output_status
-
 	local current_time=$(date "+%Y-%m-%d %I:%M %p")
-
-
 	local swap_info=$(free -m | awk 'NR==3{used=$3; total=$2; if (total == 0) {percentage=0} else {percentage=used*100/total}; printf "%dM/%dM (%d%%)", used, total, percentage}')
-
 	local runtime=$(cat /proc/uptime | awk -F. '{run_days=int($1 / 86400);run_hours=int(($1 % 86400) / 3600);run_minutes=int(($1% 3600) / 60); if (run_days > 0) printf("%d day ", run_days); if (run_hours > 0) printf("%d hour ", run_hours); printf("%d minute\n", run_minutes)}')
-
 	local timezone=$(current_timezone)
-
 	local tcp_count=$(ss -t | wc -l)
 	local udp_count=$(ss -u | wc -l)
-
 	clear
 	echo -e "System information query"
 	echo -e "${gl_kjlan}-------------"
@@ -7680,7 +6105,6 @@ linux_info() {
 	if [ -n "$ipv4_address" ]; then
 		echo -e "${gl_kjlan}IPv4 address:${gl_bai}$ipv4_address"
 	fi
-
 	if [ -n "$ipv6_address" ]; then
 		echo -e "${gl_kjlan}IPv6 address:${gl_bai}$ipv6_address"
 	fi
@@ -7690,26 +6114,17 @@ linux_info() {
 	echo -e "${gl_kjlan}-------------"
 	echo -e "${gl_kjlan}Running time:${gl_bai}$runtime"
 	echo
-
-
-
 }
-
-
-
 linux_tools() {
-
   while true; do
 	  clear
 	  # send_stats "Basic tools"
 	  echo -e "basic tools"
-
 	  tools=(
 		curl wget sudo socat htop iftop unzip tar tmux ffmpeg
 		btop ranger ncdu fzf cmatrix sl bastet nsnake ninvaders
 		vim nano git
 	  )
-
 	  if command -v apt >/dev/null 2>&1; then
 		PM="apt"
 	  elif command -v dnf >/dev/null 2>&1; then
@@ -7730,10 +6145,8 @@ linux_tools() {
 		echo "❌ Unrecognized package manager"
 		exit 1
 	  fi
-
 	  echo "📦 Use a package manager:$PM"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
-
 	  for ((i=0; i<${#tools[@]}; i+=2)); do
 		# left column
 		if command -v "${tools[i]}" >/dev/null 2>&1; then
@@ -7741,7 +6154,6 @@ linux_tools() {
 		else
 		  left=$(printf "❌ %-12s not installed" "${tools[i]}")
 		fi
-
 		# Right column (to prevent the array from going out of bounds)
 		if [[ -n "${tools[i+1]}" ]]; then
 		  if command -v "${tools[i+1]}" >/dev/null 2>&1; then
@@ -7754,7 +6166,6 @@ linux_tools() {
 		  printf "%s\n" "$left"
 		fi
 	  done
-
 	  echo -e "${gl_kjlan}------------------------"
 	  echo -e "${gl_kjlan}1.   ${gl_bai}curl download tool${gl_huang}★${gl_bai}                   ${gl_kjlan}2.   ${gl_bai}wget download tool${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}3.   ${gl_bai}sudo super administrative privilege tool${gl_kjlan}4.   ${gl_bai}socat communication connection tool"
@@ -7779,7 +6190,6 @@ linux_tools() {
 	  echo -e "${gl_kjlan}0.   ${gl_bai}Return to main menu"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  read -e -p "Please enter your choice:" sub_choice
-
 	  case $sub_choice in
 		  1)
 			  clear
@@ -7859,7 +6269,6 @@ linux_tools() {
 			  ffmpeg --help
 			  send_stats "Install ffmpeg"
 			  ;;
-
 			11)
 			  clear
 			  install btop
@@ -7912,8 +6321,6 @@ linux_tools() {
 			  cd ~
 			  send_stats "Install nano"
 			  ;;
-
-
 			17)
 			  clear
 			  install git
@@ -7923,7 +6330,6 @@ linux_tools() {
 			  cd ~
 			  send_stats "Install git"
 			  ;;
-
 			18)
 			  clear
 			  cd ~
@@ -7933,8 +6339,6 @@ linux_tools() {
 			  opencode
 			  send_stats "Install opencode"
 			  ;;
-
-
 			21)
 			  clear
 			  install cmatrix
@@ -7963,7 +6367,6 @@ linux_tools() {
 			  nsnake
 			  send_stats "Install nsnake"
 			  ;;
-
 			28)
 			  clear
 			  install ninvaders
@@ -7971,20 +6374,16 @@ linux_tools() {
 			  ninvaders
 			  send_stats "Install ninvaders"
 			  ;;
-
 		  31)
 			  clear
 			  send_stats "Install all"
 			  install curl wget sudo socat htop iftop unzip tar tmux ffmpeg btop ranger ncdu fzf cmatrix sl bastet nsnake ninvaders vim nano git
 			  ;;
-
 		  32)
 			  clear
 			  send_stats "Install all (excluding games and screensavers)"
 			  install curl wget sudo socat htop iftop unzip tar tmux ffmpeg btop ranger ncdu fzf vim nano git
 			  ;;
-
-
 		  33)
 			  clear
 			  send_stats "Uninstall all"
@@ -7992,7 +6391,6 @@ linux_tools() {
 			  opencode uninstall
 			  rm -rf ~/.opencode
 			  ;;
-
 		  41)
 			  clear
 			  read -e -p "Please enter the installed tool name (wget curl sudo htop):" installname
@@ -8005,24 +6403,16 @@ linux_tools() {
 			  remove $removename
 			  send_stats "Uninstall specified software"
 			  ;;
-
 		  0)
 			  harvey
 			  ;;
-
 		  *)
 			  echo "Invalid input!"
 			  ;;
 	  esac
 	  break_end
   done
-
-
-
-
 }
-
-
 linux_bbr() {
 	clear
 	send_stats "bbr management"
@@ -8032,7 +6422,6 @@ linux_bbr() {
 			  local congestion_algorithm=$(sysctl -n net.ipv4.tcp_congestion_control)
 			  local queue_algorithm=$(sysctl -n net.core.default_qdisc)
 			  echo "Current TCP blocking algorithm:$congestion_algorithm $queue_algorithm"
-
 			  echo ""
 			  echo "BBR management"
 			  echo "------------------------"
@@ -8041,7 +6430,6 @@ linux_bbr() {
 			  echo "0. Return to the previous menu"
 			  echo "------------------------"
 			  read -e -p "Please enter your choice:" sub_choice
-
 			  case $sub_choice in
 				  1)
 					bbr_on
@@ -8055,7 +6443,6 @@ linux_bbr() {
 				  *)
 					  break  # 跳出循环，退出菜单
 					  ;;
-
 			  esac
 		done
 	else
@@ -8064,42 +6451,27 @@ linux_bbr() {
 		chmod +x tcpx.sh
 		./tcpx.sh
 	fi
-
-
 }
-
-
-
-
-
 docker_ssh_migration() {
-
 	is_compose_container() {
 		local container=$1
 		docker inspect "$container" | jq -e '.[0].Config.Labels["com.docker.compose.project"]' >/dev/null 2>&1
 	}
-
 	list_backups() {
 		local BACKUP_ROOT="/tmp"
 		echo -e "${gl_kjlan}Current backup list:${gl_bai}"
 		ls -1dt ${BACKUP_ROOT}/docker_backup_* 2>/dev/null || echo "No backup"
 	}
-
-
-
 	# ----------------------------
 	# backup
 	# ----------------------------
 	backup_docker() {
 		send_stats "Docker backup"
-
 		echo -e "${gl_kjlan}Backing up Docker containers...${gl_bai}"
 		docker ps --format '{{.Names}}'
 		read -e -p  "Please enter the name of the container to be backed up (separate multiple spaces and press Enter to back up all running containers):" containers
-
 		install tar jq gzip
 		install_docker
-
 		local BACKUP_ROOT="/tmp"
 		local DATE_STR=$(date +%Y%m%d_%H%M%S)
 		local TARGET_CONTAINERS=()
@@ -8109,38 +6481,30 @@ docker_ssh_migration() {
 			read -ra TARGET_CONTAINERS <<< "$containers"
 		fi
 		[[ ${#TARGET_CONTAINERS[@]} -eq 0 ]] && { echo -e "${gl_hong}Container not found${gl_bai}"; return; }
-
 		local BACKUP_DIR="${BACKUP_ROOT}/docker_backup_${DATE_STR}"
 		mkdir -p "$BACKUP_DIR"
-
 		local RESTORE_SCRIPT="${BACKUP_DIR}/docker_restore.sh"
 		echo "#!/bin/bash" > "$RESTORE_SCRIPT"
 		echo "set -e" >> "$RESTORE_SCRIPT"
 		echo "# Automatically generated restore script" >> "$RESTORE_SCRIPT"
-
 		# Record the packaged Compose project path to avoid repeated packaging
 		declare -A PACKED_COMPOSE_PATHS=()
-
 		for c in "${TARGET_CONTAINERS[@]}"; do
 			echo -e "${gl_lv}Backup container:$c${gl_bai}"
 			local inspect_file="${BACKUP_DIR}/${c}_inspect.json"
 			docker inspect "$c" > "$inspect_file"
-
 			if is_compose_container "$c"; then
 				echo -e "${gl_kjlan}detected$cis a docker-compose container${gl_bai}"
 				local project_dir=$(docker inspect "$c" | jq -r '.[0].Config.Labels["com.docker.compose.project.working_dir"] // empty')
 				local project_name=$(docker inspect "$c" | jq -r '.[0].Config.Labels["com.docker.compose.project"] // empty')
-
 				if [ -z "$project_dir" ]; then
 					read -e -p  "The compose directory is not detected, please enter the path manually:" project_dir
 				fi
-
 				# If the Compose project has already been packaged, skip
 				if [[ -n "${PACKED_COMPOSE_PATHS[$project_dir]}" ]]; then
 					echo -e "${gl_huang}Compose project [$project_name] Already backed up, skip repeated packaging...${gl_bai}"
 					continue
 				fi
-
 				if [ -f "$project_dir/docker-compose.yml" ]; then
 					echo "compose" > "${BACKUP_DIR}/backup_type_${project_name}"
 					echo "$project_dir" > "${BACKUP_DIR}/compose_path_${project_name}.txt"
@@ -8160,59 +6524,44 @@ docker_ssh_migration() {
 					echo "Packing volume:$path"
 					tar -czpf "${BACKUP_DIR}/${c}_$(basename $path).tar.gz" -C / "$(echo $path | sed 's/^\///')"
 				done
-
 				# port
 				local PORT_ARGS=""
 				mapfile -t PORTS < <(jq -r '.[0].HostConfig.PortBindings | to_entries[] | "\(.value[0].HostPort):\(.key | split("/")[0])"' "$inspect_file" 2>/dev/null)
 				for p in "${PORTS[@]}"; do PORT_ARGS+="-p $p "; done
-
 				# environment variables
 				local ENV_VARS=""
 				mapfile -t ENVS < <(jq -r '.[0].Config.Env[] | @sh' "$inspect_file")
 				for e in "${ENVS[@]}"; do ENV_VARS+="-e $e "; done
-
 				# volume mapping
 				local VOL_ARGS=""
 				for path in $VOL_PATHS; do VOL_ARGS+="-v $path:$path "; done
-
 				# mirror
 				local IMAGE
 				IMAGE=$(jq -r '.[0].Config.Image' "$inspect_file")
-
 				echo -e "\n# Restore container:$c" >> "$RESTORE_SCRIPT"
 				echo "docker run -d --name $c $PORT_ARGS $VOL_ARGS $ENV_VARS $IMAGE" >> "$RESTORE_SCRIPT"
 			fi
 		done
-
-
 		# Back up all files under /home/docker (excluding subdirectories)
 		if [ -d "/home/docker" ]; then
 			echo -e "${gl_kjlan}Back up files under /home/docker...${gl_bai}"
 			find /home/docker -maxdepth 1 -type f | tar -czf "${BACKUP_DIR}/home_docker_files.tar.gz" -T -
 			echo -e "${gl_lv}Files under /home/docker have been packaged to:${BACKUP_DIR}/home_docker_files.tar.gz${gl_bai}"
 		fi
-
 		chmod +x "$RESTORE_SCRIPT"
 		echo -e "${gl_lv}Backup completed:${BACKUP_DIR}${gl_bai}"
 		echo -e "${gl_lv}Available restore scripts:${RESTORE_SCRIPT}${gl_bai}"
-
-
 	}
-
 	# ----------------------------
 	# reduction
 	# ----------------------------
 	restore_docker() {
-
 		send_stats "Docker restore"
 		read -e -p  "Please enter the backup directory to be restored:" BACKUP_DIR
 		[[ ! -d "$BACKUP_DIR" ]] && { echo -e "${gl_hong}The backup directory does not exist${gl_bai}"; return; }
-
 		echo -e "${gl_kjlan}Starting the restore operation...${gl_bai}"
-
 		install tar jq gzip
 		install_docker
-
 		# --------- Prioritize restoring Compose projects ---------
 		for f in "$BACKUP_DIR"/backup_type_*; do
 			[[ ! -f "$f" ]] && continue
@@ -8221,28 +6570,23 @@ docker_ssh_migration() {
 				path_file="$BACKUP_DIR/compose_path_${project_name}.txt"
 				[[ -f "$path_file" ]] && original_path=$(cat "$path_file") || original_path=""
 				[[ -z "$original_path" ]] && read -e -p  "Original path not found, please enter the restore directory path:" original_path
-
 				# Check whether the container of the compose project is already running
 				running_count=$(docker ps --filter "label=com.docker.compose.project=$project_name" --format '{{.Names}}' | wc -l)
 				if [[ "$running_count" -gt 0 ]]; then
 					echo -e "${gl_huang}Compose project [$project_name] Containers are already running, skip restore...${gl_bai}"
 					continue
 				fi
-
 				read -e -p  "Confirm to restore Compose project [$project_name] to path [$original_path] ? (y/n): " confirm
 				[[ "$confirm" != "y" ]] && read -e -p  "Please enter a new restore path:" original_path
-
 				mkdir -p "$original_path"
 				tar -xzf "$BACKUP_DIR/compose_project_${project_name}.tar.gz" -C "$original_path"
 				echo -e "${gl_lv}Compose project [$project_name] has been extracted to:$original_path${gl_bai}"
-
 				cd "$original_path" || return
 				docker compose down || true
 				docker compose up -d
 				echo -e "${gl_lv}Compose project [$project_name] Restore completed!${gl_bai}"
 			fi
 		done
-
 		# --------- Continue to restore normal containers ---------
 		echo -e "${gl_kjlan}Check and restore normal Docker containers...${gl_bai}"
 		local has_container=false
@@ -8251,30 +6595,25 @@ docker_ssh_migration() {
 			has_container=true
 			container=$(basename "$json" | sed 's/_inspect.json//')
 			echo -e "${gl_lv}Processing container:$container${gl_bai}"
-
 			# Check if the container already exists and is running
 			if docker ps --format '{{.Names}}' | grep -q "^${container}$"; then
 				echo -e "${gl_huang}container [$container] already running, skipping restore...${gl_bai}"
 				continue
 			fi
-
 			IMAGE=$(jq -r '.[0].Config.Image' "$json")
 			[[ -z "$IMAGE" || "$IMAGE" == "null" ]] && { echo -e "${gl_hong}Mirror information not found, skip:$container${gl_bai}"; continue; }
-
 			# port mapping
 			PORT_ARGS=""
 			mapfile -t PORTS < <(jq -r '.[0].HostConfig.PortBindings | to_entries[]? | "\(.value[0].HostPort):\(.key | split("/")[0])"' "$json")
 			for p in "${PORTS[@]}"; do
 				[[ -n "$p" ]] && PORT_ARGS="$PORT_ARGS -p $p"
 			done
-
 			# environment variables
 			ENV_ARGS=""
 			mapfile -t ENVS < <(jq -r '.[0].Config.Env[]' "$json")
 			for e in "${ENVS[@]}"; do
 				ENV_ARGS="$ENV_ARGS -e \"$e\""
 			done
-
 			# Volume mapping + volume data recovery
 			VOL_ARGS=""
 			mapfile -t VOLS < <(jq -r '.[0].Mounts[] | "\(.Source):\(.Destination)"' "$json")
@@ -8283,27 +6622,22 @@ docker_ssh_migration() {
 				VOL_DST=$(echo "$v" | cut -d':' -f2)
 				mkdir -p "$VOL_SRC"
 				VOL_ARGS="$VOL_ARGS -v $VOL_SRC:$VOL_DST"
-
 				VOL_FILE="$BACKUP_DIR/${container}_$(basename $VOL_SRC).tar.gz"
 				if [[ -f "$VOL_FILE" ]]; then
 					echo "Recover volume data:$VOL_SRC"
 					tar -xzf "$VOL_FILE" -C /
 				fi
 			done
-
 			# Delete existing but not running containers
 			if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
 				echo -e "${gl_huang}container [$container] exists but is not running, delete the old container...${gl_bai}"
 				docker rm -f "$container"
 			fi
-
 			# Start container
 			echo "Execute the restore command: docker run -d --name \"$container\" $PORT_ARGS $VOL_ARGS $ENV_ARGS \"$IMAGE\""
 			eval "docker run -d --name \"$container\" $PORT_ARGS $VOL_ARGS $ENV_ARGS \"$IMAGE\""
 		done
-
 		[[ "$has_container" == false ]] && echo -e "${gl_huang}No backup information for common containers found${gl_bai}"
-
 		# Restore files under /home/docker
 		if [ -f "$BACKUP_DIR/home_docker_files.tar.gz" ]; then
 			echo -e "${gl_kjlan}Restoring files under /home/docker...${gl_bai}"
@@ -8313,11 +6647,7 @@ docker_ssh_migration() {
 		else
 			echo -e "${gl_huang}The backup of the file under /home/docker was not found, skipping...${gl_bai}"
 		fi
-
-
 	}
-
-
 	# ----------------------------
 	# migrate
 	# ----------------------------
@@ -8326,22 +6656,17 @@ docker_ssh_migration() {
 		install jq
 		read -e -p  "Please enter the backup directory to be migrated:" BACKUP_DIR
 		[[ ! -d "$BACKUP_DIR" ]] && { echo -e "${gl_hong}The backup directory does not exist${gl_bai}"; return; }
-
 		kj_ssh_read_host_user_port "Target server IP:" "Target server SSH username [default root]:" "Target server SSH port [default 22]:" "root" "22"
 		local TARGET_IP="$KJ_SSH_HOST"
 		local TARGET_USER="$KJ_SSH_USER"
 		local TARGET_PORT="$KJ_SSH_PORT"
-
 		local LATEST_TAR="$BACKUP_DIR"
-
 		echo -e "${gl_huang}Transferring backup...${gl_bai}"
 		if [[ -z "$TARGET_PASS" ]]; then
 			# Log in using key
 			scp -P "$TARGET_PORT" -o StrictHostKeyChecking=no -r "$LATEST_TAR" "$TARGET_USER@$TARGET_IP:/tmp/"
 		fi
-
 	}
-
 	# ----------------------------
 	# Delete backup
 	# ----------------------------
@@ -8352,7 +6677,6 @@ docker_ssh_migration() {
 		rm -rf "$BACKUP_DIR"
 		echo -e "${gl_lv}Deleted backup:${BACKUP_DIR}${gl_bai}"
 	}
-
 	# ----------------------------
 	# Main menu
 	# ----------------------------
@@ -8385,16 +6709,9 @@ docker_ssh_migration() {
 		break_end
 		done
 	}
-
 	main_menu
 }
-
-
-
-
-
 linux_docker() {
-
 	while true; do
 	  clear
 	  # send_stats "docker management"
@@ -8424,13 +6741,11 @@ linux_docker() {
 	  echo -e "${gl_kjlan}0.   ${gl_bai}Return to main menu"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  read -e -p "Please enter your choice:" sub_choice
-
 	  case $sub_choice in
 		  1)
 			clear
 			send_stats "Install docker environment"
 			install_add_docker
-
 			  ;;
 		  2)
 			  clear
@@ -8438,12 +6753,10 @@ linux_docker() {
 			  local image_count=$(docker images -q 2>/dev/null | wc -l)
 			  local network_count=$(docker network ls -q 2>/dev/null | wc -l)
 			  local volume_count=$(docker volume ls -q 2>/dev/null | wc -l)
-
 			  send_stats "docker global status"
 			  echo "Docker version"
 			  docker -v
 			  docker compose version
-
 			  echo ""
 			  echo -e "Docker image:${gl_lv}$image_count${gl_bai} "
 			  docker image ls
@@ -8457,7 +6770,6 @@ linux_docker() {
 			  echo -e "Docker network:${gl_lv}$network_count${gl_bai}"
 			  docker network ls
 			  echo ""
-
 			  ;;
 		  3)
 			  docker_ps
@@ -8465,7 +6777,6 @@ linux_docker() {
 		  4)
 			  docker_image
 			  ;;
-
 		  5)
 			  while true; do
 				  clear
@@ -8474,25 +6785,19 @@ linux_docker() {
 				  echo "------------------------------------------------------------"
 				  docker network ls
 				  echo ""
-
 				  echo "------------------------------------------------------------"
 				  container_ids=$(docker ps -q)
 				  printf "%-25s %-25s %-25s\n" "Container name" "network name" "IP address"
-
 				  for container_id in $container_ids; do
 					  local container_info=$(docker inspect --format '{{ .Name }}{{ range $network, $config := .NetworkSettings.Networks }} {{ $network }} {{ $config.IPAddress }}{{ end }}' "$container_id")
-
 					  local container_name=$(echo "$container_info" | awk '{print $1}')
 					  local network_info=$(echo "$container_info" | cut -d' ' -f2-)
-
 					  while IFS= read -r line; do
 						  local network_name=$(echo "$line" | awk '{print $1}')
 						  local ip_address=$(echo "$line" | awk '{print $2}')
-
 						  printf "%-20s %-20s %-15s\n" "$container_name" "$network_name" "$ip_address"
 					  done <<< "$network_info"
 				  done
-
 				  echo ""
 				  echo "network operations"
 				  echo "------------------------"
@@ -8504,7 +6809,6 @@ linux_docker() {
 				  echo "0. Return to the previous menu"
 				  echo "------------------------"
 				  read -e -p "Please enter your choice:" sub_choice
-
 				  case $sub_choice in
 					  1)
 						  send_stats "Create network"
@@ -8515,7 +6819,6 @@ linux_docker() {
 						  send_stats "Join the network"
 						  read -e -p "Add network name:" dockernetwork
 						  read -e -p "Which containers join the network (please separate multiple container names with spaces):" dockernames
-
 						  for dockername in $dockernames; do
 							  docker network connect $dockernetwork $dockername
 						  done
@@ -8524,26 +6827,21 @@ linux_docker() {
 						  send_stats "Join the network"
 						  read -e -p "Exit network name:" dockernetwork
 						  read -e -p "Those containers exit the network (please separate multiple container names with spaces):" dockernames
-
 						  for dockername in $dockernames; do
 							  docker network disconnect $dockernetwork $dockername
 						  done
-
 						  ;;
-
 					  4)
 						  send_stats "delete network"
 						  read -e -p "Please enter the network name to be deleted:" dockernetwork
 						  docker network rm $dockernetwork
 						  ;;
-
 					  *)
 						  break  # 跳出循环，退出菜单
 						  ;;
 				  esac
 			  done
 			  ;;
-
 		  6)
 			  while true; do
 				  clear
@@ -8560,23 +6858,18 @@ linux_docker() {
 				  echo "0. Return to the previous menu"
 				  echo "------------------------"
 				  read -e -p "Please enter your choice:" sub_choice
-
 				  case $sub_choice in
 					  1)
 						  send_stats "Create new volume"
 						  read -e -p "Set new volume name:" dockerjuan
 						  docker volume create $dockerjuan
-
 						  ;;
 					  2)
 						  read -e -p "Enter the delete volume name (please separate multiple volume names with spaces):" dockerjuans
-
 						  for dockerjuan in $dockerjuans; do
 							  docker volume rm $dockerjuan
 						  done
-
 						  ;;
-
 					   3)
 						  send_stats "Delete all volumes"
 						  read -e -p "$(echo -e "${gl_hong}注意: ${gl_bai}确定删除所有未使用的卷吗？(Y/N): ")" choice
@@ -8591,7 +6884,6 @@ linux_docker() {
 							  ;;
 						  esac
 						  ;;
-
 					  *)
 						  break  # 跳出循环，退出菜单
 						  ;;
@@ -8618,34 +6910,25 @@ linux_docker() {
 			  send_stats "Docker source"
 			  bash <(curl -sSL https://linuxmirrors.cn/docker.sh)
 			  ;;
-
 		  9)
 			  clear
 			  install nano
 			  mkdir -p /etc/docker && nano /etc/docker/daemon.json
 			  restart docker
 			  ;;
-
-
-
-
 		  11)
 			  clear
 			  send_stats "Docker v6 on"
 			  docker_ipv6_on
 			  ;;
-
 		  12)
 			  clear
 			  send_stats "Docker v6 Close"
 			  docker_ipv6_off
 			  ;;
-
 		  19)
 			  docker_ssh_migration
 			  ;;
-
-
 		  20)
 			  clear
 			  send_stats "Docker uninstall"
@@ -8664,7 +6947,6 @@ linux_docker() {
 				  ;;
 			  esac
 			  ;;
-
 		  0)
 			  harvey
 			  ;;
@@ -8673,17 +6955,9 @@ linux_docker() {
 			  ;;
 	  esac
 	  break_end
-
-
 	done
-
-
 }
-
-
-
 linux_test() {
-
 	while true; do
 	  clear
 	  # send_stats "Test script collection"
@@ -8694,7 +6968,6 @@ linux_test() {
 	  echo -e "${gl_kjlan}2.   ${gl_bai}Region streaming media unlock test"
 	  echo -e "${gl_kjlan}3.   ${gl_bai}yeahwu streaming media unlock detection"
 	  echo -e "${gl_kjlan}4.   ${gl_bai}xykt IP quality check script${gl_huang}★${gl_bai}"
-
 	  echo -e "${gl_kjlan}------------------------"
 	  echo -e "${gl_kjlan}Network line speed test"
 	  echo -e "${gl_kjlan}11.  ${gl_bai}besttrace three network backhaul delay routing test"
@@ -8705,12 +6978,10 @@ linux_test() {
 	  echo -e "${gl_kjlan}16.  ${gl_bai}ludashi2020 three network line test"
 	  echo -e "${gl_kjlan}17.  ${gl_bai}i-abc multi-function speed test script"
 	  echo -e "${gl_kjlan}18.  ${gl_bai}NetQuality network quality check script${gl_huang}★${gl_bai}"
-
 	  echo -e "${gl_kjlan}------------------------"
 	  echo -e "${gl_kjlan}Hardware performance testing"
 	  echo -e "${gl_kjlan}21.  ${gl_bai}yabs performance test"
 	  echo -e "${gl_kjlan}22.  ${gl_bai}icu/gb5 CPU performance test script"
-
 	  echo -e "${gl_kjlan}------------------------"
 	  echo -e "${gl_kjlan}Comprehensive testing"
 	  echo -e "${gl_kjlan}31.  ${gl_bai}bench performance test"
@@ -8720,7 +6991,6 @@ linux_test() {
 	  echo -e "${gl_kjlan}0.   ${gl_bai}Return to main menu"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  read -e -p "Please enter your choice:" sub_choice
-
 	  case $sub_choice in
 		  1)
 			  clear
@@ -8743,8 +7013,6 @@ linux_test() {
 			  send_stats "xykt_IP quality check script"
 			  bash <(curl -Ls IP.Check.Place)
 			  ;;
-
-
 		  11)
 			  clear
 			  send_stats "besttrace triple network backhaul delay routing test"
@@ -8788,30 +7056,25 @@ linux_test() {
 			  echo "Hunan Unicom: 42.48.16.100"
 			  echo "Hunan Mobile: 39.134.254.6"
 			  echo "------------------------"
-
 			  read -e -p "Enter a specific IP:" testip
 			  curl nxtrace.org/nt |bash
 			  nexttrace $testip
 			  ;;
-
 		  16)
 			  clear
 			  send_stats "ludashi2020 three network line test"
 			  curl ${gh_proxy}raw.githubusercontent.com/ludashi2020/backtrace/main/install.sh -sSf | sh
 			  ;;
-
 		  17)
 			  clear
 			  send_stats "i-abc multifunctional speed test script"
 			  bash <(curl -sL ${gh_proxy}raw.githubusercontent.com/i-abc/Speedtest/main/speedtest.sh)
 			  ;;
-
 		  18)
 			  clear
 			  send_stats "Network quality test script"
 			  bash <(curl -sL Net.Check.Place)
 			  ;;
-
 		  21)
 			  clear
 			  send_stats "yabs performance test"
@@ -8824,7 +7087,6 @@ linux_test() {
 			  check_swap
 			  bash <(curl -sL bash.icu/gb5)
 			  ;;
-
 		  31)
 			  clear
 			  send_stats "bench performance test"
@@ -8835,34 +7097,22 @@ linux_test() {
 			  clear
 			  curl -L ${gh_proxy}github.com/spiritLHLS/ecs/raw/main/ecs.sh -o ecs.sh && chmod +x ecs.sh && bash ecs.sh
 			  ;;
-
 		  33)
 			  send_stats "nodequality fusion monster evaluation"
 			  clear
 			  bash <(curl -sL https://run.NodeQuality.com)
 			  ;;
-
-
-
 		  0)
 			  harvey
-
 			  ;;
 		  *)
 			  echo "Invalid input!"
 			  ;;
 	  esac
 	  break_end
-
 	done
-
-
 }
-
-
 linux_Oracle() {
-
-
 	 while true; do
 	  clear
 	  send_stats "Oracle Cloud Script Collection"
@@ -8879,7 +7129,6 @@ linux_Oracle() {
 	  echo -e "${gl_kjlan}0.   ${gl_bai}Return to main menu"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  read -e -p "Please enter your choice:" sub_choice
-
 	  case $sub_choice in
 		  1)
 			  clear
@@ -8887,28 +7136,21 @@ linux_Oracle() {
 			  read -e -p "Are you sure you want to install it? (Y/N):" choice
 			  case "$choice" in
 				[Yy])
-
 				  install_docker
-
 				  # Set default value
 				  local DEFAULT_CPU_CORE=1
 				  local DEFAULT_CPU_UTIL="10-20"
 				  local DEFAULT_MEM_UTIL=20
 				  local DEFAULT_SPEEDTEST_INTERVAL=120
-
 				  # Prompts the user to enter the number of CPU cores and occupancy percentage. If the user presses Enter, the default value will be used.
 				  read -e -p "Please enter the number of CPU cores [Default:$DEFAULT_CPU_CORE]: " cpu_core
 				  local cpu_core=${cpu_core:-$DEFAULT_CPU_CORE}
-
 				  read -e -p "Please enter the CPU usage percentage range (e.g. 10-20) [Default:$DEFAULT_CPU_UTIL]: " cpu_util
 				  local cpu_util=${cpu_util:-$DEFAULT_CPU_UTIL}
-
 				  read -e -p "Please enter the memory usage percentage [Default:$DEFAULT_MEM_UTIL]: " mem_util
 				  local mem_util=${mem_util:-$DEFAULT_MEM_UTIL}
-
 				  read -e -p "Please enter Speedtest interval time (seconds) [Default:$DEFAULT_SPEEDTEST_INTERVAL]: " speedtest_interval
 				  local speedtest_interval=${speedtest_interval:-$DEFAULT_SPEEDTEST_INTERVAL}
-
 				  # Run Docker container
 				  docker run -d --name=lookbusy --restart=always \
 					  -e TZ=Asia/Shanghai \
@@ -8918,10 +7160,8 @@ linux_Oracle() {
 					  -e SPEEDTEST_INTERVAL="$speedtest_interval" \
 					  fogforest/lookbusy
 				  send_stats "Oracle Cloud Installation Active Script"
-
 				  ;;
 				[Nn])
-
 				  ;;
 				*)
 				  echo "Invalid selection, please enter Y or N."
@@ -8934,19 +7174,16 @@ linux_Oracle() {
 			  docker rmi fogforest/lookbusy
 			  send_stats "Oracle Cloud Uninstall Active Script"
 			  ;;
-
 		  3)
 		  clear
 		  echo "Reinstall the system"
 		  echo "--------------------------------"
 		  echo -e "${gl_hong}Notice:${gl_bai}Reinstalling may cause loss of connection, so use with caution if you are worried. Reinstallation is expected to take 15 minutes, please back up your data in advance."
 		  read -e -p "Are you sure you want to continue? (Y/N):" choice
-
 		  case "$choice" in
 			[Yy])
 			  while true; do
 				read -e -p "Please select the system you want to reinstall: 1. Debian12 | 2. Ubuntu20.04:" sys_choice
-
 				case "$sys_choice" in
 				  1)
 					local xitong="-d 12"
@@ -8961,7 +7198,6 @@ linux_Oracle() {
 					;;
 				esac
 			  done
-
 			  read -e -p "Please enter your password after reinstallation:" vpspasswd
 			  install wget
 			  bash <(wget --no-check-certificate -qO- "${gh_proxy}raw.githubusercontent.com/MoeClub/Note/master/InstallNET.sh") $xitong -v 64 -p $vpspasswd -port 22
@@ -8975,7 +7211,6 @@ linux_Oracle() {
 			  ;;
 		  esac
 			  ;;
-
 		  4)
 			  clear
 			  send_stats "Detective R startup script"
@@ -8993,61 +7228,39 @@ linux_Oracle() {
 			  ;;
 		  0)
 			  harvey
-
 			  ;;
 		  *)
 			  echo "Invalid input!"
 			  ;;
 	  esac
 	  break_end
-
 	done
-
-
-
 }
-
-
-
-
-
 docker_tato() {
-
 	local container_count=$(docker ps -a -q 2>/dev/null | wc -l)
 	local image_count=$(docker images -q 2>/dev/null | wc -l)
 	local network_count=$(docker network ls -q 2>/dev/null | wc -l)
 	local volume_count=$(docker volume ls -q 2>/dev/null | wc -l)
-
 	if command -v docker &> /dev/null; then
 		echo -e "${gl_kjlan}------------------------"
 		echo -e "${gl_lv}The environment has been installed${gl_bai}container:${gl_lv}$container_count${gl_bai}Mirror:${gl_lv}$image_count${gl_bai}network:${gl_lv}$network_count${gl_bai}roll:${gl_lv}$volume_count${gl_bai}"
 	fi
 }
-
-
-
 ldnmp_tato() {
 local cert_count=$(ls /home/web/certs/*_cert.pem 2>/dev/null | wc -l)
 local output="${gl_lv}${cert_count}${gl_bai}"
-
 local dbrootpasswd=$(grep -oP 'MYSQL_ROOT_PASSWORD:\s*\K.*' /home/web/docker-compose.yml 2>/dev/null | tr -d '[:space:]')
 if [ -n "$dbrootpasswd" ]; then
 	local db_count=$(docker exec mysql mysql -u root -p"$dbrootpasswd" -e "SHOW DATABASES;" 2>/dev/null | grep -Ev "Database|information_schema|mysql|performance_schema|sys" | wc -l)
 fi
-
 local db_output="${gl_lv}${db_count}${gl_bai}"
-
-
 if command -v docker &>/dev/null; then
 	if docker ps --filter "name=nginx" --filter "status=running" | grep -q nginx; then
 		echo -e "${gl_huang}------------------------"
 		echo -e "${gl_lv}Environment is installed${gl_bai}Site:$outputdatabase:$db_output"
 	fi
 fi
-
 }
-
-
 fix_phpfpm_conf() {
 	local container_name=$1
 	docker exec "$container_name" sh -c "mkdir -p /run/$container_name && chmod 777 /run/$container_name"
@@ -9055,19 +7268,10 @@ fix_phpfpm_conf() {
 	docker exec "$container_name" sh -c "sed -i '/^listen =/d' /usr/local/etc/php-fpm.d/www.conf"
 	docker exec "$container_name" sh -c "echo -e '\nlisten = /run/$container_name/php-fpm.sock\nlisten.owner = www-data\nlisten.group = www-data\nlisten.mode = 0777' >> /usr/local/etc/php-fpm.d/www.conf"
 	docker exec "$container_name" sh -c "rm -f /usr/local/etc/php-fpm.d/zz-docker.conf"
-
 	find /home/web/conf.d/ -type f -name "*.conf" -exec sed -i "s#fastcgi_pass ${container_name}:9000;#fastcgi_pass unix:/run/${container_name}/php-fpm.sock;#g" {} \;
-
 }
-
-
-
-
-
-
 linux_ldnmp() {
   while true; do
-
 	clear
 	# send_stats "LDNMP website building"
 	echo -e "${gl_huang}LDNMP website building"
@@ -9094,8 +7298,6 @@ linux_ldnmp() {
 	echo -e "${gl_huang}0.   ${gl_bai}Return to main menu"
 	echo -e "${gl_huang}------------------------${gl_bai}"
 	read -e -p "Please enter your choice:" sub_choice
-
-
 	case $sub_choice in
 	  1)
 	  ldnmp_install_status_one
@@ -9104,7 +7306,6 @@ linux_ldnmp() {
 	  2)
 	  ldnmp_wp
 		;;
-
 	  3)
 	  clear
 	  # Discuz Forum
@@ -9114,39 +7315,27 @@ linux_ldnmp() {
 	  add_yuming
 	  repeat_add_yuming
 	  ldnmp_install_status
-
-
 	  install_ssltls
 	  certs_status
 	  add_db
-
-
 	  wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/map.conf
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/discuz.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
-
 	  nginx_http_on
-
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
 	  wget -O latest.zip ${gh_proxy}github.com/harvey/Website_source_code/raw/main/Discuz_X3.5_SC_UTF8_20250901.zip
 	  unzip latest.zip
 	  rm latest.zip
-
 	  restart_ldnmp
-
-
 	  ldnmp_web_on
 	  echo "Database address: mysql"
 	  echo "Database name:$dbname"
 	  echo "username:$dbuse"
 	  echo "password:$dbusepasswd"
 	  echo "Table prefix: discuz_"
-
-
 		;;
-
 	  4)
 	  clear
 	  # Kedao cloud desktop
@@ -9156,17 +7345,13 @@ linux_ldnmp() {
 	  add_yuming
 	  repeat_add_yuming
 	  ldnmp_install_status
-
 	  install_ssltls
 	  certs_status
 	  add_db
-
 	  wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/map.conf
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/kdy.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
-
 	  nginx_http_on
-
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
@@ -9175,16 +7360,13 @@ linux_ldnmp() {
 	  rm latest.zip
 	  mv /home/web/html/$yuming/kodbox* /home/web/html/$yuming/kodbox
 	  restart_ldnmp
-
 	  ldnmp_web_on
 	  echo "Database address: mysql"
 	  echo "username:$dbuse"
 	  echo "password:$dbusepasswd"
 	  echo "Database name:$dbname"
 	  echo "redis host: redis"
-
 		;;
-
 	  5)
 	  clear
 	  # AppleCMS
@@ -9194,19 +7376,13 @@ linux_ldnmp() {
 	  add_yuming
 	  repeat_add_yuming
 	  ldnmp_install_status
-
-
-
 	  install_ssltls
 	  certs_status
 	  add_db
-
 	  wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/map.conf
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/maccms.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
-
 	  nginx_http_on
-
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
@@ -9216,10 +7392,7 @@ linux_ldnmp() {
 	  cp /home/web/html/$yuming/template/DYXS2/asset/admin/Dyxs2.php /home/web/html/$yuming/application/admin/controller
 	  cp /home/web/html/$yuming/template/DYXS2/asset/admin/dycms.html /home/web/html/$yuming/application/admin/view/system
 	  mv /home/web/html/$yuming/admin.php /home/web/html/$yuming/vip.php && wget -O /home/web/html/$yuming/application/extra/maccms.php ${gh_proxy}raw.githubusercontent.com/harvey/Website_source_code/main/maccms.php
-
 	  restart_ldnmp
-
-
 	  ldnmp_web_on
 	  echo "Database address: mysql"
 	  echo "Database port: 3306"
@@ -9230,9 +7403,7 @@ linux_ldnmp() {
 	  echo "------------------------"
 	  echo "After successful installation, log in to the backend address"
 	  echo "https://$yuming/vip.php"
-
 		;;
-
 	  6)
 	  clear
 	  # One-legged number card
@@ -9242,28 +7413,18 @@ linux_ldnmp() {
 	  add_yuming
 	  repeat_add_yuming
 	  ldnmp_install_status
-
-
-
 	  install_ssltls
 	  certs_status
 	  add_db
-
-
 	  wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/map.conf
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/dujiaoka.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
-
 	  nginx_http_on
-
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
 	  wget ${gh_proxy}github.com/assimon/dujiaoka/releases/download/2.0.6/2.0.6-antibody.tar.gz && tar -zxvf 2.0.6-antibody.tar.gz && rm 2.0.6-antibody.tar.gz
-
 	  restart_ldnmp
-
-
 	  ldnmp_web_on
 	  echo "Database address: mysql"
 	  echo "Database port: 3306"
@@ -9284,9 +7445,7 @@ linux_ldnmp() {
 	  echo "If a red error0 appears in the upper right corner when logging in, please use the following command:"
 	  echo "I am also very angry about why the Unicorn Number Card is so troublesome and has such problems!"
 	  echo "sed -i 's/ADMIN_HTTPS=false/ADMIN_HTTPS=true/g' /home/web/html/$yuming/dujiaoka/.env"
-
 		;;
-
 	  7)
 	  clear
 	  # flarum forum
@@ -9296,31 +7455,21 @@ linux_ldnmp() {
 	  add_yuming
 	  repeat_add_yuming
 	  ldnmp_install_status
-
-
-
 	  install_ssltls
 	  certs_status
 	  add_db
-
 	  wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/map.conf
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/flarum.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
-
-
 	  nginx_http_on
-
 	  docker exec php rm -f /usr/local/etc/php/conf.d/optimized_php.ini
-
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
-
 	  docker exec php sh -c "php -r \"copy('https://getcomposer.org/installer', 'composer-setup.php');\""
 	  docker exec php sh -c "php composer-setup.php"
 	  docker exec php sh -c "php -r \"unlink('composer-setup.php');\""
 	  docker exec php sh -c "mv composer.phar /usr/local/bin/composer"
-
 	  docker exec php composer create-project flarum/flarum /var/www/html/$yuming
 	  docker exec php sh -c "cd /var/www/html/$yuming && composer require flarum-lang/chinese-simplified"
 	  docker exec php sh -c "cd /var/www/html/$yuming && composer require flarum/extension-manager:*"
@@ -9333,11 +7482,7 @@ linux_ldnmp() {
 	  docker exec php sh -c "cd /var/www/html/$yuming && composer require fof/byobu:*"
 	  docker exec php sh -c "cd /var/www/html/$yuming && composer require v17development/flarum-seo"
 	  docker exec php sh -c "cd /var/www/html/$yuming && composer require clarkwinkelmann/flarum-ext-emojionearea"
-
-
 	  restart_ldnmp
-
-
 	  ldnmp_web_on
 	  echo "Database address: mysql"
 	  echo "Database name:$dbname"
@@ -9345,9 +7490,7 @@ linux_ldnmp() {
 	  echo "password:$dbusepasswd"
 	  echo "Table prefix: flarum_"
 	  echo "Administrator information can be set by oneself"
-
 		;;
-
 	  8)
 	  clear
 	  # typecho
@@ -9357,30 +7500,20 @@ linux_ldnmp() {
 	  add_yuming
 	  repeat_add_yuming
 	  ldnmp_install_status
-
-
-
-
 	  install_ssltls
 	  certs_status
 	  add_db
-
 	  wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/map.conf
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/typecho.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
-
 	  nginx_http_on
-
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
 	  wget -O latest.zip ${gh_proxy}github.com/typecho/typecho/releases/latest/download/typecho.zip
 	  unzip latest.zip
 	  rm latest.zip
-
 	  restart_ldnmp
-
-
 	  clear
 	  ldnmp_web_on
 	  echo "Database prefix: typecho_"
@@ -9388,10 +7521,7 @@ linux_ldnmp() {
 	  echo "username:$dbuse"
 	  echo "password:$dbusepasswd"
 	  echo "Database name:$dbname"
-
 		;;
-
-
 	  9)
 	  clear
 	  # LinkStack
@@ -9401,29 +7531,21 @@ linux_ldnmp() {
 	  add_yuming
 	  repeat_add_yuming
 	  ldnmp_install_status
-
-
 	  install_ssltls
 	  certs_status
 	  add_db
-
 	  wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/map.conf
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/refs/heads/main/index_php.conf
 	  sed -i "s|/var/www/html/yuming.com/|/var/www/html/yuming.com/linkstack|g" /home/web/conf.d/$yuming.conf
 	  sed -i "s|yuming.com|$yuming|g" /home/web/conf.d/$yuming.conf
-
 	  nginx_http_on
-
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
 	  wget -O latest.zip ${gh_proxy}github.com/linkstackorg/linkstack/releases/latest/download/linkstack.zip
 	  unzip latest.zip
 	  rm latest.zip
-
 	  restart_ldnmp
-
-
 	  clear
 	  ldnmp_web_on
 	  echo "Database address: mysql"
@@ -9432,7 +7554,6 @@ linux_ldnmp() {
 	  echo "username:$dbuse"
 	  echo "password:$dbusepasswd"
 		;;
-
 	  20)
 	  clear
 	  webname="PHP dynamic site"
@@ -9441,45 +7562,34 @@ linux_ldnmp() {
 	  add_yuming
 	  repeat_add_yuming
 	  ldnmp_install_status
-
 	  install_ssltls
 	  certs_status
 	  add_db
-
 	  wget -O /home/web/conf.d/map.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/map.conf
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/index_php.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
-
 	  nginx_http_on
-
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
-
 	  clear
 	  echo -e "[${gl_huang}1/6${gl_bai}] Upload PHP source code"
 	  echo "-------------"
 	  echo "Currently, only source code packages in zip format are allowed to be uploaded. Please put the source code packages in /home/web/html/${yuming}under directory"
 	  read -e -p "You can also enter the download link to download the source code package remotely. Press Enter directly to skip the remote download:" url_download
-
 	  if [ -n "$url_download" ]; then
 		  wget "$url_download"
 	  fi
-
 	  unzip $(ls -t *.zip | head -n 1)
 	  rm -f $(ls -t *.zip | head -n 1)
-
 	  clear
 	  echo -e "[${gl_huang}2/6${gl_bai}] The path where index.php is located"
 	  echo "-------------"
 	  # find "$(realpath .)" -name "index.php" -print
 	  find "$(realpath .)" -name "index.php" -print | xargs -I {} dirname {}
-
 	  read -e -p "Please enter the path to index.php, similar to (/home/web/html/$yuming/wordpress/）： " index_lujing
-
 	  sed -i "s#root /var/www/html/$yuming/#root $index_lujing#g" /home/web/conf.d/$yuming.conf
 	  sed -i "s#/home/web/#/var/www/#g" /home/web/conf.d/$yuming.conf
-
 	  clear
 	  echo -e "[${gl_huang}3/6${gl_bai}] Please select PHP version"
 	  echo "-------------"
@@ -9497,20 +7607,15 @@ linux_ldnmp() {
 		  echo "Invalid selection, please re-enter."
 		  ;;
 	  esac
-
-
 	  clear
 	  echo -e "[${gl_huang}4/6${gl_bai}] Install specified extension"
 	  echo "-------------"
 	  echo "Installed extensions"
 	  docker exec php php -m
-
 	  read -e -p "$(echo -e "输入需要安装的扩展名称，如 ${gl_huang}SourceGuardian imap ftp${gl_bai} 等等。直接回车将跳过安装 ： ")" php_extensions
 	  if [ -n "$php_extensions" ]; then
 		  docker exec $PHP_Version install-php-extensions $php_extensions
 	  fi
-
-
 	  clear
 	  echo -e "[${gl_huang}5/6${gl_bai}] Edit site configuration"
 	  echo "-------------"
@@ -9518,8 +7623,6 @@ linux_ldnmp() {
 	  read -n 1 -s -r -p ""
 	  install nano
 	  nano /home/web/conf.d/$yuming.conf
-
-
 	  clear
 	  echo -e "[${gl_huang}6/6${gl_bai}] Database management"
 	  echo "-------------"
@@ -9531,7 +7634,6 @@ linux_ldnmp() {
 		  2)
 			  echo "Database backup must be a compressed package ending in .gz. Please put it in the /home/ directory to support the import of Pagoda/1panel backup data."
 			  read -e -p "You can also enter the download link to download the backup data remotely. Press Enter directly to skip the remote download:" url_download_db
-
 			  cd /home/
 			  if [ -n "$url_download_db" ]; then
 				  wget "$url_download_db"
@@ -9549,9 +7651,7 @@ linux_ldnmp() {
 			  echo
 			  ;;
 	  esac
-
 	  docker exec php rm -f /usr/local/etc/php/conf.d/optimized_php.ini
-
 	  restart_ldnmp
 	  ldnmp_web_on
 	  prefix="web$(shuf -i 10-99 -n 1)_"
@@ -9561,15 +7661,11 @@ linux_ldnmp() {
 	  echo "password:$dbusepasswd"
 	  echo "Table prefix:$prefix"
 	  echo "Administrator login information is set by yourself"
-
 		;;
-
-
 	  21)
 	  ldnmp_install_status_one
 	  nginx_install_all
 		;;
-
 	  22)
 	  clear
 	  webname="site redirect"
@@ -9578,26 +7674,15 @@ linux_ldnmp() {
 	  add_yuming
 	  read -e -p "Please enter the redirect domain name:" reverseproxy
 	  nginx_install_status
-
-
-
 	  install_ssltls
 	  certs_status
-
-
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/rewrite.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  sed -i "s/baidu.com/$reverseproxy/g" /home/web/conf.d/$yuming.conf
-
 	  nginx_http_on
-
 	  docker exec nginx nginx -s reload
-
 	  nginx_web_on
-
-
 		;;
-
 	  23)
 	  ldnmp_Proxy
 	  find_container_by_host_port "$port"
@@ -9609,9 +7694,7 @@ linux_ldnmp() {
 		close_port "$port"
 		block_container_port "$docker_name" "$ipv4_address"
 	  fi
-
 		;;
-
 	  24)
 	  clear
 	  webname="Reverse proxy-domain name"
@@ -9621,59 +7704,40 @@ linux_ldnmp() {
 	  echo -e "Domain name format:${gl_huang}google.com${gl_bai}"
 	  read -e -p "Please enter your reverse proxy domain name:" fandai_yuming
 	  nginx_install_status
-
 	  install_ssltls
 	  certs_status
-
-
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/reverse-proxy-domain.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  sed -i "s|fandaicom|$fandai_yuming|g" /home/web/conf.d/$yuming.conf
-
-
 	  nginx_http_on
-
 	  docker exec nginx nginx -s reload
-
 	  nginx_web_on
-
 		;;
-
-
 	  25)
 	  clear
 	  webname="Bitwarden"
 	  send_stats "Install$webname"
 	  echo "Start deployment$webname"
 	  add_yuming
-
 	  docker run -d \
 		--name bitwarden \
 		--restart=always \
 		-p 3280:80 \
 		-v /home/web/html/$yuming/bitwarden/data:/data \
 		vaultwarden/server
-
 	  duankou=3280
 	  ldnmp_Proxy ${yuming} 127.0.0.1 $duankou
-
-
 		;;
-
 	  26)
 	  clear
 	  webname="halo"
 	  send_stats "Install$webname"
 	  echo "Start deployment$webname"
 	  add_yuming
-
 	  docker run -d --name halo --restart=always -p 8010:8090 -v /home/web/html/$yuming/.halo2:/root/.halo2 halohub/halo:2
-
 	  duankou=8010
 	  ldnmp_Proxy ${yuming} 127.0.0.1 $duankou
-
 		;;
-
 	  27)
 	  clear
 	  webname="AI painting prompt word generator"
@@ -9681,40 +7745,27 @@ linux_ldnmp() {
 	  echo "Start deployment$webname"
 	  add_yuming
 	  nginx_install_status
-
-
 	  install_ssltls
 	  certs_status
-
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/html.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
-
 	  nginx_http_on
-
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
-
 	  wget ${gh_proxy}github.com/harvey/Website_source_code/raw/refs/heads/main/ai_prompt_generator.zip
 	  unzip $(ls -t *.zip | head -n 1)
 	  rm -f $(ls -t *.zip | head -n 1)
-
 	  docker exec nginx chmod -R nginx:nginx /var/www/html
 	  docker exec nginx nginx -s reload
-
 	  nginx_web_on
-
 		;;
-
 	  28)
 	  ldnmp_Proxy_backend
 		;;
-
-
 	  29)
 	  stream_panel
 		;;
-
 	  30)
 	  clear
 	  webname="static site"
@@ -9723,71 +7774,45 @@ linux_ldnmp() {
 	  add_yuming
 	  repeat_add_yuming
 	  nginx_install_status
-
-
 	  install_ssltls
 	  certs_status
-
 	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/html.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
-
 	  nginx_http_on
-
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
-
-
 	  clear
 	  echo -e "[${gl_huang}1/2${gl_bai}] Upload static source code"
 	  echo "-------------"
 	  echo "Currently, only source code packages in zip format are allowed to be uploaded. Please put the source code packages in /home/web/html/${yuming}under directory"
 	  read -e -p "You can also enter the download link to download the source code package remotely. Press Enter directly to skip the remote download:" url_download
-
 	  if [ -n "$url_download" ]; then
 		  wget "$url_download"
 	  fi
-
 	  unzip $(ls -t *.zip | head -n 1)
 	  rm -f $(ls -t *.zip | head -n 1)
-
 	  clear
 	  echo -e "[${gl_huang}2/2${gl_bai}] The path where index.html is located"
 	  echo "-------------"
 	  # find "$(realpath .)" -name "index.html" -print
 	  find "$(realpath .)" -name "index.html" -print | xargs -I {} dirname {}
-
 	  read -e -p "Please enter the path to index.html, similar to (/home/web/html/$yuming/index/）： " index_lujing
-
 	  sed -i "s#root /var/www/html/$yuming/#root $index_lujing#g" /home/web/conf.d/$yuming.conf
 	  sed -i "s#/home/web/#/var/www/#g" /home/web/conf.d/$yuming.conf
-
 	  docker exec nginx chmod -R nginx:nginx /var/www/html
 	  docker exec nginx nginx -s reload
-
 	  nginx_web_on
-
 		;;
-
-
-
-
-
-
-
 	31)
 	  ldnmp_web_status
 	  ;;
-
-
 	32)
 	  clear
 	  send_stats "LDNMP environment backup"
-
 	  local backup_filename="web_$(date +"%Y%m%d%H%M%S").tar.gz"
 	  echo -e "${gl_kjlan}Backing up$backup_filename ...${gl_bai}"
 	  cd /home/ && tar czvf "$backup_filename" web
-
 	  while true; do
 		clear
 		echo "Backup file created: /home/$backup_filename"
@@ -9817,24 +7842,19 @@ linux_ldnmp() {
 		esac
 	  done
 	  ;;
-
 	33)
 	  clear
 	  send_stats "Scheduled remote backup"
 	  read -e -p "Enter the remote server IP:" useip
 	  read -e -p "Enter the remote server password:" usepasswd
-
 	  cd ~
 	  wget -O ${useip}_beifen.sh ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/beifen.sh > /dev/null 2>&1
 	  chmod +x ${useip}_beifen.sh
-
 	  sed -i "s/0.0.0.0/$useip/g" ${useip}_beifen.sh
 	  sed -i "s/123456/$usepasswd/g" ${useip}_beifen.sh
-
 	  echo "------------------------"
 	  echo "1. Weekly backup 2. Daily backup"
 	  read -e -p "Please enter your choice:" dingshi
-
 	  case $dingshi in
 		  1)
 			  check_crontab_installed
@@ -9850,11 +7870,8 @@ linux_ldnmp() {
 			  break  # 跳出
 			  ;;
 	  esac
-
 	  install sshpass
-
 	  ;;
-
 	34)
 	  root_use
 	  send_stats "LDNMP environment restoration"
@@ -9863,25 +7880,20 @@ linux_ldnmp() {
 	  ls -lt /home/*.gz | awk '{print $NF}'
 	  echo ""
 	  read -e -p  "Press the Enter key to restore the latest backup, enter the backup file name to restore the specified backup, enter 0 to exit:" filename
-
 	  if [ "$filename" == "0" ]; then
 		  break_end
 		  linux_ldnmp
 	  fi
-
 	  # If the user does not enter a file name, the latest compressed package is used
 	  if [ -z "$filename" ]; then
 		  local filename=$(ls -t /home/*.tar.gz | head -1)
 	  fi
-
 	  if [ -n "$filename" ]; then
 		  cd /home/web/ > /dev/null 2>&1
 		  docker compose down > /dev/null 2>&1
 		  rm -rf /home/web > /dev/null 2>&1
-
 		  echo -e "${gl_kjlan}Unzipping$filename ...${gl_bai}"
 		  cd /home/ && tar -xzf "$filename"
-
 		  install_dependency
 		  install_docker
 		  install_certbot
@@ -9889,18 +7901,13 @@ linux_ldnmp() {
 	  else
 		  echo "No compressed package found."
 	  fi
-
 	  ;;
-
 	35)
 		web_security
 		;;
-
 	36)
 		web_optimization
 		;;
-
-
 	37)
 	  root_use
 	  while true; do
@@ -9939,14 +7946,11 @@ linux_ldnmp() {
 		  case $sub_choice in
 			  1)
 			  nginx_upgrade
-
 				  ;;
-
 			  2)
 			  local ldnmp_pods="mysql"
 			  read -e -p "Please enter${ldnmp_pods}Version number (such as: 8.0 8.3 8.4 9.0) (press enter to get the latest version):" version
 			  local version=${version:-latest}
-
 			  cd /home/web/
 			  cp /home/web/docker-compose.yml /home/web/docker-compose1.yml
 			  sed -i "s/image: mysql/image: mysql:${version}/" /home/web/docker-compose.yml
@@ -9957,7 +7961,6 @@ linux_ldnmp() {
 			  cp /home/web/docker-compose1.yml /home/web/docker-compose.yml
 			  send_stats "renew$ldnmp_pods"
 			  echo "renew${ldnmp_pods}Finish"
-
 				  ;;
 			  3)
 			  local ldnmp_pods="php"
@@ -9972,31 +7975,24 @@ linux_ldnmp() {
   			  docker images --filter=reference="kjlion/${ldnmp_pods}*" -q | xargs docker rmi > /dev/null 2>&1
 			  docker compose up -d --force-recreate $ldnmp_pods
 			  docker exec php chown -R www-data:www-data /var/www/html
-
 			  run_command docker exec php sed -i "s/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g" /etc/apk/repositories > /dev/null 2>&1
-
 			  docker exec php apk update
 			  curl -sL ${gh_proxy}github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions -o /usr/local/bin/install-php-extensions
 			  docker exec php mkdir -p /usr/local/bin/
 			  docker cp /usr/local/bin/install-php-extensions php:/usr/local/bin/
 			  docker exec php chmod +x /usr/local/bin/install-php-extensions
 			  docker exec php install-php-extensions mysqli pdo_mysql gd intl zip exif bcmath opcache redis imagick soap
-
-
 			  docker exec php sh -c 'echo "upload_max_filesize=50M " > /usr/local/etc/php/conf.d/uploads.ini' > /dev/null 2>&1
 			  docker exec php sh -c 'echo "post_max_size=50M " > /usr/local/etc/php/conf.d/post.ini' > /dev/null 2>&1
 			  docker exec php sh -c 'echo "memory_limit=512M" > /usr/local/etc/php/conf.d/memory.ini' > /dev/null 2>&1
 			  docker exec php sh -c 'echo "max_execution_time=1200" > /usr/local/etc/php/conf.d/max_execution_time.ini' > /dev/null 2>&1
 			  docker exec php sh -c 'echo "max_input_time=600" > /usr/local/etc/php/conf.d/max_input_time.ini' > /dev/null 2>&1
 			  docker exec php sh -c 'echo "max_input_vars=5000" > /usr/local/etc/php/conf.d/max_input_vars.ini' > /dev/null 2>&1
-
 			  fix_phpfpm_con $ldnmp_pods
-
 			  docker restart $ldnmp_pods > /dev/null 2>&1
 			  cp /home/web/docker-compose1.yml /home/web/docker-compose.yml
 			  send_stats "renew$ldnmp_pods"
 			  echo "renew${ldnmp_pods}Finish"
-
 				  ;;
 			  4)
 			  local ldnmp_pods="redis"
@@ -10007,7 +8003,6 @@ linux_ldnmp() {
 			  docker restart $ldnmp_pods > /dev/null 2>&1
 			  send_stats "renew$ldnmp_pods"
 			  echo "renew${ldnmp_pods}Finish"
-
 				  ;;
 			  5)
 				read -e -p "$(echo -e "${gl_huang}提示: ${gl_bai}长时间不更新环境的用户，请慎重更新LDNMP环境，会有数据库更新失败的风险。确定更新LDNMP环境吗？(Y/N): ")" choice
@@ -10016,7 +8011,6 @@ linux_ldnmp() {
 					send_stats "Complete update of LDNMP environment"
 					cd /home/web/
 					docker compose down --rmi all
-
 					install_dependency
 					install_docker
 					install_certbot
@@ -10032,10 +8026,7 @@ linux_ldnmp() {
 		  esac
 		  break_end
 	  done
-
-
 	  ;;
-
 	38)
 		root_use
 		send_stats "Uninstall the LDNMP environment"
@@ -10049,63 +8040,43 @@ linux_ldnmp() {
 			rm -rf /home/web
 			;;
 		  [Nn])
-
 			;;
 		  *)
 			echo "Invalid selection, please enter Y or N."
 			;;
 		esac
 		;;
-
 	0)
 		harvey
 	  ;;
-
 	*)
 		echo "Invalid input!"
 	esac
 	break_end
-
   done
-
 }
-
-
-
-
-
-
 moltbot_menu() {
 	local app_id="114"
-
 	send_stats "clawdbot/moltbot management"
-
 	check_openclaw_update() {
 		if ! command -v npm >/dev/null 2>&1; then
 			return 1
 		fi
-
 		# Add --no-update-notifier and make sure error redirection is in the correct location
 		local_version=$(npm list -g openclaw --depth=0 --no-update-notifier 2>/dev/null | grep openclaw | awk '{print $NF}' | sed 's/^.*@//')
-
 		if [ -z "$local_version" ]; then
 			return 1
 		fi
-
 		remote_version=$(npm view openclaw version --no-update-notifier 2>/dev/null)
-
 		if [ -z "$remote_version" ]; then
 			return 1
 		fi
-
 		if [ "$local_version" != "$remote_version" ]; then
 			echo "${gl_huang}New version detected:$remote_version${gl_bai}"
 		else
 			echo "${gl_lv}The current version is the latest:$local_version${gl_bai}"
 		fi
 	}
-
-
 	get_install_status() {
 		if command -v openclaw >/dev/null 2>&1; then
 			echo "${gl_lv}Installed${gl_bai}"
@@ -10113,7 +8084,6 @@ moltbot_menu() {
 			echo "${gl_hui}Not installed${gl_bai}"
 		fi
 	}
-
 	get_running_status() {		
 		if pgrep -f "openclaw.*gateway" >/dev/null 2>&1; then
 			echo "${gl_lv}Running${gl_bai}"
@@ -10121,17 +8091,11 @@ moltbot_menu() {
 			echo "${gl_hui}Not running${gl_bai}"
 		fi
 	}
-
-
 	show_menu() {
-
-
 		clear
-
 		local install_status=$(get_install_status)
 		local running_status=$(get_running_status)
 		local update_message=$(check_openclaw_update)
-
 		echo "======================================="
 		echo -e "🦞 OPENCLAW Management Tool by HARVEY 🦞"
 		echo -e "💡 Terminal execution \033[1;33mk claw\033[0m to quickly enter the menu"
@@ -10164,15 +8128,11 @@ moltbot_menu() {
 		echo "--------------------"
 		printf "Please enter options and press Enter:"
 	}
-
-
 	start_gateway() {
 		openclaw gateway stop
 		openclaw gateway start
 		sleep 3
 	}
-
-
 	install_node_and_tools() {
 		if command -v dnf &>/dev/null; then
 			curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -
@@ -10180,22 +8140,17 @@ moltbot_menu() {
 			dnf group install -y "Development Tools" "Development Libraries"
 			dnf install -y cmake libatomic nodejs
 		fi
-
 		if command -v apt &>/dev/null; then
 			curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
 			apt update -y
 			apt install build-essential python3 libatomic1 nodejs -y
 		fi
 	}
-
 	sync_openclaw_api_models() {
 		local config_file
 		config_file=$(openclaw_get_config_file)
-
 		[ ! -f "$config_file" ] && return 0
-
 		install jq curl >/dev/null 2>&1
-
 		python3 - "$config_file" "$ENABLE_STATS" "$sh_v" <<'PY'
 import copy
 import json
@@ -10205,11 +8160,9 @@ import sys
 import time
 import urllib.request
 from datetime import datetime, timezone
-
 path = sys.argv[1]
 stats_enabled = (sys.argv[2].lower() == "true") if len(sys.argv) > 2 else True
 script_version = sys.argv[3] if len(sys.argv) > 3 else ""
-
 def send_stat(action):
     if not stats_enabled:
         return
@@ -10232,17 +8185,14 @@ def send_stat(action):
             pass
     except Exception:
         pass
-
 with open(path, 'r', encoding='utf-8') as f:
     obj = json.load(f)
-
 work = copy.deepcopy(obj)
 models_cfg = work.setdefault('models', {})
 providers = models_cfg.get('providers', {})
 if not isinstance(providers, dict) or not providers:
     print('ℹ️ API providers not detected, model synchronization skipped')
     raise SystemExit(0)
-
 agents = work.setdefault('agents', {})
 defaults = agents.setdefault('defaults', {})
 defaults_models_raw = defaults.get('models')
@@ -10253,18 +8203,12 @@ elif isinstance(defaults_models_raw, list):
 else:
     defaults_models = {}
 defaults['models'] = defaults_models
-
 SUPPORTED_APIS = {'openai-completions', 'openai-responses'}
-
 changed = False
 fatal_errors = []
 summary = []
-
-
 def model_ref(provider_name, model_id):
     return f"{provider_name}/{model_id}"
-
-
 def get_primary_ref(defaults_obj):
     model_obj = defaults_obj.get('model')
     if isinstance(model_obj, str):
@@ -10274,8 +8218,6 @@ def get_primary_ref(defaults_obj):
         if isinstance(primary, str):
             return primary
     return None
-
-
 def set_primary_ref(defaults_obj, new_ref):
     model_obj = defaults_obj.get('model')
     if isinstance(model_obj, str):
@@ -10284,14 +8226,10 @@ def set_primary_ref(defaults_obj, new_ref):
         model_obj['primary'] = new_ref
     else:
         defaults_obj['model'] = {'primary': new_ref}
-
-
 def ref_provider(ref):
     if not isinstance(ref, str) or '/' not in ref:
         return None
     return ref.split('/', 1)[0]
-
-
 def collect_available_refs(exclude_provider=None):
     refs = []
     if not isinstance(providers, dict):
@@ -10305,8 +8243,6 @@ def collect_available_refs(exclude_provider=None):
             if isinstance(m, dict) and m.get('id'):
                 refs.append(model_ref(pname, str(m['id'])))
     return refs
-
-
 def prompt_delete_provider(name):
     prompt = f"⚠️ {name} /models probe failed 3 times in a row. Delete this API provider and all related models? [y/N]:"
     try:
@@ -10314,20 +8250,15 @@ def prompt_delete_provider(name):
     except EOFError:
         return False
     return ans in ('y', 'yes')
-
-
 def rebind_defaults_before_delete(name):
     global changed
-
     replacement = None
-
     def get_replacement():
         nonlocal replacement
         if replacement is None:
             candidates = collect_available_refs(exclude_provider=name)
             replacement = candidates[0] if candidates else None
         return replacement
-
     primary_ref = get_primary_ref(defaults)
     if ref_provider(primary_ref) == name:
         repl = get_replacement()
@@ -10337,7 +8268,6 @@ def rebind_defaults_before_delete(name):
         set_primary_ref(defaults, repl)
         changed = True
         summary.append(f'🔁 The default primary model has been switched before deletion: {primary_ref} -> {repl}')
-
     for fk in ('modelFallback', 'imageModelFallback'):
         val = defaults.get(fk)
         if ref_provider(val) == name:
@@ -10348,30 +8278,21 @@ def rebind_defaults_before_delete(name):
             defaults[fk] = repl
             changed = True
             summary.append(f'🔁 Switched before deletion {fk}: {val} -> {repl}')
-
     return True
-
-
 def delete_provider_and_refs(name):
     global changed
-
     if not rebind_defaults_before_delete(name):
         return False
-
     removed_refs = [r for r in list(defaults_models.keys()) if r.startswith(name + '/')]
     for r in removed_refs:
         defaults_models.pop(r, None)
     if removed_refs:
         changed = True
-
     if name in providers:
         providers.pop(name, None)
         changed = True
-
     summary.append(f'🗑️ Provider {name} has been deleted and {len(removed_refs)} model references under defaults.models have been removed')
     return True
-
-
 def fetch_remote_models_with_retry(name, base_url, api_key, retries=3):
     last_error = None
     for attempt in range(1, retries + 1):
@@ -10392,28 +8313,22 @@ def fetch_remote_models_with_retry(name, base_url, api_key, retries=3):
             if attempt < retries:
                 time.sleep(1)
     return None, last_error, retries
-
-
 for name, provider in list(providers.items()):
     if not isinstance(provider, dict):
         summary.append(f'ℹ️ Skip {name}: provider structure is illegal')
         continue
-
     api = provider.get('api', '')
     base_url = provider.get('baseUrl')
     api_key = provider.get('apiKey')
     model_list = provider.get('models', [])
-
     if not base_url or not api_key or not isinstance(model_list, list) or not model_list:
         summary.append(f'ℹ️ Skip {name}: None baseUrl/apiKey/models')
         continue
-
     if api not in SUPPORTED_APIS:
         summary.append(f'🔁 {name}: Illegal protocol {api or "(unset)"} found, will be re-detected')
         provider['api'] = ''
         api = ''
         changed = True
-
     data, err, attempts = fetch_remote_models_with_retry(name, base_url, api_key, retries=3)
     if err is not None:
         summary.append(f'⚠️ {name}: /models detection failed, retried {attempts} times ({type(err).__name__}: {err})')
@@ -10427,28 +8342,22 @@ for name, provider in list(providers.items()):
             send_stat('OpenClaw API deletion failed Provider-rejected')
             summary.append(f'ℹ️ {name}: The user has not confirmed the deletion and retains the existing provider configuration.')
         continue
-
     if attempts > 1:
         summary.append(f'🔁 {name}: /models Successful after {attempts} retry')
-
     if not (isinstance(data, dict) and isinstance(data.get('data'), list)):
         summary.append(f'⚠️ Skip {name}: /models return structure is not recognized')
         continue
-
     remote_ids = []
     for item in data['data']:
         if isinstance(item, dict) and item.get('id'):
             remote_ids.append(str(item['id']))
     remote_set = set(remote_ids)
-
     if not remote_set:
         fatal_errors.append(f'❌ {name}’s upstream /models is empty and cannot provide a bottom-up model for this provider.')
         continue
-
     local_models = [m for m in model_list if isinstance(m, dict) and m.get('id')]
     local_ids = [str(m['id']) for m in local_models]
     local_set = set(local_ids)
-
     template = None
     for m in local_models:
         template = copy.deepcopy(m)
@@ -10456,58 +8365,45 @@ for name, provider in list(providers.items()):
     if template is None:
         summary.append(f'⚠️ Skip {name}: local models no valid template model')
         continue
-
     removed_ids = [mid for mid in local_ids if mid not in remote_set]
     added_ids = [mid for mid in remote_ids if mid not in local_set]
-
     kept_models = [copy.deepcopy(m) for m in local_models if str(m['id']) in remote_set]
     new_models = kept_models[:]
-
     for mid in added_ids:
         nm = copy.deepcopy(template)
         nm['id'] = mid
         if isinstance(nm.get('name'), str):
             nm['name'] = f'{name} / {mid}'
         new_models.append(nm)
-
     if not new_models:
         fatal_errors.append(f'❌ {name} has no available model after synchronization, and the default model/fallback model cannot be guaranteed.')
         continue
-
     expected_refs = {model_ref(name, str(m['id'])) for m in new_models if isinstance(m, dict) and m.get('id')}
     local_refs = {model_ref(name, mid) for mid in local_ids}
-
     first_ref = model_ref(name, str(new_models[0]['id']))
-
     primary_ref = get_primary_ref(defaults)
     if isinstance(primary_ref, str) and primary_ref in (local_refs - expected_refs):
         set_primary_ref(defaults, first_ref)
         changed = True
         summary.append(f'🔁 The default model has been completely replaced: {primary_ref} -> {first_ref}')
-
     for fk in ('modelFallback', 'imageModelFallback'):
         val = defaults.get(fk)
         if isinstance(val, str) and val in (local_refs - expected_refs):
             defaults[fk] = first_ref
             changed = True
             summary.append(f'🔁 {fk} has been completely replaced: {val} -> {first_ref}')
-
     stale_refs = [r for r in list(defaults_models.keys()) if r.startswith(name + '/') and r not in expected_refs]
     for r in stale_refs:
         defaults_models.pop(r, None)
         changed = True
-
     for r in sorted(expected_refs):
         if r not in defaults_models:
             defaults_models[r] = {}
             changed = True
-
     if removed_ids or added_ids or len(local_models) != len(new_models):
         provider['models'] = new_models
         changed = True
-
     summary.append(f'✅ {name}: Added {len(added_ids)}, deleted {len(removed_ids)}, currently {len(new_models)}')
-
     if added_ids:
         summary.append(f'➕ Add new model ({len(added_ids)}):')
         for mid in added_ids:
@@ -10516,8 +8412,6 @@ for name, provider in list(providers.items()):
         summary.append(f'➖ Delete model ({len(removed_ids)}):')
         for mid in removed_ids:
             summary.append(f'  - {mid}')
-
-
 if fatal_errors:
     for line in summary:
         print(line)
@@ -10525,7 +8419,6 @@ if fatal_errors:
         print(err)
     print('❌ Model synchronization failed: There is a provider. After synchronization, there is no available model and writing has been aborted.')
     raise SystemExit(2)
-
 if changed:
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(work, f, ensure_ascii=False, indent=2)
@@ -10539,40 +8432,29 @@ else:
     print('ℹ️ No synchronization required: configuration is already consistent with upstream /models')
 PY
 	}
-
-
-
 	install_moltbot() {
 		echo "Start installing OpenClaw..."
 		send_stats "Start installing OpenClaw..."
 		install git jq
-
 		install_node_and_tools
-
 		country=$(curl -s ipinfo.io/country)
 		if [[ "$country" == "CN" || "$country" == "HK" ]]; then
 			npm config set registry https://registry.npmmirror.com
 		fi
-
 		git config --global url."${gh_proxy}github.com/".insteadOf ssh://git@github.com/
 		git config --global url."${gh_proxy}github.com/".insteadOf git@github.com:
-
 		npm install -g openclaw@latest
 		openclaw onboard --install-daemon
 		start_gateway
 		add_app_id
 		break_end
-
 	}
-
-
 	start_bot() {
 		echo "Starting OpenClaw..."
 		send_stats "Starting OpenClaw..."
 		start_gateway
 		break_end
 	}
-
 	stop_bot() {
 		echo "Stop OpenClaw..."
 		send_stats "Stop OpenClaw..."
@@ -10580,7 +8462,6 @@ PY
 		openclaw gateway stop
 		break_end
 	}
-
 	view_logs() {
 		echo "View the OpenClaw status log"
 		send_stats "View OpenClaw logs"
@@ -10589,31 +8470,22 @@ PY
 		openclaw logs
 		break_end
 	}
-
-
-
-
-
 	# OpenClaw API protocol detection logic has been removed: API types are no longer automatically detected/determined.
 	# Note: The API type is explicitly configured by the user (models.providers.<name>.api), and the script no longer attempts to call /responses for inference.
-
 	# Construct model configuration JSON
 	build-openclaw-provider-models-json() {
 		local provider_name="$1"
 		local model_ids="$2"
 		local models_array="["
 		local first=true
-
 		while read -r model_id; do
 			[ -z "$model_id" ] && continue
 			[[ $first == false ]] && models_array+=","
 			first=false
-
 			local context_window=1048576
 			local max_tokens=128000
 			local input_cost=0.15
 			local output_cost=0.60
-
 			case "$model_id" in
 				*opus*|*pro*|*preview*|*thinking*|*sonnet*)
 					input_cost=2.00
@@ -10628,7 +8500,6 @@ PY
 					output_cost=0.40
 					;;
 			esac
-
 			models_array+=$(cat <<EOF
 {
 	"id": "$model_id",
@@ -10646,11 +8517,9 @@ PY
 EOF
 )
 		done <<< "$model_ids"
-
 		models_array+="]"
 		echo "$models_array"
 	}
-
 	# Write provider and model configuration
 	write-openclaw-provider-models() {
 		local provider_name="$1"
@@ -10659,12 +8528,9 @@ EOF
 		local models_array="$4"
 		local config_file
 		config_file=$(openclaw_get_config_file)
-
 		# No longer automatically detects/corrects API protocols; maintains user configuration
 		DETECTED_API="openai-completions"
-
 		[[ -f "$config_file" ]] && cp "$config_file" "${config_file}.bak.$(date +%s)"
-
 		jq --arg prov "$provider_name" \
 		   --arg url "$base_url" \
 		   --arg key "$api_key" \
@@ -10699,39 +8565,29 @@ EOF
 		)
 		' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
 	}
-
 	# Core function: get and add all models
 	add-all-models-from-provider() {
 		local provider_name="$1"
 		local base_url="$2"
 		local api_key="$3"
-
 		echo "🔍 Getting$provider_nameAll available models of..."
-
 		local models_json=$(curl -s -m 10 \
 			-H "Authorization: Bearer $api_key" \
 			"${base_url}/models")
-
 		if [[ -z "$models_json" ]]; then
 			echo "❌ Unable to obtain model list"
 			return 1
 		fi
-
 		local model_ids=$(echo "$models_json" | grep -oP '"id":\s*"\K[^"]+')
-
 		if [[ -z "$model_ids" ]]; then
 			echo "❌ No models found"
 			return 1
 		fi
-
 		local model_count=$(echo "$model_ids" | wc -l)
 		echo "✅ Discover$model_countmodels"
-
 		local models_array
 		models_array=$(build-openclaw-provider-models-json "$provider_name" "$model_ids")
-
 		write-openclaw-provider-models "$provider_name" "$base_url" "$api_key" "$models_array"
-
 		if [[ $? -eq 0 ]]; then
 			echo "✅ Added successfully$model_countmodels arrive$provider_name"
 			echo "📦 Model reference format:$provider_name/<model-id>"
@@ -10741,24 +8597,19 @@ EOF
 			return 1
 		fi
 	}
-
 	# Add only the default model and keep the provider
 	add-default-model-only-to-provider() {
 		local provider_name="$1"
 		local base_url="$2"
 		local api_key="$3"
 		local default_model="$4"
-
 		if [[ -z "$default_model" ]]; then
 			echo "❌ The default model cannot be empty"
 			return 1
 		fi
-
 		local models_array
 		models_array=$(build-openclaw-provider-models-json "$provider_name" "$default_model")
-
 		write-openclaw-provider-models "$provider_name" "$base_url" "$api_key" "$models_array"
-
 		if [[ $? -eq 0 ]]; then
 			echo "✅ Provider added:$provider_name"
 			echo "✅ Only write to the default model:$default_model"
@@ -10768,18 +8619,15 @@ EOF
 			return 1
 		fi
 	}
-
 	add-openclaw-provider-interactive() {
 		send_stats "OpenClaw API added"
 		echo "=== Interactively add OpenClaw Provider (full model) ==="
-
 		# 1. Provider name
 		read -erp "Please enter the Provider name (eg: deepseek):" provider_name
 		while [[ -z "$provider_name" ]]; do
 			echo "❌ Provider name cannot be empty"
 			read -erp "Please enter Provider name:" provider_name
 		done
-
 		# 2. Base URL
 		read -erp "Please enter Base URL (eg: https://api.xxx.com/v1):" base_url
 		while [[ -z "$base_url" ]]; do
@@ -10787,7 +8635,6 @@ EOF
 			read -erp "Please enter Base URL:" base_url
 		done
 		base_url="${base_url%/}"
-
 		# 3. API Key
 		read -rsp "Please enter API Key (input will not be displayed):" api_key
 		echo
@@ -10796,18 +8643,14 @@ EOF
 			read -rsp "Please enter API Key:" api_key
 			echo
 		done
-
 		# 4. No longer detecting/determining API types; protocols are selected and maintained by users themselves
-
 		# 5. Get model list
 		echo "🔍 Getting list of available models..."
 		models_json=$(curl -s -m 10 \
 			-H "Authorization: Bearer $api_key" \
 			"${base_url}/models")
-
 		if [[ -n "$models_json" ]]; then
 			available_models=$(echo "$models_json" | grep -oP '"id":\s*"\K[^"]+' | sort)
-
 			if [[ -n "$available_models" ]]; then
 				model_count=$(echo "$available_models" | wc -l)
 				echo "✅ Discover$model_countAvailable models:"
@@ -10823,11 +8666,9 @@ EOF
 				echo "--------------------------------"
 			fi
 		fi
-
 		# 5. Select the default model
 		echo
 		read -erp "Please enter the default Model ID (or serial number, leave blank to use the first one):" input_model
-
 		if [[ -z "$input_model" && -n "$available_models" ]]; then
 			default_model=$(echo "$available_models" | head -1)
 			echo "🎯 Using the first model:$default_model"
@@ -10837,7 +8678,6 @@ EOF
 		else
 			default_model="$input_model"
 		fi
-
 		# 6. Confirm information
 		echo
 		echo "====== Confirmation ======"
@@ -10847,9 +8687,7 @@ EOF
 		echo "Default model:$default_model"
 		echo "Total number of models:$model_count"
 		echo "======================"
-
 		read -erp "Do you want to add all other available models at the same time? (y/N):" confirm
-
 		install jq
 		if [[ "$confirm" =~ ^[Yy]$ ]]; then
 			add-all-models-from-provider "$provider_name" "$base_url" "$api_key"
@@ -10860,7 +8698,6 @@ EOF
 			add_result=$?
 			finish_msg="✅ Done! Provider is retained and only the default model is loaded:$default_model"
 		fi
-
 		if [[ $add_result -eq 0 ]]; then
 			echo
 			echo "🔄 Set default model and restart gateway..."
@@ -10870,16 +8707,11 @@ EOF
 			echo "$finish_msg"
 			echo "✅ Current API protocol type:$DETECTED_API"
 		fi
-
 		break_end
 	}
-
-
-
 openclaw_api_manage_list() {
 	local config_file="${HOME}/.openclaw/openclaw.json"
 	send_stats "OpenClaw API List"
-
 	while IFS=$'\t' read -r rec_type idx name base_url model_count api_type latency_txt latency_level; do
 		case "$rec_type" in
 			MSG)
@@ -10893,7 +8725,6 @@ openclaw_api_manage_list() {
 					high|unavailable) latency_color="$gl_hong" ;;
 					unchecked) latency_color="$gl_bai" ;;
 				esac
-
 				printf '%b\n' "[$idx] ${name} | API: ${base_url}| Agreement:${api_type}| Number of models:${gl_huang}${model_count}${gl_bai}| Delay/Status:${latency_color}${latency_txt}${gl_bai}"
 				;;
 		esac
@@ -10902,11 +8733,8 @@ import json
 import sys
 import time
 import urllib.request
-
 path = sys.argv[1]
 SUPPORTED_APIS = {'openai-completions', 'openai-responses'}
-
-
 def ping_models(base_url, api_key):
     req = urllib.request.Request(
         base_url.rstrip('/') + '/models',
@@ -10919,8 +8747,6 @@ def ping_models(base_url, api_key):
     with urllib.request.urlopen(req, timeout=4) as resp:
         resp.read(2048)
     return int((time.perf_counter() - start) * 1000)
-
-
 def classify_latency(latency):
     if latency == 'Not available':
         return 'Not available', 'unavailable'
@@ -10935,8 +8761,6 @@ def classify_latency(latency):
             level = 'high'
         return f'{latency}ms', level
     return str(latency), 'unchecked'
-
-
 try:
     with open(path, 'r', encoding='utf-8') as f:
         obj = json.load(f)
@@ -10946,14 +8770,11 @@ except FileNotFoundError:
 except Exception as e:
     print(f'MSG\t❌ Failed to read configuration: {type(e).__name__}: {e}')
     raise SystemExit(0)
-
 providers = ((obj.get('models') or {}).get('providers') or {})
 if not isinstance(providers, dict) or not providers:
     print('MSG\tℹ️ No API provider is currently configured.')
     raise SystemExit(0)
-
 print('MSG\t--- Configured API list ---')
-
 for idx, name in enumerate(sorted(providers.keys()), start=1):
     provider = providers.get(name)
     if not isinstance(provider, dict):
@@ -10966,7 +8787,6 @@ for idx, name in enumerate(sorted(providers.keys()), start=1):
         model_count = sum(1 for m in models if isinstance(m, dict) and m.get('id'))
         api = provider.get('api', '')
         api_key = provider.get('apiKey')
-
         latency_raw = 'Not detected'
         if api in SUPPORTED_APIS:
             if isinstance(base_url, str) and base_url != '-' and isinstance(api_key, str) and api_key:
@@ -10976,7 +8796,6 @@ for idx, name in enumerate(sorted(providers.keys()), start=1):
                     latency_raw = 'Not available'
             else:
                 latency_raw = 'Not available'
-
     latency_text, latency_level = classify_latency(latency_raw)
     api_label = api if api in SUPPORTED_APIS else '-'
     print(
@@ -10996,13 +8815,11 @@ PY
 sync-openclaw-provider-interactive() {
 	local config_file="${HOME}/.openclaw/openclaw.json"
 	send_stats "OpenClaw API synchronization by Provider"
-
 	if [ ! -f "$config_file" ]; then
 		echo "❌ Configuration file not found:$config_file"
 		break_end
 		return 1
 	fi
-
 	read -erp "Please enter the API name (provider) to be synchronized and press Enter to synchronize all:" provider_name
 	if [ -z "$provider_name" ]; then
 		if sync_openclaw_api_models; then
@@ -11014,35 +8831,28 @@ sync-openclaw-provider-interactive() {
 		break_end
 		return 0
 	fi
-
 	install jq curl >/dev/null 2>&1
-
 	python3 - "$config_file" "$provider_name" <<'PY2'
 import copy
 import json
 import sys
 import time
 import urllib.request
-
 path = sys.argv[1]
 target = sys.argv[2]
 SUPPORTED_APIS = {'openai-completions', 'openai-responses'}
-
 with open(path, 'r', encoding='utf-8') as f:
     obj = json.load(f)
-
 work = copy.deepcopy(obj)
 models_cfg = work.setdefault('models', {})
 providers = models_cfg.get('providers', {})
 if not isinstance(providers, dict) or not providers:
     print('❌ API providers not detected, unable to synchronize')
     raise SystemExit(2)
-
 provider = providers.get(target)
 if not isinstance(provider, dict):
     print(f'❌ provider: {target} not found')
     raise SystemExit(2)
-
 agents = work.setdefault('agents', {})
 defaults = agents.setdefault('defaults', {})
 defaults_models_raw = defaults.get('models')
@@ -11053,12 +8863,8 @@ elif isinstance(defaults_models_raw, list):
 else:
     defaults_models = {}
 defaults['models'] = defaults_models
-
-
 def model_ref(provider_name, model_id):
     return f"{provider_name}/{model_id}"
-
-
 def get_primary_ref(defaults_obj):
     model_obj = defaults_obj.get('model')
     if isinstance(model_obj, str):
@@ -11068,8 +8874,6 @@ def get_primary_ref(defaults_obj):
         if isinstance(primary, str):
             return primary
     return None
-
-
 def set_primary_ref(defaults_obj, new_ref):
     model_obj = defaults_obj.get('model')
     if isinstance(model_obj, str):
@@ -11078,8 +8882,6 @@ def set_primary_ref(defaults_obj, new_ref):
         model_obj['primary'] = new_ref
     else:
         defaults_obj['model'] = {'primary': new_ref}
-
-
 def fetch_remote_models_with_retry(base_url, api_key, retries=3):
     last_error = None
     for attempt in range(1, retries + 1):
@@ -11099,31 +8901,23 @@ def fetch_remote_models_with_retry(base_url, api_key, retries=3):
             if attempt < retries:
                 time.sleep(1)
     return None, last_error, retries
-
-
 api = provider.get('api', '')
 base_url = provider.get('baseUrl')
 api_key = provider.get('apiKey')
 model_list = provider.get('models', [])
-
 if not base_url or not api_key or not isinstance(model_list, list) or not model_list:
     print(f'❌ provider {target} is missing baseUrl/apiKey/models and cannot perform synchronization')
     raise SystemExit(3)
-
 if api not in SUPPORTED_APIS:
     print(f'ℹ️ provider {target} currently api={api}, but the script no longer detects/corrects the protocol; please manually set it to openai-completions or openai-responses')
-
 protocol_msg = None
-
 data, err, attempts = fetch_remote_models_with_retry(base_url, api_key, retries=3)
 if err is not None:
     print(f'❌ {target}: /models detection failed, retried {attempts} times ({type(err).__name__}: {err})')
     raise SystemExit(4)
-
 if not (isinstance(data, dict) and isinstance(data.get('data'), list)):
     print(f'❌ {target}: /models The returned structure is not recognized')
     raise SystemExit(4)
-
 remote_ids = []
 for item in data['data']:
     if isinstance(item, dict) and item.get('id'):
@@ -11132,19 +8926,15 @@ remote_set = set(remote_ids)
 if not remote_set:
     print(f'❌ {target}: upstream /models is empty, synchronization aborted')
     raise SystemExit(5)
-
 local_models = [m for m in model_list if isinstance(m, dict) and m.get('id')]
 local_ids = [str(m['id']) for m in local_models]
 local_set = set(local_ids)
-
 template = copy.deepcopy(local_models[0]) if local_models else None
 if template is None:
     print(f'❌ {target}: Local models do not have a valid template model, and new models cannot be added.')
     raise SystemExit(3)
-
 removed_ids = [mid for mid in local_ids if mid not in remote_set]
 added_ids = [mid for mid in remote_ids if mid not in local_set]
-
 kept_models = [copy.deepcopy(m) for m in local_models if str(m['id']) in remote_set]
 new_models = kept_models[:]
 for mid in added_ids:
@@ -11153,52 +8943,41 @@ for mid in added_ids:
     if isinstance(nm.get('name'), str):
         nm['name'] = f'{target} / {mid}'
     new_models.append(nm)
-
 if not new_models:
     print(f'❌ {target}: No model available after synchronization, writing aborted')
     raise SystemExit(5)
-
 expected_refs = {model_ref(target, str(m['id'])) for m in new_models if isinstance(m, dict) and m.get('id')}
 local_refs = {model_ref(target, mid) for mid in local_ids}
 removed_refs = local_refs - expected_refs
 first_ref = model_ref(target, str(new_models[0]['id']))
-
 changed = False
 primary_ref = get_primary_ref(defaults)
 if isinstance(primary_ref, str) and primary_ref in removed_refs:
     set_primary_ref(defaults, first_ref)
     changed = True
     print(f'🔁 The default model has been completely replaced: {primary_ref} -> {first_ref}')
-
 for fk in ('modelFallback', 'imageModelFallback'):
     val = defaults.get(fk)
     if isinstance(val, str) and val in removed_refs:
         defaults[fk] = first_ref
         changed = True
         print(f'🔁 {fk} has been completely replaced: {val} -> {first_ref}')
-
 stale_refs = [r for r in list(defaults_models.keys()) if r.startswith(target + '/') and r not in expected_refs]
 for r in stale_refs:
     defaults_models.pop(r, None)
     changed = True
-
 for r in sorted(expected_refs):
     if r not in defaults_models:
         defaults_models[r] = {}
         changed = True
-
 if removed_ids or added_ids or len(local_models) != len(new_models):
     provider['models'] = new_models
     changed = True
-
-
 if changed:
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(work, f, ensure_ascii=False, indent=2)
         f.write('\n')
-
 print(f'✅ {target}: Added {len(added_ids)}, deleted {len(removed_ids)}, current {len(new_models)}')
-
 if added_ids:
     print(f'➕ Add new model ({len(added_ids)}):')
     for mid in added_ids:
@@ -11207,7 +8986,6 @@ if removed_ids:
     print(f'➖ Delete model ({len(removed_ids)}):')
     for mid in removed_ids:
         print(f'  - {mid}')
-
 if changed:
     print('✅ The specified provider model consistency synchronization is completed and the configuration has been written')
 else:
@@ -11235,39 +9013,32 @@ PY2
 			echo "❌ Synchronization failed: please check the configuration file structure or log output"
 			;;
 	esac
-
 	break_end
 }
-
 openclaw_detect_api_protocol_by_provider() {
 	# Protocol detection logic has been removed: scripts no longer automatically detect/determine API types.
 	# The function is retained for compatibility with menu calls, but no rewriting is done.
 	echo "ℹ️ Protocol detection has been turned off: please manually${HOME}Set provider.api in /.openclaw/openclaw.json to openai-completions or openai-responses"
 	return 0
 }
-
 fix-openclaw-provider-protocol-interactive() {
 	local config_file="${HOME}/.openclaw/openclaw.json"
 	send_stats "OpenClaw API protocol switching"
-
 	if [ ! -f "$config_file" ]; then
 		echo "❌ Configuration file not found:$config_file"
 		break_end
 		return 1
 	fi
-
 	read -erp "Please enter the API name (provider) to switch protocols:" provider_name
 	if [ -z "$provider_name" ]; then
 		echo "❌ provider name cannot be empty"
 		break_end
 		return 1
 	fi
-
 	echo "Please select the API type you want to set up:"
 	echo "1. openai-completions"
 	echo "2. openai-responses"
 	read -erp "Please enter your choice (1/2):" proto_choice
-
 	local new_api=""
 	case "$proto_choice" in
 		1) new_api="openai-completions" ;;
@@ -11278,38 +9049,29 @@ fix-openclaw-provider-protocol-interactive() {
 			return 1
 			;;
 	esac
-
 	install python3 >/dev/null 2>&1
-
 	python3 - "$config_file" "$provider_name" "$new_api" <<'PY'
 import copy
 import json
 import sys
-
 path = sys.argv[1]
 name = sys.argv[2]
 new_api = sys.argv[3]
-
 SUPPORTED_APIS = {'openai-completions', 'openai-responses'}
 if new_api not in SUPPORTED_APIS:
     print('❌ Illegal protocol value')
     raise SystemExit(3)
-
 with open(path, 'r', encoding='utf-8') as f:
     obj = json.load(f)
-
 work = copy.deepcopy(obj)
 providers = ((work.get('models') or {}).get('providers') or {})
 if not isinstance(providers, dict) or name not in providers or not isinstance(providers.get(name), dict):
     print(f'❌ provider: {name} not found')
     raise SystemExit(2)
-
 providers[name]['api'] = new_api
-
 with open(path, 'w', encoding='utf-8') as f:
     json.dump(work, f, ensure_ascii=False, indent=2)
     f.write('\n')
-
 print(f'✅ The provider {name} protocol has been updated to: {new_api}')
 PY
 	local rc=$?
@@ -11327,21 +9089,17 @@ PY
 			echo "❌ Switching failed: please check the configuration file structure or log output"
 			;;
 	esac
-
 	break_end
 }
-
 	delete-openclaw-provider-interactive() {
 		local config_file
 		config_file=$(openclaw_get_config_file)
 		send_stats "OpenClaw API delete entry"
-
 		if [ ! -f "$config_file" ]; then
 			echo "❌ Configuration file not found:$config_file"
 			break_end
 			return 1
 		fi
-
 		read -erp "Please enter the API name (provider) to be deleted:" provider_name
 		if [ -z "$provider_name" ]; then
 			send_stats "OpenClaw API Delete Cancel"
@@ -11349,25 +9107,20 @@ PY
 			break_end
 			return 1
 		fi
-
 		python3 - "$config_file" "$provider_name" <<'PY'
 import copy
 import json
 import sys
-
 path = sys.argv[1]
 name = sys.argv[2]
-
 with open(path, 'r', encoding='utf-8') as f:
     obj = json.load(f)
-
 work = copy.deepcopy(obj)
 models_cfg = work.setdefault('models', {})
 providers = models_cfg.get('providers', {})
 if not isinstance(providers, dict) or name not in providers:
     print(f'❌ provider: {name} not found')
     raise SystemExit(2)
-
 agents = work.setdefault('agents', {})
 defaults = agents.setdefault('defaults', {})
 defaults_models_raw = defaults.get('models')
@@ -11378,18 +9131,12 @@ elif isinstance(defaults_models_raw, list):
 else:
     defaults_models = {}
 defaults['models'] = defaults_models
-
-
 def model_ref(provider_name, model_id):
     return f"{provider_name}/{model_id}"
-
-
 def ref_provider(ref):
     if not isinstance(ref, str) or '/' not in ref:
         return None
     return ref.split('/', 1)[0]
-
-
 def get_primary_ref(defaults_obj):
     model_obj = defaults_obj.get('model')
     if isinstance(model_obj, str):
@@ -11399,8 +9146,6 @@ def get_primary_ref(defaults_obj):
         if isinstance(primary, str):
             return primary
     return None
-
-
 def set_primary_ref(defaults_obj, new_ref):
     model_obj = defaults_obj.get('model')
     if isinstance(model_obj, str):
@@ -11409,8 +9154,6 @@ def set_primary_ref(defaults_obj, new_ref):
         model_obj['primary'] = new_ref
     else:
         defaults_obj['model'] = {'primary': new_ref}
-
-
 def collect_available_refs(exclude_provider=None):
     refs = []
     if not isinstance(providers, dict):
@@ -11424,11 +9167,8 @@ def collect_available_refs(exclude_provider=None):
             if isinstance(m, dict) and m.get('id'):
                 refs.append(model_ref(pname, str(m['id'])))
     return refs
-
-
 replacement_candidates = collect_available_refs(exclude_provider=name)
 replacement = replacement_candidates[0] if replacement_candidates else None
-
 primary_ref = get_primary_ref(defaults)
 if ref_provider(primary_ref) == name:
     if not replacement:
@@ -11436,7 +9176,6 @@ if ref_provider(primary_ref) == name:
         raise SystemExit(3)
     set_primary_ref(defaults, replacement)
     print(f'🔁 Default primary model switching: {primary_ref} -> {replacement}')
-
 for fk in ('modelFallback', 'imageModelFallback'):
     val = defaults.get(fk)
     if ref_provider(val) == name:
@@ -11445,17 +9184,13 @@ for fk in ('modelFallback', 'imageModelFallback'):
             raise SystemExit(3)
         defaults[fk] = replacement
         print(f'🔁 {fk} switch: {val} -> {replacement}')
-
 removed_refs = [r for r in list(defaults_models.keys()) if r.startswith(name + '/')]
 for r in removed_refs:
     defaults_models.pop(r, None)
-
 providers.pop(name, None)
-
 with open(path, 'w', encoding='utf-8') as f:
     json.dump(work, f, ensure_ascii=False, indent=2)
     f.write('\n')
-
 print(f'🗑️ Deleted provider: {name}')
 print(f'🧹 Cleaned {len(removed_refs)} associated model references in defaults.models')
 PY
@@ -11477,13 +9212,10 @@ PY
 				echo "❌ Deletion failed: please check the configuration file structure or log output"
 				;;
 		esac
-
 		break_end
 	}
-
 	openclaw_api_providers_showcase() {
 		send_stats "OpenClaw API Vendor Recommendations"
-
 		clear
 		echo ""
 		echo -e "${gl_kjlan}╔════════════════════════════════════════════════════════════╗${gl_bai}"
@@ -11540,7 +9272,6 @@ PY
 		echo ""
 		read -erp "Press Enter to return..." dummy
 	}
-
 	openclaw_api_manage_menu() {
 		send_stats "OpenClaw API entrance"
 		while true; do
@@ -11558,7 +9289,6 @@ PY
 			echo "0. Exit"
 			echo "---------------------------------------"
 			read -erp "Please enter your choice:" api_choice
-
 			case "$api_choice" in
 				1)
 					add-openclaw-provider-interactive
@@ -11585,14 +9315,10 @@ PY
 			esac
 		done
 	}
-
-
-
 	install_gum() {
 	    if command -v gum >/dev/null 2>&1; then
 	        return 0
 	    fi
-
  		if command -v apt >/dev/null 2>&1; then
 	        mkdir -p /etc/apt/keyrings
 	        curl -fsSL https://repo.charm.sh/apt/gpg.key | gpg --dearmor -o /etc/apt/keyrings/charm.gpg
@@ -11618,14 +9344,9 @@ REPO
 	        zypper --non-interactive install gum
 	    fi
 	}
-
-
-
 	change_model() {
 		send_stats "Change model"
-
 		local orange="#FF8C00"
-
 		openclaw_probe_status_line() {
 			local status_text="$1"
 			local status_color_ok='[32m'
@@ -11639,7 +9360,6 @@ REPO
 " "$status_color_fail" "$status_text" "$status_color_reset"
 			fi
 		}
-
 		openclaw_model_probe() {
 			local target_model="$1"
 			local probe_timeout=25
@@ -11648,7 +9368,6 @@ REPO
 			local first_endpoint second_endpoint
 			local first_exit first_http first_latency second_exit second_http second_latency
 			local first_reply second_reply
-
 			oc_config=$(openclaw_get_config_file)
 			[ ! -f "$oc_config" ] && {
 				OPENCLAW_PROBE_STATUS="ERROR"
@@ -11657,7 +9376,6 @@ REPO
 				OPENCLAW_PROBE_REPLY="-"
 				return 1
 			}
-
 			provider_name="${target_model%%/*}"
 			request_model="${target_model#*/}"
 			base_url=$(jq -r --arg provider "$provider_name" '.models.providers[$provider].baseUrl // empty' "$oc_config" 2>/dev/null)
@@ -11669,11 +9387,9 @@ REPO
 				OPENCLAW_PROBE_REPLY="-"
 				return 1
 			fi
-
 			base_url="${base_url%/}"
 			first_endpoint="/responses"
 			second_endpoint="/chat/completions"
-
 			openclaw_extract_probe_reply() {
 				python3 - "$1" <<'PYTHON_EOF'
 import json
@@ -11725,7 +9441,6 @@ reply = ' '.join(str(reply).split())
 print(reply)
 PYTHON_EOF
 			}
-
 			openclaw_run_probe() {
 				local endpoint="$1"
 				tmp_payload=$(mktemp)
@@ -11735,13 +9450,11 @@ PYTHON_EOF
 				else
 					printf '{"model":"%s","messages":[{"role":"user","content":"hi"}],"temperature":0,"max_tokens":16}' "$request_model" > "$tmp_payload"
 				fi
-
 				probe_result=$(python3 - "$base_url" "$api_key" "$tmp_payload" "$tmp_response" "$probe_timeout" "$endpoint" <<'PYTHON_EOF'
 import sys
 import time
 import urllib.error
 import urllib.request
-
 base_url, api_key, payload_path, response_path, timeout, endpoint = sys.argv[1:7]
 timeout = int(timeout)
 url = base_url + endpoint
@@ -11781,17 +9494,14 @@ PYTHON_EOF
 				rm -f "$tmp_payload" "$tmp_response"
 				return $probe_status
 			}
-
 			openclaw_run_probe "$first_endpoint"
 			first_exit=${probe_result%%|*}
 			first_http=${probe_result#*|}
 			first_http=${first_http%%|*}
 			first_latency=${probe_result##*|}
 			first_reply="$reply_preview"
-
 			reply_trimmed=$(printf '%s' "$first_reply" | cut -c1-120)
 			[ -z "$reply_trimmed" ] && reply_trimmed="(empty return)"
-
 			if [ "$first_exit" = "0" ] && [ "$first_http" -ge 200 ] && [ "$first_http" -lt 300 ]; then
 				OPENCLAW_PROBE_STATUS="OK"
 				OPENCLAW_PROBE_MESSAGE="${first_endpoint} -> HTTP ${first_http}"
@@ -11799,17 +9509,14 @@ PYTHON_EOF
 				OPENCLAW_PROBE_REPLY="$reply_trimmed"
 				return 0
 			fi
-
 			openclaw_run_probe "$second_endpoint"
 			second_exit=${probe_result%%|*}
 			second_http=${probe_result#*|}
 			second_http=${second_http%%|*}
 			second_latency=${probe_result##*|}
 			second_reply="$reply_preview"
-
 			reply_trimmed=$(printf '%s' "$second_reply" | cut -c1-120)
 			[ -z "$reply_trimmed" ] && reply_trimmed="(empty return)"
-
 			if [ "$second_exit" = "0" ] && [ "$second_http" -ge 200 ] && [ "$second_http" -lt 300 ]; then
 				OPENCLAW_PROBE_STATUS="OK"
 				OPENCLAW_PROBE_MESSAGE="${first_endpoint}-> HTTP ${first_http:-0}, switch${second_endpoint} -> HTTP ${second_http}"
@@ -11817,47 +9524,36 @@ PYTHON_EOF
 				OPENCLAW_PROBE_REPLY="$reply_trimmed"
 				return 0
 			fi
-
 			reply_trimmed=$(printf '%s' "$first_reply" | cut -c1-120)
 			[ -z "$reply_trimmed" ] && reply_trimmed=$(printf '%s' "$second_reply" | cut -c1-120)
 			[ -z "$reply_trimmed" ] && reply_trimmed="(empty return)"
-
 			OPENCLAW_PROBE_STATUS="FAIL"
 			OPENCLAW_PROBE_MESSAGE="${first_endpoint} -> HTTP ${first_http:-0} / exit ${first_exit:-1}；${second_endpoint} -> HTTP ${second_http:-0} / exit ${second_exit:-1}"
 			OPENCLAW_PROBE_LATENCY="${first_latency:-?}ms -> ${second_latency:-?}ms"
 			OPENCLAW_PROBE_REPLY="$reply_trimmed"
 			return 1
 		}
-
 		clear
-
 		while true; do
 			local models_raw models_list default_model model_count selected_model confirm_switch
-
 			# Read model keys from configuration file (without calling openclaw models list)
 			local oc_config
 			oc_config=$(openclaw_get_config_file)
-
 			models_raw=$(jq -r '.agents.defaults.models | if type == "object" then keys[] else .[] end' "$oc_config" 2>/dev/null | sed '/^\s*$/d')
 			if [ -z "$models_raw" ]; then
 				echo "Failed to get list of models: agents.defaults.models not found in configuration file."
 				break_end
 				return 1
 			fi
-
 			# Number each model to facilitate quick location (for example: "(10) or-api/...:free")
 			models_list=$(echo "$models_raw" | awk '{print "(" NR ") " $0}')
 			model_count=$(echo "$models_list" | sed '/^\s*$/d' | wc -l | tr -d ' ')
-
 			# Read default model from configuration file (faster); fallback to openclaw command on failure
 			default_model=$(jq -r '.agents.defaults.model.primary // empty' "$oc_config" 2>/dev/null)
 			[ -z "$default_model" ] && default_model="(unknown)"
-
 			clear
-
 			install_gum
 			install gum
-
 			# If gum does not exist, it will be downgraded to the original manual input process.
 			if ! command -v gum >/dev/null 2>&1 || ! gum --version >/dev/null 2>&1; then
 				echo "---Model Management ---"
@@ -11865,18 +9561,15 @@ PYTHON_EOF
 				jq -r '.agents.defaults.models | if type == "object" then keys[] else .[] end' "$oc_config" 2>/dev/null | sed '/^\s*$/d'
 				echo "----------------"
 				read -e -p "Please enter the model name to set (e.g. openrouter/openai/gpt-4o) (enter 0 to exit):" selected_model
-
 				if [ "$selected_model" = "0" ]; then
 					echo "Operation canceled, exiting..."
 					break
 				fi
-
 				if [ -z "$selected_model" ]; then
 					echo "Error: Model name cannot be empty. Please try again."
 					echo ""
 					continue
 				fi
-
 				echo "The model being switched is:$selected_model ..."
 				if ! openclaw models set "$selected_model"; then
 					echo "Switch failed: openclaw models set returned error."
@@ -11885,7 +9578,6 @@ PYTHON_EOF
 				fi
 				openclaw_sync_sessions_model "$selected_model"
 				start_gateway
-
 				break_end
 				return 0
 			else
@@ -11900,17 +9592,13 @@ PYTHON_EOF
 				echo ""
 				gum style --faint "↑↓ Select / Enter to test / Esc to exit"
 				echo ""
-
 				selected_model=$(echo "$models_list" | gum filter 					--placeholder "Search models (such as cli-api/gpt-5.2)" 					--prompt "Select model >" 					--indicator "➜ " 					--prompt.foreground "$orange" 					--indicator.foreground "$orange" 					--cursor-text.foreground "$orange" 					--match.foreground "$orange" 					--header "" 					--height 35)
-
 				if [ -z "$selected_model" ] || echo "$selected_model" | head -n 1 | grep -iqE '^(error|usage|gum:)'; then
 					echo "Operation canceled, exiting..."
 					break
 				fi
 			fi
-
 			selected_model=$(echo "$selected_model" | sed -E 's/^\([0-9]+\)[[:space:]]+//')
-
 			echo ""
 			echo "Detecting model:$selected_model"
 			if openclaw_model_probe "$selected_model"; then
@@ -11922,7 +9610,6 @@ PYTHON_EOF
 			echo "Delay:$OPENCLAW_PROBE_LATENCY"
 			echo "summary:$OPENCLAW_PROBE_REPLY"
 			echo ""
-
 			printf "Switch to this model? [y/N, Esc returns to list]:"
 			IFS= read -rsn1 confirm_switch
 			echo ""
@@ -11938,13 +9625,11 @@ PYTHON_EOF
 					*) confirm_switch="no" ;;
 				esac
 			fi
-
 			if [ "$confirm_switch" != "yes" ]; then
 				echo "The model selection list has been returned."
 				sleep 1
 				continue
 			fi
-
 			echo "The model being switched is:$selected_model ..."
 			if ! openclaw models set "$selected_model"; then
 				echo "Switch failed: openclaw models set returned error."
@@ -11953,12 +9638,9 @@ PYTHON_EOF
 			fi
 			openclaw_sync_sessions_model "$selected_model"
 			start_gateway
-
 			break_end
 			done
 		}
-
-
 		openclaw_get_config_file() {
 			local user_config="${HOME}/.openclaw/openclaw.json"
 			local root_config="/root/.openclaw/openclaw.json"
@@ -11970,7 +9652,6 @@ PYTHON_EOF
 				echo "$user_config"
 			fi
 		}
-
 		openclaw_get_agents_dir() {
 			local user_agents="${HOME}/.openclaw/agents"
 			local root_agents="/root/.openclaw/agents"
@@ -11982,30 +9663,23 @@ PYTHON_EOF
 				echo "$user_agents"
 			fi
 		}
-
 		openclaw_sync_sessions_model() {
 			local model_ref="$1"
 			[ -z "$model_ref" ] && return 1
-
 			local agents_dir
 			agents_dir=$(openclaw_get_agents_dir)
 			[ ! -d "$agents_dir" ] && return 0
-
 			local provider="${model_ref%%/*}"
 			local model="${model_ref#*/}"
 			[ "$provider" = "$model_ref" ] && { provider=""; model="$model_ref"; }
-
 			local count=0
 			local agent_dir sessions_file backup_file
-
 			for agent_dir in "$agents_dir"/*/; do
 				[ ! -d "$agent_dir" ] && continue
 				sessions_file="$agent_dir/sessions/sessions.json"
 				[ ! -f "$sessions_file" ] && continue
-
 				backup_file="${sessions_file}.bak"
 				cp "$sessions_file" "$backup_file" 2>/dev/null || continue
-
 				if command -v jq >/dev/null 2>&1; then
 					local tmp_json
 					tmp_json=$(mktemp)
@@ -12024,15 +9698,12 @@ PYTHON_EOF
 					fi
 				fi
 			done
-
 			[ "$count" -gt 0 ] && echo "✅ Synced$countThe session model of an agent is$model_ref"
 			return 0
 		}
-
 		resolve_openclaw_plugin_id() {
 			local raw_input="$1"
 			local plugin_id="$raw_input"
-
 			plugin_id="${plugin_id#@openclaw/}"
 			if [[ "$plugin_id" == @*/* ]]; then
 				plugin_id="${plugin_id##*/}"
@@ -12040,19 +9711,15 @@ PYTHON_EOF
 			plugin_id="${plugin_id%%@*}"
 			echo "$plugin_id"
 		}
-
 		sync_openclaw_plugin_allowlist() {
 			local plugin_id="$1"
 			[ -z "$plugin_id" ] && return 1
-
 			local config_file
 			config_file=$(openclaw_get_config_file)
-
 			mkdir -p "$(dirname "$config_file")"
 			if [ ! -s "$config_file" ]; then
 				echo '{}' > "$config_file"
 			fi
-
 			if command -v jq >/dev/null 2>&1; then
 				local tmp_json
 				tmp_json=$(mktemp)
@@ -12066,34 +9733,27 @@ PYTHON_EOF
 				fi
 				rm -f "$tmp_json"
 			fi
-
 			if command -v python3 >/dev/null 2>&1; then
 				if python3 - "$config_file" "$plugin_id" <<'PYTHON_EOF'
 import json
 import sys
 from pathlib import Path
-
 config_file = Path(sys.argv[1])
 plugin_id = sys.argv[2]
-
 try:
     data = json.loads(config_file.read_text(encoding='utf-8')) if config_file.exists() else {}
     if not isinstance(data, dict):
         data = {}
 except Exception:
     data = {}
-
 plugins = data.get('plugins')
 if not isinstance(plugins, dict):
     plugins = {}
-
 a = plugins.get('allow')
 if not isinstance(a, list):
     a = []
-
 if plugin_id not in a:
     a.append(plugin_id)
-
 plugins['allow'] = a
 data['plugins'] = plugins
 config_file.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding='utf-8')
@@ -12103,23 +9763,18 @@ PYTHON_EOF
 					return 0
 				fi
 			fi
-
 			echo "⚠️ The plugin has been installed, but the synchronization of plugins.allow failed, please check manually:$config_file"
 			return 1
 		}
-
 		sync_openclaw_plugin_denylist() {
 			local plugin_id="$1"
 			[ -z "$plugin_id" ] && return 1
-
 			local config_file
 			config_file=$(openclaw_get_config_file)
-
 			mkdir -p "$(dirname "$config_file")"
 			if [ ! -s "$config_file" ]; then
 				echo '{}' > "$config_file"
 			fi
-
 			if command -v jq >/dev/null 2>&1; then
 				local tmp_json
 				tmp_json=$(mktemp)
@@ -12133,31 +9788,25 @@ PYTHON_EOF
 				fi
 				rm -f "$tmp_json"
 			fi
-
 			if command -v python3 >/dev/null 2>&1; then
 				if python3 - "$config_file" "$plugin_id" <<'PYTHON_EOF'
 import json
 import sys
 from pathlib import Path
-
 config_file = Path(sys.argv[1])
 plugin_id = sys.argv[2]
-
 try:
     data = json.loads(config_file.read_text(encoding='utf-8')) if config_file.exists() else {}
     if not isinstance(data, dict):
         data = {}
 except Exception:
     data = {}
-
 plugins = data.get('plugins')
 if not isinstance(plugins, dict):
     plugins = {}
-
 a = plugins.get('allow')
 if not isinstance(a, list):
     a = []
-
 a = [x for x in a if x != plugin_id]
 plugins['allow'] = a
 data['plugins'] = plugins
@@ -12168,16 +9817,9 @@ PYTHON_EOF
 					return 0
 				fi
 			fi
-
 			echo "⚠️ plugins.allow removal failed, please check manually:$config_file"
 			return 1
 		}
-
-
-
-
-
-
 		install_plugin() {
 		send_stats "Plug-in management"
 		while true; do
@@ -12208,37 +9850,30 @@ PYTHON_EOF
 			echo "- [voice-call] # Voice call capability"
 			echo "- [nostr] # Encrypted private chat"
 			echo "--------------------------------------------------------"
-
 			echo "1) Install/enable plugin"
 			echo "2) Delete/disable plugins"
 			echo "0) Return"
 			read -e -p "Please select an action:" plugin_action
-
 			[ "$plugin_action" = "0" ] && break
 			[ -z "$plugin_action" ] && continue
-
 			read -e -p "Please enter plugin IDs (separated by spaces, enter 0 to exit):" raw_input
 			[ "$raw_input" = "0" ] && break
 			[ -z "$raw_input" ] && continue
-
 			local success_list=""
 			local failed_list=""
 			local skipped_list=""
 			local changed=false
 			local token
-
 			for token in $raw_input; do
 				local plugin_id
 				local plugin_full
 				plugin_id=$(resolve_openclaw_plugin_id "$token")
 				plugin_full="$token"
 				[ -z "$plugin_id" ] && continue
-
 				if [ "$plugin_action" = "1" ]; then
 					echo "🔍 Checking plugin status:$plugin_id"
 					local plugin_list
 					plugin_list=$(openclaw plugins list 2>/dev/null)
-
 					if echo "$plugin_list" | grep -qw "$plugin_id" && echo "$plugin_list" | grep "$plugin_id" | grep -q "disabled"; then
 						echo "💡 Plugin [$plugin_id] Pre-installed, activating..."
 						if openclaw plugins enable "$plugin_id"; then
@@ -12250,7 +9885,6 @@ PYTHON_EOF
 						fi
 						continue
 					fi
-
 					if [ -d "/usr/lib/node_modules/openclaw/extensions/$plugin_id" ]; then
 						echo "💡 Found that the plug-in exists in the system's built-in directory, try to enable it directly..."
 						if openclaw plugins enable "$plugin_id"; then
@@ -12262,7 +9896,6 @@ PYTHON_EOF
 						fi
 						continue
 					fi
-
 					echo "📥 Not found locally, try to download and install:$plugin_full"
 					rm -rf "${HOME}/.openclaw/extensions/$plugin_id"
 					[ "$HOME" != "/root" ] && rm -rf "/root/.openclaw/extensions/$plugin_id"
@@ -12292,13 +9925,11 @@ PYTHON_EOF
 					changed=true
 				fi
 			done
-
 			echo ""
 			echo "====== Operation Summary ======"
 			echo "✅ Success:$success_list"
 			[ -n "$failed_list" ] && echo "❌ Failure:$failed_list"
 			[ -n "$skipped_list" ] && echo "⏭️ Skip:$skipped_list"
-
 			if [ "$changed" = true ]; then
 				echo "🔄 Restarting OpenClaw service to load changes..."
 				start_gateway
@@ -12306,8 +9937,6 @@ PYTHON_EOF
 			break_end
 		done
 	}
-
-
 	install_skill() {
 		send_stats "Skill management"
 		while true; do
@@ -12318,7 +9947,6 @@ PYTHON_EOF
 			echo "Currently installed skills:"
 			openclaw skills list
 			echo "----------------------------------------"
-
 			# Output a list of recommended practical skills
 			echo "Recommended practical skills (you can directly copy the name and enter it):"
 			echo "github # Manage GitHub Issues/PR/CI (gh CLI)"
@@ -12336,25 +9964,20 @@ PYTHON_EOF
 			echo "openai-whisper # Convert local audio to text (offline privacy protection)"
 			echo "coding-agent # Automatically run programming assistants such as Claude Code/Codex"
 			echo "----------------------------------------"
-
 			echo "1) Installation skills"
 			echo "2) Delete skills"
 			echo "0) Return"
 			read -e -p "Please select an action:" skill_action
-
 			[ "$skill_action" = "0" ] && break
 			[ -z "$skill_action" ] && continue
-
 			read -e -p "Please enter skill names (separated by spaces, enter 0 to exit):" skill_input
 			[ "$skill_input" = "0" ] && break
 			[ -z "$skill_input" ] && continue
-
 			local success_list=""
 			local failed_list=""
 			local skipped_list=""
 			local changed=false
 			local token
-
 			if [ "$skill_action" = "2" ]; then
 				read -e -p "Secondary confirmation: Deletion only affects the user directory ~/.openclaw/workspace/skills. Are you sure to continue? (y/N):" confirm_del
 				if [[ ! "$confirm_del" =~ ^[Yy]$ ]]; then
@@ -12363,12 +9986,10 @@ PYTHON_EOF
 					continue
 				fi
 			fi
-
 			for token in $skill_input; do
 				local skill_name
 				skill_name="$token"
 				[ -z "$skill_name" ] && continue
-
 				if [ "$skill_action" = "1" ]; then
 					local skill_found=false
 					if [ -d "${HOME}/.openclaw/workspace/skills/${skill_name}" ]; then
@@ -12378,7 +9999,6 @@ PYTHON_EOF
 						echo "💡 Skills [$skill_name] is installed in the system directory."
 						skill_found=true
 					fi
-
 					if [ "$skill_found" = true ]; then
 						read -e -p "Skill [$skill_name] Already installed, do you want to reinstall? (y/N):" reinstall
 						if [[ ! "$reinstall" =~ ^[Yy]$ ]]; then
@@ -12386,7 +10006,6 @@ PYTHON_EOF
 							continue
 						fi
 					fi
-
 					echo "Installing skills:$skill_name ..."
 					if npx clawhub install "$skill_name" --yes --no-input 2>/dev/null || npx clawhub install "$skill_name"; then
 						echo "✅ Skills$skill_nameInstallation successful."
@@ -12410,13 +10029,11 @@ PYTHON_EOF
 					fi
 				fi
 			done
-
 			echo ""
 			echo "====== Operation Summary ======"
 			echo "✅ Success:$success_list"
 			[ -n "$failed_list" ] && echo "❌ Failure:$failed_list"
 			[ -n "$skipped_list" ] && echo "⏭️ Skip:$skipped_list"
-
 			if [ "$changed" = true ]; then
 				echo "🔄 Restarting OpenClaw service to load changes..."
 				start_gateway
@@ -12424,7 +10041,6 @@ PYTHON_EOF
 			break_end
 		done
 	}
-
 openclaw_json_get_bool() {
 		local expr="$1"
 		local config_file
@@ -12435,7 +10051,6 @@ openclaw_json_get_bool() {
 		fi
 		jq -r "$expr" "$config_file" 2>/dev/null || echo "false"
 	}
-
 	openclaw_channel_has_cfg() {
 		local channel="$1"
 		local config_file
@@ -12458,12 +10073,10 @@ openclaw_json_get_bool() {
 			  end
 		' "$config_file" 2>/dev/null || echo "false"
 	}
-
 	openclaw_dir_has_files() {
 		local dir="$1"
 		[ -d "$dir" ] && find "$dir" -type f -print -quit 2>/dev/null | grep -q .
 	}
-
 	openclaw_plugin_local_installed() {
 		local plugin="$1"
 		local config_file
@@ -12471,7 +10084,6 @@ openclaw_json_get_bool() {
 		if [ -s "$config_file" ] && jq -e --arg p "$plugin" '.plugins.installs[$p]' "$config_file" >/dev/null 2>&1; then
 			return 0
 		fi
-
 		# Compatible with two common directory namings:
 		# - ~/.openclaw/extensions/qqbot
 		# - ~/.openclaw/extensions/openclaw-qqbot
@@ -12481,7 +10093,6 @@ openclaw_json_get_bool() {
 			|| [ -d "/usr/lib/node_modules/openclaw/extensions/${plugin}" ] \
 			|| [ -d "/usr/lib/node_modules/openclaw/extensions/openclaw-${plugin}" ]
 	}
-
 	openclaw_bot_status_text() {
 		local enabled="$1"
 		local configured="$2"
@@ -12499,7 +10110,6 @@ openclaw_json_get_bool() {
 			echo "Not configured"
 		fi
 	}
-
 	openclaw_colorize_bot_status() {
 		local status="$1"
 		case "$status" in
@@ -12509,13 +10119,11 @@ openclaw_json_get_bool() {
 			*) echo "$status" ;;
 		esac
 	}
-
 	openclaw_print_bot_status_line() {
 		local label="$1"
 		local status="$2"
 		echo -e "- ${label}: $(openclaw_colorize_bot_status "$status")"
 	}
-
 	openclaw_show_bot_local_status_block() {
 		local config_file
 		config_file=$(openclaw_get_config_file)
@@ -12523,7 +10131,6 @@ openclaw_json_get_bool() {
 		if [ -s "$config_file" ] && jq empty "$config_file" >/dev/null 2>&1; then
 			json_ok="true"
 		fi
-
 		local tg_enabled tg_cfg tg_connected tg_abnormal tg_status
 		tg_enabled=$(openclaw_json_get_bool '.channels.telegram.enabled // .plugins.entries.telegram.enabled // false')
 		tg_cfg=$(openclaw_channel_has_cfg "telegram")
@@ -12536,7 +10143,6 @@ openclaw_json_get_bool() {
 			tg_abnormal="true"
 		fi
 		tg_status=$(openclaw_bot_status_text "$tg_enabled" "$tg_cfg" "$tg_connected" "$tg_abnormal")
-
 		local feishu_enabled feishu_cfg feishu_connected feishu_abnormal feishu_status
 		feishu_enabled=$(openclaw_json_get_bool '.plugins.entries.feishu.enabled // .plugins.entries["openclaw-lark"].enabled // .channels.feishu.enabled // .channels.lark.enabled // false')
 		feishu_cfg=$(openclaw_channel_has_cfg "feishu")
@@ -12558,7 +10164,6 @@ openclaw_json_get_bool() {
 			feishu_connected="true"
 		fi
 		feishu_status=$(openclaw_bot_status_text "$feishu_enabled" "$feishu_cfg" "$feishu_connected" "$feishu_abnormal")
-
 		local wa_enabled wa_cfg wa_connected wa_abnormal wa_status
 		wa_enabled=$(openclaw_json_get_bool '.plugins.entries.whatsapp.enabled // .channels.whatsapp.enabled // false')
 		wa_cfg=$(openclaw_channel_has_cfg "whatsapp")
@@ -12574,7 +10179,6 @@ openclaw_json_get_bool() {
 			wa_abnormal="true"
 		fi
 		wa_status=$(openclaw_bot_status_text "$wa_enabled" "$wa_cfg" "$wa_connected" "$wa_abnormal")
-
 		local dc_enabled dc_cfg dc_connected dc_abnormal dc_status
 		dc_enabled=$(openclaw_json_get_bool '.channels.discord.enabled // .plugins.entries.discord.enabled // false')
 		dc_cfg=$(openclaw_channel_has_cfg "discord")
@@ -12587,7 +10191,6 @@ openclaw_json_get_bool() {
 			dc_abnormal="true"
 		fi
 		dc_status=$(openclaw_bot_status_text "$dc_enabled" "$dc_cfg" "$dc_connected" "$dc_abnormal")
-
 		local slack_enabled slack_cfg slack_connected slack_abnormal slack_status
 		slack_enabled=$(openclaw_json_get_bool '.plugins.entries.slack.enabled // .channels.slack.enabled // false')
 		slack_cfg=$(openclaw_channel_has_cfg "slack")
@@ -12603,7 +10206,6 @@ openclaw_json_get_bool() {
 			slack_abnormal="true"
 		fi
 		slack_status=$(openclaw_bot_status_text "$slack_enabled" "$slack_cfg" "$slack_connected" "$slack_abnormal")
-
 		local qq_enabled qq_cfg qq_connected qq_abnormal qq_status
 		qq_enabled=$(openclaw_json_get_bool '.plugins.entries.qqbot.enabled // .channels.qqbot.enabled // false')
 		qq_cfg=$(openclaw_channel_has_cfg "qqbot")
@@ -12619,7 +10221,6 @@ openclaw_json_get_bool() {
 			qq_abnormal="true"
 		fi
 		qq_status=$(openclaw_bot_status_text "$qq_enabled" "$qq_cfg" "$qq_connected" "$qq_abnormal")
-
 		local wx_enabled wx_cfg wx_connected wx_abnormal wx_status
 		wx_enabled=$(openclaw_json_get_bool '.plugins.entries.weixin.enabled // .plugins.entries["openclaw-weixin"].enabled // .channels.weixin.enabled // .channels["openclaw-weixin"].enabled // false')
 		wx_cfg=$(openclaw_channel_has_cfg "weixin")
@@ -12638,7 +10239,6 @@ openclaw_json_get_bool() {
 			wx_abnormal="true"
 		fi
 		wx_status=$(openclaw_bot_status_text "$wx_enabled" "$wx_cfg" "$wx_connected" "$wx_abnormal")
-
 		echo "Local status (only local configuration/cache, no network detection):"
 		openclaw_print_bot_status_line "Telegram" "$tg_status"
 		openclaw_print_bot_status_line "Lark" "$feishu_status"
@@ -12648,7 +10248,6 @@ openclaw_json_get_bool() {
 		openclaw_print_bot_status_line "QQ Bot" "$qq_status"
 		openclaw_print_bot_status_line "WeChat (Weixin)" "$wx_status"
 	}
-
 	change_tg_bot_code() {
 		send_stats "Robot docking"
 		while true; do
@@ -12667,7 +10266,6 @@ openclaw_json_get_bool() {
 			echo "0. Return to the previous menu"
 			echo "----------------------------------------"
 			read -e -p "Please enter your choice:" bot_choice
-
 			case $bot_choice in
 				1)
 					read -e -p "Please enter the connection code received by the TG robot (for example, NYA99R2F) (enter 0 to exit):" code
@@ -12708,21 +10306,15 @@ openclaw_json_get_bool() {
 			esac
 		done
 	}
-
-
 	openclaw_backup_root() {
 		echo "${HOME}/.openclaw/backups"
 	}
-
 	openclaw_is_interactive_terminal() {
 		[ -t 0 ] && [ -t 1 ]
 	}
-
 	openclaw_has_command() {
 		command -v "$1" >/dev/null 2>&1
 	}
-
-
 	openclaw_is_safe_relpath() {
 		local rel="$1"
 		[ -z "$rel" ] && return 1
@@ -12737,7 +10329,6 @@ openclaw_json_get_bool() {
 		esac
 		return 0
 	}
-
 	openclaw_restore_path_allowed() {
 		local mode="$1"
 		local rel="$2"
@@ -12759,20 +10350,16 @@ openclaw_json_get_bool() {
 				;;
 		esac
 	}
-
 	openclaw_pack_backup_archive() {
 		local backup_type="$1"
 		local export_mode="$2"
 		local payload_dir="$3"
 		local output_file="$4"
-
 		local tmp_root
 		tmp_root=$(mktemp -d) || return 1
 		local pack_dir="$tmp_root/package"
 		mkdir -p "$pack_dir"
-
 		cp -a "$payload_dir" "$pack_dir/payload"
-
 		(
 			cd "$pack_dir/payload" || exit 1
 			find . -type f | sed 's|^\./||' | sort > "$pack_dir/manifest.files"
@@ -12782,64 +10369,52 @@ openclaw_json_get_bool() {
 				sha256sum "$f" >> "$pack_dir/manifest.sha256"
 			done < "$pack_dir/manifest.files"
 		) || { rm -rf "$tmp_root"; return 1; }
-
 		cat > "$pack_dir/backup.meta" <<EOF
 TYPE=$backup_type
 MODE=$export_mode
 CREATED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 HOST=$(hostname)
 EOF
-
 		mkdir -p "$(dirname "$output_file")"
 		tar -C "$pack_dir" -czf "$output_file" backup.meta manifest.files manifest.sha256 payload
 		local rc=$?
 		rm -rf "$tmp_root"
 		return $rc
 	}
-
 	openclaw_offer_transfer_hint() {
 		local file_path="$1"
-
 		echo "Backup files can be downloaded using the following methods:"
 		echo "- Local path:$file_path"
 		echo "- scp example: scp root@yourserver:$file_path ./"
 		echo "- Or download using SFTP client"
 	}
-
 	openclaw_prepare_import_archive() {
 		local expected_type="$1"
 		local archive_path="$2"
 		local unpack_root="$3"
-
 		[ ! -f "$archive_path" ] && { echo "❌ File does not exist:$archive_path"; return 1; }
 		mkdir -p "$unpack_root"
 		tar -xzf "$archive_path" -C "$unpack_root" || { echo "❌ Failed to decompress the backup package"; return 1; }
-
 		local pkg_dir="$unpack_root/package"
 		if [ -f "$unpack_root/backup.meta" ]; then
 			pkg_dir="$unpack_root"
 		fi
-
 		for required in backup.meta manifest.files manifest.sha256 payload; do
 			[ -e "$pkg_dir/$required" ] || { echo "❌ The backup package is missing necessary files:$required"; return 1; }
 		done
-
 		local real_type
 		real_type=$(grep '^TYPE=' "$pkg_dir/backup.meta" | head -n1 | cut -d'=' -f2-)
 		if [ "$real_type" != "$expected_type" ]; then
 			echo "❌ Backup type mismatch, expected:$expected_type, actual: ${real_type:-unknown}"
 			return 1
 		fi
-
 		(
 			cd "$pkg_dir/payload" || exit 1
 			sha256sum -c ../manifest.sha256 >/dev/null
 		) || { echo "❌ sha256 verification failed and restoration refused"; return 1; }
-
 		echo "$pkg_dir"
 		return 0
 	}
-
 	openclaw_get_all_agent_workspaces() {
 		local config_file
 		config_file=$(openclaw_get_config_file)
@@ -12860,7 +10435,6 @@ PY
 			echo '[{"id": "main", "ws": "'"${HOME}"'/.openclaw/workspace"}]'
 		fi
 	}
-
 	openclaw_memory_backup_export() {
 		send_stats "OpenClaw memory full backup"
 		local backup_root=$(openclaw_backup_root)
@@ -12892,7 +10466,6 @@ for item in workspaces:
 		fi
 		rm -rf "$tmp_payload"; break_end
 	}
-
 	openclaw_memory_backup_import() {
 		send_stats "OpenClaw memory full restoration"
 		local archive_path=$(openclaw_read_import_path "Restore the full amount of memory (supports multi-agent)")
@@ -12915,8 +10488,6 @@ if os.path.isdir(agents_root):
             print(f"✅ Agent memory restored: {aid}")' "$workspaces_json" "$pkg_dir/payload"
 		rm -rf "$tmp_unpack"; echo "✅ Full memory restoration completed"; break_end
 	}
-
-
 	openclaw_project_backup_export() {
 		send_stats "OpenClaw project backup"
 		local config_file
@@ -12928,17 +10499,14 @@ if os.path.isdir(agents_root):
 			break_end
 			return 1
 		fi
-
 		echo "Backup mode:"
 		echo "1. Safe mode (default, recommended): workspace + openclaw.json + extensions/skills/prompts/tools (if exists)"
 		echo "2. Complete mode (contains more states, higher sensitivity risk)"
 		read -e -p "Please select backup mode (default 1):" export_mode
 		[ -z "$export_mode" ] && export_mode="1"
-
 		local mode_label="safe"
 		local tmp_payload
 		tmp_payload=$(mktemp -d) || return 1
-
 		if [ "$export_mode" = "2" ]; then
 			mode_label="full"
 			for d in workspace extensions skills prompts tools; do
@@ -12955,30 +10523,25 @@ if os.path.isdir(agents_root):
 				[ -e "$openclaw_root/$d" ] && cp -a "$openclaw_root/$d" "$tmp_payload/"
 			done
 		fi
-
 		if ! find "$tmp_payload" -mindepth 1 -print -quit | grep -q .; then
 			echo "❌ No backupable OpenClaw project content found"
 			rm -rf "$tmp_payload"
 			break_end
 			return 1
 		fi
-
 		local backup_root
 		backup_root=$(openclaw_backup_root)
 		mkdir -p "$backup_root"
 		local out_file="$backup_root/openclaw-project-${mode_label}-$(date +%Y%m%d-%H%M%S).tar.gz"
-
 		if openclaw_pack_backup_archive "openclaw-project" "$mode_label" "$tmp_payload" "$out_file"; then
 			echo "✅ OpenClaw project backup completed (${mode_label}): $out_file"
 			openclaw_offer_transfer_hint "$out_file"
 		else
 			echo "❌ OpenClaw project backup failed"
 		fi
-
 		rm -rf "$tmp_payload"
 		break_end
 	}
-
 	openclaw_project_backup_import() {
 		send_stats "OpenClaw project restore"
 		local config_file
@@ -12986,7 +10549,6 @@ if os.path.isdir(agents_root):
 		local openclaw_root
 		openclaw_root=$(dirname "$config_file")
 		mkdir -p "$openclaw_root"
-
 		echo "⚠️ High-risk operation: Project restore will overwrite OpenClaw configuration and workspace content."
 		echo "⚠️ Manifest/sha256 verification, whitelist restoration, gateway shutdown and health check will be performed before restoration."
 		read -e -p "Please enter the confirmation word [I am aware of the high risk and continue to restore] to continue:" confirm_text
@@ -12995,16 +10557,13 @@ if os.path.isdir(agents_root):
 			break_end
 			return 1
 		fi
-
 		local archive_path
 		archive_path=$(openclaw_read_import_path "Please enter the OpenClaw project backup package path")
 		[ -z "$archive_path" ] && { echo "❌ No backup path entered"; break_end; return 1; }
-
 		local tmp_unpack
 		tmp_unpack=$(mktemp -d) || return 1
 		local pkg_dir
 		pkg_dir=$(openclaw_prepare_import_archive "openclaw-project" "$archive_path" "$tmp_unpack") || { rm -rf "$tmp_unpack"; break_end; return 1; }
-
 		local invalid=0
 		local valid_list
 		valid_list=$(mktemp)
@@ -13017,7 +10576,6 @@ if os.path.isdir(agents_root):
 			fi
 			echo "$rel" >> "$valid_list"
 		done < "$pkg_dir/manifest.files"
-
 		if [ "$invalid" -ne 0 ]; then
 			rm -f "$valid_list"
 			rm -rf "$tmp_unpack"
@@ -13025,18 +10583,14 @@ if os.path.isdir(agents_root):
 			break_end
 			return 1
 		fi
-
-
 		if command -v openclaw >/dev/null 2>&1; then
 			echo "⏸️ Stop OpenClaw gateway before restoring..."
 			openclaw gateway stop >/dev/null 2>&1
 		fi
-
 		while IFS= read -r rel; do
 			mkdir -p "$openclaw_root/$(dirname "$rel")"
 			cp -a "$pkg_dir/payload/$rel" "$openclaw_root/$rel"
 		done < "$valid_list"
-
 		if command -v openclaw >/dev/null 2>&1; then
 			echo "▶️ Start OpenClaw gateway after restoration..."
 			openclaw gateway start >/dev/null 2>&1
@@ -13044,13 +10598,11 @@ if os.path.isdir(agents_root):
 			echo "🩺 gateway health check:"
 			openclaw gateway status || true
 		fi
-
 		rm -f "$valid_list"
 		rm -rf "$tmp_unpack"
 		echo "✅ OpenClaw project restoration completed"
 		break_end
 	}
-
 	openclaw_backup_detect_type() {
 		local file_name="$1"
 		if [[ "$file_name" == openclaw-memory-full-*.tar.gz ]]; then
@@ -13061,27 +10613,22 @@ if os.path.isdir(agents_root):
 			echo "Other backup files"
 		fi
 	}
-
 	openclaw_backup_collect_files() {
 		local backup_root
 		backup_root=$(openclaw_backup_root)
 		mkdir -p "$backup_root"
 		mapfile -t OPENCLAW_BACKUP_FILES < <(find "$backup_root" -maxdepth 1 -type f -name '*.tar.gz' -printf '%f\n' | sort -r)
 	}
-
-
 	openclaw_backup_render_file_list() {
 		local backup_root i file_name file_path file_type file_size file_time
 		local has_memory=0 has_project=0 has_other=0
 		backup_root=$(openclaw_backup_root)
 		openclaw_backup_collect_files
-
 		echo "Backup directory:$backup_root"
 		if [ ${#OPENCLAW_BACKUP_FILES[@]} -eq 0 ]; then
 			echo "No backup files yet"
 			return 0
 		fi
-
 		for i in "${!OPENCLAW_BACKUP_FILES[@]}"; do
 			file_type=$(openclaw_backup_detect_type "${OPENCLAW_BACKUP_FILES[$i]}")
 			case "$file_type" in
@@ -13090,7 +10637,6 @@ if os.path.isdir(agents_root):
 				"Other backup files") has_other=1 ;;
 			esac
 		done
-
 		if [ "$has_memory" -eq 1 ]; then
 			echo "memory backup file"
 			for i in "${!OPENCLAW_BACKUP_FILES[@]}"; do
@@ -13103,7 +10649,6 @@ if os.path.isdir(agents_root):
 				printf "%s | %s | %s\n" "$file_name" "$file_size" "$file_time"
 			done
 		fi
-
 		if [ "$has_project" -eq 1 ]; then
 			echo "Project backup file"
 			for i in "${!OPENCLAW_BACKUP_FILES[@]}"; do
@@ -13116,7 +10661,6 @@ if os.path.isdir(agents_root):
 				printf "%s | %s | %s\n" "$file_name" "$file_size" "$file_time"
 			done
 		fi
-
 		if [ "$has_other" -eq 1 ]; then
 			echo "Other backup files"
 			for i in "${!OPENCLAW_BACKUP_FILES[@]}"; do
@@ -13130,7 +10674,6 @@ if os.path.isdir(agents_root):
 			done
 		fi
 	}
-
 	openclaw_backup_file_exists_in_list() {
 		local target_file="$1"
 		local item
@@ -13139,18 +10682,15 @@ if os.path.isdir(agents_root):
 		done
 		return 1
 	}
-
 	openclaw_backup_delete_file() {
 		send_stats "OpenClaw delete backup files"
 		local backup_root backup_root_real user_input target_file target_path target_type
 		backup_root=$(openclaw_backup_root)
-
 		openclaw_backup_render_file_list
 		if [ ${#OPENCLAW_BACKUP_FILES[@]} -eq 0 ]; then
 			break_end
 			return 0
 		fi
-
 		read -e -p "Please enter the file name or full path to delete (0 to cancel):" user_input
 		if [ "$user_input" = "0" ]; then
 			echo "Deletion canceled."
@@ -13162,7 +10702,6 @@ if os.path.isdir(agents_root):
 			break_end
 			return 1
 		fi
-
 		backup_root_real=$(realpath -m "$backup_root")
 		if [[ "$user_input" == /* ]]; then
 			target_path=$(realpath -m "$user_input")
@@ -13179,21 +10718,17 @@ if os.path.isdir(agents_root):
 			target_file=$(basename -- "$user_input")
 			target_path="$backup_root/$target_file"
 		fi
-
 		if [ ! -f "$target_path" ]; then
 			echo "❌ The target file does not exist:$target_path"
 			break_end
 			return 1
 		fi
-
 		if ! openclaw_backup_file_exists_in_list "$target_file"; then
 			echo "❌ The target file is not in the current backup list."
 			break_end
 			return 1
 		fi
-
 		target_type=$(openclaw_backup_detect_type "$target_file")
-
 		echo "About to be deleted: [$target_type] $target_path"
 		read -e -p "First confirmation: Enter yes to confirm and continue:" confirm_step1
 		if [ "$confirm_step1" != "yes" ]; then
@@ -13207,7 +10742,6 @@ if os.path.isdir(agents_root):
 			break_end
 			return 0
 		fi
-
 		if rm -f -- "$target_path"; then
 			echo "✅ Deletion successful:$target_file"
 		else
@@ -13215,12 +10749,10 @@ if os.path.isdir(agents_root):
 		fi
 		break_end
 	}
-
 	openclaw_backup_list_files() {
 		openclaw_backup_render_file_list
 		break_end
 	}
-
 	openclaw_memory_config_file() {
 		local user_config="${HOME}/.openclaw/openclaw.json"
 		local root_config="/root/.openclaw/openclaw.json"
@@ -13232,7 +10764,6 @@ if os.path.isdir(agents_root):
 			echo "$user_config"
 		fi
 	}
-
 	openclaw_memory_config_get() {
 		local key="$1"
 		local default_value="${2:-}"
@@ -13244,22 +10775,18 @@ if os.path.isdir(agents_root):
 		fi
 		echo "$value"
 	}
-
 	openclaw_memory_config_set() {
 		local key="$1"
 		shift
 		openclaw config set "$key" "$@" >/dev/null 2>&1
 	}
-
 	openclaw_memory_config_unset() {
 		local key="$1"
 		openclaw config unset "$key" >/dev/null 2>&1
 	}
-
 	openclaw_memory_cleanup_legacy_keys() {
 		openclaw_memory_config_unset "memory.local"
 	}
-
 	openclaw_memory_list_agents() {
 		if command -v openclaw >/dev/null 2>&1; then
 			local agents_json
@@ -13323,7 +10850,6 @@ for aid, ws in results:
     print(f"{aid}\t{ws}")
 PY
 	}
-
 	openclaw_memory_status_value() {
 		local key="$1"
 		local agent_id="${2:-}"
@@ -13333,7 +10859,6 @@ PY
 			openclaw memory status 2>/dev/null | awk -F': ' -v k="$key" '$1==k {print $2; exit}'
 		fi
 	}
-
 	openclaw_memory_expand_path() {
 		local raw_path="$1"
 		if [ -z "$raw_path" ]; then
@@ -13347,7 +10872,6 @@ PY
 			echo "$raw_path"
 		fi
 	}
-
 	openclaw_memory_rebuild_index_single() {
 		local agent_id="${1:-main}"
 		local store_raw store_file ts backup_file
@@ -13368,7 +10892,6 @@ PY
 		fi
 		openclaw memory index --agent "$agent_id" --force
 	}
-
 	openclaw_memory_rebuild_index_safe() {
 		local agent_id="${1:-main}"
 		openclaw_memory_rebuild_index_single "$agent_id"
@@ -13377,7 +10900,6 @@ PY
 		echo ""
 		openclaw_memory_render_status
 	}
-
 	openclaw_memory_rebuild_index_all() {
 		local count=0
 		local agent_lines agent_id workspace
@@ -13395,7 +10917,6 @@ EOF
 		echo ""
 		openclaw_memory_render_status
 	}
-
 	openclaw_memory_prepare_workspace() {
 		local agent_id="${1:-main}"
 		local workspace memory_dir
@@ -13411,7 +10932,6 @@ EOF
 		fi
 		return 0
 	}
-
 	openclaw_memory_prepare_workspace_all() {
 		local count=0
 		local agent_lines agent_id workspace
@@ -13426,7 +10946,6 @@ $agent_lines
 EOF
 		return 0
 	}
-
 	openclaw_memory_render_status() {
 		local json_output
 		json_output=$(openclaw memory status --json 2>/dev/null)
@@ -13483,7 +11002,6 @@ for entry in data:
                 print("  ⚠️ %s" % issue)
 PY
 	}
-
 	openclaw_memory_get_backend() {
 		local backend
 		backend=$(openclaw_memory_config_get "memory.backend")
@@ -13493,11 +11011,9 @@ PY
 			echo "$backend"
 		fi
 	}
-
 	openclaw_memory_get_local_model_path() {
 		openclaw_memory_config_get "agents.defaults.memorySearch.local.modelPath"
 	}
-
 	openclaw_memory_local_model_status() {
 		local model_path="$1"
 		if [ -z "$model_path" ]; then
@@ -13514,7 +11030,6 @@ PY
 			echo "missing"
 		fi
 	}
-
 	openclaw_memory_qmd_available() {
 		if command -v qmd >/dev/null 2>&1; then
 			echo "true"
@@ -13528,7 +11043,6 @@ PY
 		fi
 		echo "false"
 	}
-
 	openclaw_memory_probe_url() {
 		local url="$1"
 		if ! command -v curl >/dev/null 2>&1; then
@@ -13545,7 +11059,6 @@ PY
 			echo "fail"
 		fi
 	}
-
 	openclaw_memory_recommend() {
 		local qmd_ok model_path model_status hf_ok mirror_ok
 		qmd_ok=$(openclaw_memory_qmd_available)
@@ -13553,7 +11066,6 @@ PY
 		model_status=$(openclaw_memory_local_model_status "$model_path")
 		hf_ok=$(openclaw_memory_probe_url "https://huggingface.co")
 		mirror_ok=$(openclaw_memory_probe_url "https://hf-mirror.com")
-
 		OPENCLAW_MEMORY_RECOMMEND_REASON=()
 		if [ "$qmd_ok" = "true" ]; then
 			OPENCLAW_MEMORY_RECOMMEND_REASON+=("QMD is available")
@@ -13577,7 +11089,6 @@ PY
 		else
 			OPENCLAW_MEMORY_RECOMMEND_REASON+=("huggingface.co / hf-mirror.com may be unreachable (suspected domestic/restricted network)")
 		fi
-
 		if [ "$qmd_ok" = "true" ]; then
 			if [ "$model_status" = "ok" ]; then
 				OPENCLAW_MEMORY_RECOMMEND="local"
@@ -13596,8 +11107,6 @@ PY
 			fi
 		fi
 	}
-
-
 	openclaw_memory_detect_region() {
 		OPENCLAW_MEMORY_COUNTRY="unknown"
 		OPENCLAW_MEMORY_USE_MIRROR="false"
@@ -13612,7 +11121,6 @@ PY
 				;;
 		esac
 	}
-
 	openclaw_memory_select_sources() {
 		local hf_ok mirror_ok
 		hf_ok=$(openclaw_memory_probe_url "https://huggingface.co")
@@ -13639,7 +11147,6 @@ PY
 			OPENCLAW_MEMORY_GH_PROXY="https://"
 		fi
 	}
-
 	openclaw_memory_download_file() {
 		local url="$1"
 		local dest="$2"
@@ -13655,7 +11162,6 @@ PY
 		echo "❌ Curl or wget is not detected and cannot be downloaded."
 		return 1
 	}
-
 	openclaw_memory_check_sqlite() {
 		if ! command -v sqlite3 >/dev/null 2>&1; then
 			echo "⚠️ sqlite3 is not detected, QMD may not function properly."
@@ -13667,7 +11173,6 @@ PY
 		echo "ℹ️ sqlite extension support cannot be reliably detected and will continue."
 		return 0
 	}
-
 	openclaw_memory_ensure_bun() {
 		if [ -x "$HOME/.bun/bin/bun" ]; then
 			export PATH="$HOME/.bun/bin:$PATH"
@@ -13695,7 +11200,6 @@ PY
 		echo "❌ bun installation failed"
 		return 1
 	}
-
 	openclaw_memory_ensure_qmd() {
 		local qmd_path
 		qmd_path=$(command -v qmd 2>/dev/null || true)
@@ -13723,7 +11227,6 @@ PY
 		echo "✅ qmd installation completed:$qmd_path"
 		return 0
 	}
-
 	openclaw_memory_render_auto_summary() {
 		echo "---------------------------------------"
 		echo "✅ Environment ready"
@@ -13757,7 +11260,6 @@ PY
 		openclaw_memory_render_status
 		echo "---------------------------------------"
 	}
-
 	openclaw_memory_auto_confirm() {
 		local scheme_label="$1"
 		OPENCLAW_MEMORY_PREHEAT="true"
@@ -13799,7 +11301,6 @@ PY
 		fi
 		return 0
 	}
-
 	openclaw_memory_auto_setup_qmd() {
 		echo "🔍 Detect QMD environment"
 		openclaw_memory_cleanup_legacy_keys
@@ -13845,7 +11346,6 @@ EOF
 		fi
 		echo "✅ QMD automatic deployment completed"
 	}
-
 	openclaw_memory_auto_setup_local() {
 		echo "🔍 Detect Local environment"
 		openclaw_memory_cleanup_legacy_keys
@@ -13864,7 +11364,6 @@ EOF
 			openclaw_memory_config_set "agents.defaults.memorySearch.provider" "local"
 			echo "✅ agents.defaults.memorySearch.provider=local set"
 		fi
-
 		local model_path model_status
 		model_path=$(openclaw_memory_get_local_model_path)
 		model_path=$(openclaw_memory_expand_path "$model_path")
@@ -13909,7 +11408,6 @@ EOF
 		fi
 		echo "✅ Local automatic deployment is completed"
 	}
-
 	openclaw_memory_auto_setup_run() {
 		local scheme="$1"
 		local scheme_label
@@ -13961,7 +11459,6 @@ EOF
 		openclaw_memory_render_auto_summary
 		return 0
 	}
-
 	openclaw_memory_auto_setup_menu() {
 		while true; do
 			clear
@@ -13997,7 +11494,6 @@ EOF
 			esac
 		done
 	}
-
 	openclaw_memory_apply_scheme() {
 		local scheme="$1"
 		openclaw_memory_cleanup_legacy_keys
@@ -14025,7 +11521,6 @@ EOF
 		echo "✅ Memory scheme configuration has been updated"
 		return 0
 	}
-
 	openclaw_memory_offer_restart() {
 		echo "The configuration has been written and needs to be restarted to take effect after the OpenClaw gateway is restarted."
 		read -e -p "Restart OpenClaw Gateway now? (Y/n):" restart_choice
@@ -14039,7 +11534,6 @@ EOF
 			openclaw gateway restart
 		fi
 	}
-
 	openclaw_memory_fix_index() {
 		local backend include_dm
 		backend=$(openclaw_memory_get_backend)
@@ -14084,7 +11578,6 @@ EOF
 		fi
 		break_end
 	}
-
 	openclaw_memory_scheme_menu() {
 		while true; do
 			clear
@@ -14133,7 +11626,6 @@ EOF
 			esac
 		done
 	}
-
 	openclaw_memory_file_collect() {
 		OPENCLAW_MEMORY_FILES=()
 		OPENCLAW_MEMORY_FILE_LABELS=()
@@ -14159,7 +11651,6 @@ EOF
 $agent_lines
 EOF
 	}
-
 	openclaw_memory_file_render_list() {
 		openclaw_memory_file_collect
 		if [ ${#OPENCLAW_MEMORY_FILES[@]} -eq 0 ]; then
@@ -14177,7 +11668,6 @@ EOF
 			printf "%s | %s | %s | %s\\n" "$((i+1))" "$rel" "$size" "$mtime"
 		done
 	}
-
 	openclaw_memory_view_file() {
 		local file="$1"
 		[ -f "$file" ] || {
@@ -14223,7 +11713,6 @@ EOF
 		sed -n "${start_line},${end_line}p" "$file"
 		echo "---------------------------------------"
 	}
-
 	openclaw_memory_files_menu() {
 		while true; do
 			clear
@@ -14256,8 +11745,6 @@ EOF
 			read -p "Press Enter to return to the list..."
 			done
 	}
-
-
 	openclaw_memory_search_test() {
 		read -e -p "Enter search keywords:" query
 		if [ -z "$query" ]; then
@@ -14267,12 +11754,10 @@ EOF
 		echo "Searching memory..."
 		openclaw memory search "$query" --max-results 5
 	}
-
 	openclaw_memory_deep_status() {
 		echo "Detecting embedded model readiness status..."
 		openclaw memory status --deep
 	}
-
 	openclaw_memory_menu() {
 		send_stats "OpenClaw memory management"
 		while true; do
@@ -14351,17 +11836,14 @@ EOF
 			esac
 		done
 	}
-
 	openclaw_permission_config_file() {
 		echo "$(openclaw_get_config_file)"
 	}
-
 	openclaw_permission_backup_file() {
 		local backup_root
 		backup_root=$(openclaw_backup_root)
 		echo "${backup_root}/openclaw-permission-last.json"
 	}
-
 	openclaw_permission_require_openclaw() {
 		if ! openclaw_has_command openclaw; then
 			echo "❌ The openclaw command is not detected, please install or initialize OpenClaw first."
@@ -14369,7 +11851,6 @@ EOF
 		fi
 		return 0
 	}
-
 	openclaw_permission_backup_current() {
 		local config_file backup_file
 		config_file=$(openclaw_permission_config_file)
@@ -14386,7 +11867,6 @@ EOF
 		echo "✅ Current permission configuration has been backed up:$backup_file"
 		return 0
 	}
-
 	openclaw_permission_restore_backup() {
 		local config_file backup_file
 		config_file=$(openclaw_permission_config_file)
@@ -14403,7 +11883,6 @@ EOF
 		openclaw_permission_restart_gateway || true
 		return 0
 	}
-
 	openclaw_permission_restart_gateway() {
 		if ! openclaw_has_command openclaw; then
 			echo "❌ openclaw is not detected and OpenClaw Gateway cannot be restarted."
@@ -14415,12 +11894,10 @@ EOF
 			openclaw gateway start >/dev/null 2>&1
 		}
 	}
-
 	openclaw_permission_get_value() {
 		local path="$1"
 		local config_file
 		config_file=$(openclaw_permission_config_file)
-
 		if openclaw_has_command openclaw; then
 			local value
 			value=$(openclaw config get "$path" 2>&1 | head -n 1)
@@ -14440,9 +11917,7 @@ EOF
 				return 0
 			fi
 		fi
-
 		[ -f "$config_file" ] || { echo "(unset)"; return 0; }
-
 		if openclaw_has_command jq; then
 			local jq_value
 			jq_value=$(jq -r --arg p "$path" 'getpath($p|split(".")) // "(unset)"' "$config_file" 2>/dev/null) || jq_value="(unset)"
@@ -14450,7 +11925,6 @@ EOF
 			echo "$jq_value"
 			return 0
 		fi
-
 		if openclaw_has_command python3; then
 			python3 - "$config_file" "$path" <<'PY'
 import json, sys
@@ -14473,11 +11947,9 @@ else:
 PY
 			return 0
 		fi
-
 		echo "(unset)"
 		return 0
 	}
-
 	openclaw_permission_unset_optional() {
 		local key="$1"
 		local probe
@@ -14493,15 +11965,12 @@ PY
 		fi
 		return 1
 	}
-
 	openclaw_permission_detect_mode() {
 		local config_file
 		config_file=$(openclaw_permission_config_file)
 		[ ! -f "$config_file" ] && { echo "Unknown mode"; return; }
-
 		python3 - "$config_file" <<'PY'
 import json, sys
-
 def get_v(o, p):
     for k in p.split('.'):
         if isinstance(o, dict) and k in o:
@@ -14509,7 +11978,6 @@ def get_v(o, p):
         else:
             return "(unset)"
     return str(o).lower()
-
 try:
     with open(sys.argv[1], 'r', encoding='utf-8') as f:
         d = json.load(f)
@@ -14520,7 +11988,6 @@ try:
     b = get_v(d, "commands.bash")
     ap = get_v(d, "tools.exec.applyPatch.enabled")
     w = get_v(d, "tools.exec.applyPatch.workspaceOnly")
-
     if p == "coding" and s == "allowlist" and a == "on-miss" and e == "false" and b == "false" and ap == "false":
         print("Standard safe mode")
     elif p == "coding" and s == "allowlist" and a == "on-miss" and e == "true" and b == "true" and ap == "true" and w == "true":
@@ -14533,15 +12000,12 @@ except Exception:
     print("Custom mode")
 PY
 	}
-
 		openclaw_permission_update_exec_approvals() {
 		local sec="$1"
 		local ask="$2"
 		local fallback="$3"
 		local approvals_file="$HOME/.openclaw/exec-approvals.json"
-
 		mkdir -p "$HOME/.openclaw"
-
 		# Generate JSON and write via openclaw approvals set --stdin (preferred)
 		# If the CLI does not support it, it will fall back to writing the file directly.
 		local json_payload
@@ -14564,14 +12028,12 @@ data["defaults"]["askFallback"] = sys.argv[4]
 data["defaults"]["autoAllowSkills"] = True
 print(json.dumps(data, indent=2))
 ' "$approvals_file" "$sec" "$ask" "$fallback")
-
 		if openclaw_has_command openclaw && echo "$json_payload" | openclaw approvals set --stdin >/dev/null 2>&1; then
 			return 0
 		fi
 		# Fallback: Write the file directly
 		echo "$json_payload" > "$approvals_file"
 	}
-
 	openclaw_permission_render_status() {
 		echo "Application layer configuration: ~/.openclaw/openclaw.json"
 		echo "Host approval: ~/.openclaw/exec-approvals.json"
@@ -14586,7 +12048,6 @@ print(json.dumps(data, indent=2))
 		[ -z "$current_sec" ] || echo "$current_sec" | grep -qi "config path not found" && current_sec=""
 		[ -z "$current_ask" ] || echo "$current_ask" | grep -qi "config path not found" && current_ask=""
 		[ -z "$current_elevated" ] || echo "$current_elevated" | grep -qi "config path not found" && current_elevated=""
-
 		local current_mode="Unknown / Custom"
 		if [ "$current_profile" = "full" ] && [ "$current_sec" = "full" ] && [ "$current_ask" = "off" ]; then
 			current_mode="\033[1;31mFull open mode\033[0m"
@@ -14604,7 +12065,6 @@ print(json.dumps(data, indent=2))
 		echo "Exec limit: ${current_sec:-(unset)}"
 		echo "Approval prompt: ${current_ask:-(unset)}"
 		echo "Privilege elevation switch: ${current_elevated:-(unset)}"
-
 		echo -e "\n${gl_huang}[Underlying Exec Approvals status]${gl_bai}"
 		if openclaw_has_command openclaw; then
 			local approvals_json
@@ -14651,11 +12111,9 @@ except Exception:
 			echo "(Not configured, forced to use the system's built-in security policy)"
 		fi
 	}
-
 	openclaw_permission_apply_standard() {
 		send_stats "OpenClaw Permissions - Standard Security Mode"
 		openclaw_permission_require_openclaw || return 1
-
 		echo "Configuring application layer policy..."
 		openclaw config set tools.profile coding >/dev/null 2>&1
 		openclaw config set tools.exec.security allowlist >/dev/null 2>&1
@@ -14663,62 +12121,49 @@ except Exception:
 		openclaw config set tools.elevated.enabled false >/dev/null 2>&1
 		openclaw config set tools.exec.strictInlineEval true >/dev/null 2>&1  # 拦截危险的内联代码
 		openclaw config unset commands.bash >/dev/null 2>&1 # 废弃旧版参数
-
 		echo "Configuring host approval interception..."
 		openclaw_permission_update_exec_approvals "allowlist" "on-miss" "deny"
-
 		openclaw_permission_restart_gateway
 		echo -e "${gl_lv}✅ Switched to standard safety mode (all dangerous commands will ask for your approval through UI/TG)${gl_bai}"
 	}
-
 	openclaw_permission_apply_developer() {
 		send_stats "OpenClaw Permissions - Development Enhanced Mode"
 		openclaw_permission_require_openclaw || return 1
-
 		echo "Configuring application layer policy..."
 		openclaw config set tools.profile coding >/dev/null 2>&1
 		openclaw config set tools.exec.security allowlist >/dev/null 2>&1
 		openclaw config set tools.exec.ask on-miss >/dev/null 2>&1
 		openclaw config set tools.elevated.enabled true >/dev/null 2>&1 # 允许智能体申请提权
 		openclaw config set tools.exec.strictInlineEval false >/dev/null 2>&1
-
 		echo "Configuring host approval interception..."
 		openclaw_permission_update_exec_approvals "allowlist" "on-miss" "deny"
-
 		openclaw_permission_restart_gateway
 		echo -e "${gl_lv}✅ Switched to development enhancement mode (privilege escalation is allowed, but common dangerous commands still require approval)${gl_bai}"
 	}
-
 	openclaw_permission_apply_full() {
 		send_stats "OpenClaw Permissions - Fully Open Mode"
 		openclaw_permission_require_openclaw || return 1
-
 		echo "Configuring application layer policy..."
 		openclaw config set tools.profile full >/dev/null 2>&1
 		openclaw config set tools.exec.security full >/dev/null 2>&1
 		openclaw config set tools.exec.ask off >/dev/null 2>&1
 		openclaw config set tools.elevated.enabled true >/dev/null 2>&1
 		openclaw config set tools.exec.strictInlineEval false >/dev/null 2>&1
-
 		echo "Disintegrating host interception defense..."
 		# The full and off here will completely bypass the exec approval system of the underlying host.
 		openclaw_permission_update_exec_approvals "full" "off" "full"
-
 		openclaw_permission_restart_gateway
 		echo -e "${gl_lv}✅ Has been switched to fully open mode (Warning: All host command interceptions have expired, and the agent has the highest permissions)${gl_bai}"
 	}
-
 	openclaw_permission_restore_official_defaults() {
 		send_stats "OpenClaw permissions-restore official default"
 		openclaw_permission_require_openclaw || return 1
-
 		echo "Clean application layer force coverage..."
 		openclaw config unset tools.profile >/dev/null 2>&1
 		openclaw config unset tools.exec.security >/dev/null 2>&1
 		openclaw config unset tools.exec.ask >/dev/null 2>&1
 		openclaw config unset tools.elevated.enabled >/dev/null 2>&1
 		openclaw config unset tools.exec.strictInlineEval >/dev/null 2>&1
-
 		echo "Clean host interception configuration..."
 		# Prioritize clearing the approval configuration through the CLI, and fall back to directly deleting the file.
 		if echo '{"version":1,"defaults":{}}' | openclaw approvals set --stdin >/dev/null 2>&1; then
@@ -14726,11 +12171,9 @@ except Exception:
 		else
 			rm -f "$HOME/.openclaw/exec-approvals.json"
 		fi
-
 		openclaw_permission_restart_gateway
 		echo -e "${gl_lv}✅ Reverted to OpenClaw official security sandbox defense mechanism${gl_bai}"
 	}
-
 	openclaw_permission_run_audit() {
 		echo "======================================="
 		echo "Run the official OpenClaw security audit and physical..."
@@ -14745,8 +12188,6 @@ except Exception:
 		echo "Press any key to return..."
 		read -n 1 -s
 	}
-
-
 	openclaw_permission_manage_allowlist() {
 		while true; do
 			clear
@@ -14805,7 +12246,6 @@ except Exception as e:
 			esac
 		done
 	}
-
 	openclaw_permission_menu() {
 		send_stats "OpenClaw permission management"
 		while true; do
@@ -14865,7 +12305,6 @@ except Exception as e:
 			esac
 		done
 	}
-
 	openclaw_multiagent_config_file() {
 		local config_file
 		config_file=$(openclaw_permission_config_file)
@@ -14875,7 +12314,6 @@ except Exception as e:
 		fi
 		openclaw config file 2>/dev/null | tail -n 1
 	}
-
 	openclaw_multiagent_default_agent() {
 		local config_file
 		config_file=$(openclaw_permission_config_file)
@@ -14921,7 +12359,6 @@ except Exception:
 		fi
 		echo "$value"
 	}
-
 	openclaw_multiagent_require_openclaw() {
 		if ! openclaw_has_command openclaw; then
 			echo "❌ The openclaw command is not detected, please install or initialize OpenClaw first."
@@ -14929,7 +12366,6 @@ except Exception:
 		fi
 		return 0
 	}
-
 	openclaw_multiagent_agents_json() {
 		local result
 		if openclaw_has_command openclaw; then
@@ -14960,7 +12396,6 @@ PY
 		fi
 		echo '[]'
 	}
-
 	openclaw_multiagent_bindings_json() {
 		local result
 		if openclaw_has_command openclaw; then
@@ -14996,7 +12431,6 @@ PY
 		fi
 		echo '[]'
 	}
-
 	openclaw_multiagent_sessions_json() {
 		local result
 		if openclaw_has_command openclaw; then
@@ -15038,7 +12472,6 @@ for agent_id in agent_dirs:
 print(json.dumps({"path":"(filesystem)","count":len(sessions),"sessions":sessions}, ensure_ascii=False))
 PY
 	}
-
 	openclaw_multiagent_render_status() {
 		local config_file default_agent
 		config_file=$(openclaw_multiagent_config_file)
@@ -15074,7 +12507,6 @@ else:
         print("Number of bindings: %s" % bcount)
 ' "$(openclaw_multiagent_agents_json)" "$(openclaw_multiagent_bindings_json)" "$(openclaw_multiagent_sessions_json)"
 	}
-
 	openclaw_multiagent_list_agents() {
 		send_stats "OpenClaw Multi-Agent - List Agents"
 		python3 -c 'import json,sys; agents=json.loads(sys.argv[1] or "[]");
@@ -15082,7 +12514,6 @@ if not agents: print("No Agent has been configured yet."); raise SystemExit(0)
 for idx,item in enumerate(agents,1):
  print("%s. %s" % (idx, item.get("id","?"))); print("   workspace : %s" % item.get("workspace","-")); ident=(item.get("identityName") or "-") + ((" " + item.get("identityEmoji")) if item.get("identityEmoji") else ""); print("   identity  : %s" % ident.strip()); print("   model     : %s" % (item.get("model") or "-")); print("   bindings  : %s" % item.get("bindings",0)); print("   default   : %s" % ("yes" if item.get("isDefault") else "no"))' "$(openclaw_multiagent_agents_json)"
 	}
-
 	openclaw_multiagent_add_agent() {
 		send_stats "OpenClaw multi-agent-new Agent"
 		openclaw_multiagent_require_openclaw || return 1
@@ -15109,7 +12540,6 @@ for idx,item in enumerate(agents,1):
 			return 1
 		fi
 	}
-
 	openclaw_multiagent_delete_agent() {
 		send_stats "OpenClaw multi-agent-delete agent"
 		openclaw_multiagent_require_openclaw || return 1
@@ -15126,7 +12556,6 @@ for idx,item in enumerate(agents,1):
 			return 1
 		fi
 	}
-
 	openclaw_multiagent_list_bindings() {
 		send_stats "OpenClaw multi-agent - view routing bindings"
 		python3 -c '
@@ -15140,7 +12569,6 @@ for idx,item in enumerate(bindings,1):
     print("%s. agent=%s | %s" % (idx, item.get("agentId","?"), desc))
 ' "$(openclaw_multiagent_bindings_json)"
 	}
-
 	openclaw_multiagent_add_binding() {
 		send_stats "OpenClaw multi-agent-new routing binding"
 		openclaw_multiagent_require_openclaw || return 1
@@ -15158,7 +12586,6 @@ for idx,item in enumerate(bindings,1):
 			return 1
 		fi
 	}
-
 	openclaw_multiagent_remove_binding() {
 		send_stats "OpenClaw multi-agent - remove route binding"
 		openclaw_multiagent_require_openclaw || return 1
@@ -15176,8 +12603,6 @@ for idx,item in enumerate(bindings,1):
 			return 1
 		fi
 	}
-
-
 	openclaw_multiagent_show_sessions() {
 		send_stats "OpenClaw Multi-Agent - Session Overview"
 		python3 -c '
@@ -15207,7 +12632,6 @@ for item in sessions[:10]:
     print("%s | %s | %s%s" % (aid, key, model, tokens))
 ' "$(openclaw_multiagent_sessions_json)"
 	}
-
 	openclaw_multiagent_health_check() {
 		send_stats "OpenClaw Multi-Agent-Health Check"
 		openclaw_multiagent_require_openclaw || return 1
@@ -15242,8 +12666,6 @@ print("✅Multi-agent health check completed")
 		echo "Run a security audit..."
 		openclaw security audit 2>/dev/null || echo "⚠️ Security audit command is not available"
 	}
-
-
 	openclaw_multiagent_set_identity() {
 		openclaw_multiagent_require_openclaw || return 1
 		openclaw_multiagent_list_agents
@@ -15262,7 +12684,6 @@ print("✅Multi-agent health check completed")
 		fi
 		eval "$cmd"
 	}
-
 	openclaw_multiagent_cleanup_sessions() {
 		openclaw_multiagent_require_openclaw || return 1
 		echo "Cleaning up expired/redundant session data soon..."
@@ -15270,7 +12691,6 @@ print("✅Multi-agent health check completed")
 		[ "$confirm" != "yes" ] && { echo "Canceled"; return 0; }
 		openclaw sessions cleanup
 	}
-
 	openclaw_multiagent_menu() {
 		send_stats "OpenClaw multi-agent management"
 		while true; do
@@ -15307,10 +12727,7 @@ print("✅Multi-agent health check completed")
 			esac
 		done
 	}
-
-
 openclaw_backup_restore_menu() {
-
 		send_stats "OpenClaw backup and restore"
 		while true; do
 			clear
@@ -15327,7 +12744,6 @@ openclaw_backup_restore_menu() {
 			echo "0. Return to the previous level"
 			echo "---------------------------------------"
 			read -e -p "Please enter your choice:" backup_choice
-
 			case "$backup_choice" in
 				1) openclaw_memory_backup_export ;;
 				2) openclaw_memory_backup_import ;;
@@ -15342,8 +12758,6 @@ openclaw_backup_restore_menu() {
 			esac
 		done
 	}
-
-
 	update_moltbot() {
 		echo "Update OpenClaw..."
 		send_stats "Update OpenClaw..."
@@ -15358,8 +12772,6 @@ openclaw_backup_restore_menu() {
 		echo "Update completed"
 		break_end
 	}
-
-
 	uninstall_moltbot() {
 		echo "Uninstall OpenClaw..."
 		send_stats "Uninstall OpenClaw..."
@@ -15373,22 +12785,14 @@ openclaw_backup_restore_menu() {
 		echo "Uninstall completed"
 		break_end
 	}
-
 	nano_openclaw_json() {
 		send_stats "Edit the OpenClaw configuration file"
 		install nano
 		nano "$(openclaw_get_config_file)"
 		start_gateway
 	}
-
-
-
-
-
-
 	openclaw_find_webui_domain() {
 		local conf domain_list
-
 		domain_list=$(
 			grep -R "18789" /home/web/conf.d/*.conf 2>/dev/null \
 			| awk -F: '{print $1}' \
@@ -15397,21 +12801,15 @@ openclaw_backup_restore_menu() {
 				basename "$conf" .conf
 			done
 		)
-
 		if [ -n "$domain_list" ]; then
 			echo "$domain_list"
 		fi
 	}
-
-
-
 	openclaw_show_webui_addr() {
 		local local_ip token domains
-
 		echo "=================================="
 		echo "OpenClaw WebUI access address"
 		local_ip="127.0.0.1"
-
 		token=$(
 			openclaw dashboard 2>/dev/null \
 			| sed -n 's/.*:18789\/#token=\([a-f0-9]\+\).*/\1/p' \
@@ -15420,7 +12818,6 @@ openclaw_backup_restore_menu() {
 		echo
 		echo "Local address:"
 		echo "http://${local_ip}:18789/#token=${token}"
-
 		domains=$(openclaw_find_webui_domain)
 		if [ -n "$domains" ]; then
 			echo "Domain name address:"
@@ -15428,23 +12825,17 @@ openclaw_backup_restore_menu() {
 				echo "https://${d}/#token=${token}"
 			done
 		fi
-
 		echo "=================================="
 	}
-
-
-
 	# Add a domain name (call the function you gave)
 	openclaw_domain_webui() {
 		add_yuming
 		ldnmp_Proxy ${yuming} 127.0.0.1 18789
-
 		token=$(
 			openclaw dashboard 2>/dev/null \
 			| sed -n 's/.*:18789\/#token=\([a-f0-9]\+\).*/\1/p' \
 			| head -n 1
 		)
-
 		clear
 		echo "Visit address:"
 		echo "https://${yuming}/#token=$token"
@@ -15463,29 +12854,21 @@ openclaw_backup_restore_menu() {
 				openclaw gateway restart >/dev/null 2>&1
 			fi
 		fi
-
 		openclaw devices list
-
 		read -e -p "Please enter Request_Key:" Request_Key
-
 		[ -z "$Request_Key" ] && {
 			echo "Request_Key cannot be empty"
 			return 1
 		}
-
 		openclaw devices approve "$Request_Key"
-
 	}
-
 	# Delete domain name
 	openclaw_remove_domain() {
 		echo "Domain name format example.com without https://"
 		web_del
 	}
-
 	# Main menu
 	openclaw_webui_menu() {
-
 		send_stats "WebUI access and settings"
 		while true; do
 			clear
@@ -15496,7 +12879,6 @@ openclaw_backup_restore_menu() {
 			echo "0. Exit"
 			echo
 			read -e -p "Please select:" choice
-
 			case "$choice" in
 				1)
 					openclaw_domain_webui
@@ -15517,9 +12899,6 @@ openclaw_backup_restore_menu() {
 			esac
 		done
 	}
-
-
-
 	# main loop
 	while true; do
 		show_menu
@@ -15557,16 +12936,9 @@ openclaw_backup_restore_menu() {
 			*) break ;;
 		esac
 	done
-
 }
-
-
-
-
 linux_panel() {
-
 local sub_choice="$1"
-
 clear
 cd ~
 install git
@@ -15578,16 +12950,12 @@ else
 	# git pull origin main > /dev/null 2>&1
 	timeout 10s git pull ${gh_proxy}github.com/harvey/apps.git main > /dev/null 2>&1
 fi
-
 while true; do
-
 	if [ -z "$sub_choice" ]; then
 	  clear
 	  echo -e "application market"
 	  echo -e "${gl_kjlan}-------------------------"
-
 	  local app_numbers=$([ -f /home/docker/appno.txt ] && cat /home/docker/appno.txt || echo "")
-
 	  # Set color with loop
 	  for i in {1..150}; do
 		  if echo "$app_numbers" | grep -q "^$i$"; then
@@ -15596,7 +12964,6 @@ while true; do
 			  declare "color$i=${gl_bai}"
 		  fi
 	  done
-
 	  echo -e "${gl_kjlan}1.   ${color1}Pagoda panel official version${gl_kjlan}2.   ${color2}aaPanel Pagoda International Version"
 	  echo -e "${gl_kjlan}3.   ${color3}1Panel new generation management panel${gl_kjlan}4.   ${color4}NginxProxyManager visualization panel"
 	  echo -e "${gl_kjlan}5.   ${color5}OpenList multi-store file list program${gl_kjlan}6.   ${color6}Ubuntu Remote Desktop Web Edition"
@@ -15669,13 +13036,11 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}Third-party application list"
   	  echo -e "${gl_kjlan}Want your app to appear here? Check out the developer guide:${gl_huang}https://dev.harvey.sh/${gl_bai}"
-
 	  for f in "$HOME"/apps/*.conf; do
 		  [ -e "$f" ] || continue
 		  local base_name=$(basename "$f" .conf)
 		  # Get app description
 		  local app_text=$(grep "app_text=" "$f" | cut -d'=' -f2 | tr -d '"' | tr -d "'")
-
 		  # Check installation status (match ID in appno.txt)
 		  # It is assumed here that what is recorded in appno.txt is base_name (i.e. file name)
 		  if echo "$app_numbers" | grep -q "^$base_name$"; then
@@ -15686,9 +13051,6 @@ while true; do
 			  echo -e "${gl_kjlan}$base_name${gl_bai} - $app_text"
 		  fi
 	  done
-
-
-
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}b.   ${gl_bai}Back up all application data${gl_kjlan}r.   ${gl_bai}Restore all app data"
 	  echo -e "${gl_kjlan}------------------------"
@@ -15696,91 +13058,67 @@ while true; do
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  read -e -p "Please enter your choice:" sub_choice
 	fi
-
 	case $sub_choice in
 	  1|bt|baota)
 		local app_id="1"
 		local lujing="[ -d "/www/server/panel" ]"
 		local panelname="pagoda panel"
 		local panelurl="https://www.bt.cn/new/index.html"
-
 		panel_app_install() {
 			if [ -f /usr/bin/curl ];then curl -sSO https://download.bt.cn/install/install_panel.sh;else wget -O install_panel.sh https://download.bt.cn/install/install_panel.sh;fi;bash install_panel.sh ed8484bec
 		}
-
 		panel_app_manage() {
 			bt
 		}
-
 		panel_app_uninstall() {
 			curl -o bt-uninstall.sh http://download.bt.cn/install/bt-uninstall.sh > /dev/null 2>&1 && chmod +x bt-uninstall.sh && ./bt-uninstall.sh
 			chmod +x bt-uninstall.sh
 			./bt-uninstall.sh
 		}
-
 		install_panel
-
-
-
 		  ;;
 	  2|aapanel)
-
-
 		local app_id="2"
 		local lujing="[ -d "/www/server/panel" ]"
 		local panelname="aapanel"
 		local panelurl="https://www.aapanel.com/new/index.html"
-
 		panel_app_install() {
 			URL=https://www.aapanel.com/script/install_7.0_en.sh && if [ -f /usr/bin/curl ];then curl -ksSO "$URL" ;else wget --no-check-certificate -O install_7.0_en.sh "$URL";fi;bash install_7.0_en.sh aapanel
 		}
-
 		panel_app_manage() {
 			bt
 		}
-
 		panel_app_uninstall() {
 			curl -o bt-uninstall.sh http://download.bt.cn/install/bt-uninstall.sh > /dev/null 2>&1 && chmod +x bt-uninstall.sh && ./bt-uninstall.sh
 			chmod +x bt-uninstall.sh
 			./bt-uninstall.sh
 		}
-
 		install_panel
-
 		  ;;
 	  3|1p|1panel)
-
 		local app_id="3"
 		local lujing="command -v 1pctl"
 		local panelname="1Panel"
 		local panelurl="https://1panel.cn/"
-
 		panel_app_install() {
 			install bash
 			bash -c "$(curl -sSL https://resource.fit2cloud.com/1panel/package/v2/quick_start.sh)"
 		}
-
 		panel_app_manage() {
 			1pctl user-info
 			1pctl update password
 		}
-
 		panel_app_uninstall() {
 			1pctl uninstall
 		}
-
 		install_panel
-
 		  ;;
 	  4|npm)
-
 		local app_id="4"
 		local docker_name="npm"
 		local docker_img="jc21/nginx-proxy-manager:latest"
 		local docker_port=81
-
 		docker_rum() {
-
 			docker run -d \
 			  --name=$docker_name \
 			  -p ${docker_port}:81 \
@@ -15790,32 +13128,22 @@ while true; do
 			  -v /home/docker/npm/letsencrypt:/etc/letsencrypt \
 			  --restart=always \
 			  $docker_img
-
-
 		}
-
 		local docker_describe="An Nginx reverse proxy tool panel that does not support adding domain name access."
 		local docker_url="Official website introduction: https://nginxproxymanager.com/"
 		local docker_use="echo \"Initial username: admin@example.com\""
 		local docker_passwd="echo \"Initial password: changeme\""
 		local app_size="1"
-
 		docker_app
-
 		  ;;
-
 	  5|openlist)
-
 		local app_id="5"
 		local docker_name="openlist"
 		local docker_img="openlistteam/openlist:latest-aria2"
 		local docker_port=5244
-
 		docker_rum() {
-
 			mkdir -p /home/docker/openlist
 			chmod -R 777 /home/docker/openlist
-
 			docker run -d \
 				--restart=always \
 				-v /home/docker/openlist:/opt/openlist/data \
@@ -15825,28 +13153,20 @@ while true; do
 				-e UMASK=022 \
 				--name="openlist" \
 				openlistteam/openlist:latest-aria2
-
 		}
-
-
 		local docker_describe="A file listing program that supports multiple storages, web browsing and WebDAV, powered by gin and Solidjs"
 		local docker_url="Official website introduction:${gh_https_url}github.com/OpenListTeam/OpenList"
 		local docker_use="docker exec openlist ./openlist admin random"
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
 	  6|webtop-ubuntu)
-
 		local app_id="6"
 		local docker_name="webtop-ubuntu"
 		local docker_img="lscr.io/linuxserver/webtop:ubuntu-kde"
 		local docker_port=3006
-
 		docker_rum() {
-
 			read -e -p "Set login username:" admin
 			read -e -p "Set login user password:" admin_password
 			docker run -d \
@@ -15865,24 +13185,17 @@ while true; do
 			  --shm-size="1gb" \
 			  --restart=always \
 			  lscr.io/linuxserver/webtop:ubuntu-kde
-
-
 		}
-
-
 		local docker_describe="webtop is an Ubuntu-based container. If the IP cannot be accessed, please add a domain name for access."
 		local docker_url="Official website introduction: https://docs.linuxserver.io/images/docker-webtop/"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="2"
 		docker_app
-
-
 		  ;;
 	  7|nezha)
 		clear
 		send_stats "Build Nezha"
-
 		local app_id="7"
 		local docker_name="nezha-dashboard"
 		local docker_port=8008
@@ -15904,7 +13217,6 @@ while true; do
 			echo "0. Return to the previous menu"
 			echo "------------------------"
 			read -e -p "Enter your selection:" choice
-
 			case $choice in
 				1)
 					check_disk_space 1
@@ -15914,25 +13226,19 @@ while true; do
 					local docker_port=$(docker port $docker_name | awk -F'[:]' '/->/ {print $NF}' | uniq)
 					check_docker_app_ip
 					;;
-
 				*)
 					break
 					;;
-
 			esac
 			break_end
 		done
 		  ;;
-
 	  8|qb|QB)
-
 		local app_id="8"
 		local docker_name="qbittorrent"
 		local docker_img="lscr.io/linuxserver/qbittorrent:latest"
 		local docker_port=8081
-
 		docker_rum() {
-
 			docker run -d \
 			  --name=qbittorrent \
 			  -e PUID=1000 \
@@ -15947,18 +13253,14 @@ while true; do
 			  -v /home/docker/qbittorrent/downloads:/downloads \
 			  --restart=always \
 			  lscr.io/linuxserver/qbittorrent:latest
-
 		}
-
 		local docker_describe="qbittorrent offline BT magnetic download service"
 		local docker_url="Official website introduction: https://hub.docker.com/r/linuxserver/qbittorrent"
 		local docker_use="sleep 3"
 		local docker_passwd="docker logs qbittorrent"
 		local app_size="1"
 		docker_app
-
 		  ;;
-
 	  9|mail)
 		send_stats "Build a post office"
 		clear
@@ -15968,12 +13270,10 @@ while true; do
 		while true; do
 			check_docker_app
 			check_docker_image_update $docker_name
-
 			clear
 			echo -e "postal services$check_docker $update_status"
 			echo "poste.io is an open source mail server solution,"
 			echo "Video introduction: https://www.bilibili.com/video/BV1wv421C71t?t=0.1"
-
 			echo ""
 			echo "Port detection"
 			port=25
@@ -15984,20 +13284,17 @@ while true; do
 			  echo -e "${gl_hong}port$portCurrently unavailable${gl_bai}"
 			fi
 			echo ""
-
 			if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "$docker_name"; then
 				yuming=$(cat /home/docker/mail.txt)
 				echo "Visit address:"
 				echo "https://$yuming"
 			fi
-
 			echo "------------------------"
 			echo "1. Install 2. Update 3. Uninstall"
 			echo "------------------------"
 			echo "0. Return to the previous menu"
 			echo "------------------------"
 			read -e -p "Enter your selection:" choice
-
 			case $choice in
 				1)
 					setup_docker_dir
@@ -16019,10 +13316,8 @@ while true; do
 					echo "------------------------"
 					echo "Press any key to continue..."
 					read -n 1 -s -r -p ""
-
 					install jq
 					install_docker
-
 					docker run \
 						--net=host \
 						-e TZ=Europe/Prague \
@@ -16031,19 +13326,14 @@ while true; do
 						-h "$yuming" \
 						--restart=always \
 						-d analogic/poste.io
-
-
 					add_app_id
-
 					clear
 					echo "poste.io has been installed"
 					echo "------------------------"
 					echo "You can access poste.io using the following address:"
 					echo "https://$yuming"
 					echo ""
-
 					;;
-
 				2)
 					docker rm -f mailserver
 					docker rmi -f analogic/poste.i
@@ -16056,10 +13346,7 @@ while true; do
 						-h "$yuming" \
 						--restart=always \
 						-d analogic/poste.i
-
-
 					add_app_id
-
 					clear
 					echo "poste.io has been installed"
 					echo "------------------------"
@@ -16072,23 +13359,17 @@ while true; do
 					docker rmi -f analogic/poste.io
 					rm /home/docker/mail.txt
 					rm -rf /home/docker/mail
-
 					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
 					echo "App has been uninstalled"
 					;;
-
 				*)
 					break
 					;;
-
 			esac
 			break_end
 		done
-
 		  ;;
-
 	  10|rocketchat)
-
 		local app_id="10"
 		local app_name="Rocket.Chat chat system"
 		local app_text="Rocket.Chat is an open source team communication platform that supports real-time chat, audio and video calls, file sharing and other functions."
@@ -16096,7 +13377,6 @@ while true; do
 		local docker_name="rocketchat"
 		local docker_port="3897"
 		local app_size="2"
-
 		docker_app_install() {
 			docker run --name db -d --restart=always \
 				-v /home/docker/mongo/dump:/dump \
@@ -16105,13 +13385,11 @@ while true; do
 			docker exec db mongosh --eval "printjson(rs.initiate())"
 			sleep 5
 			docker run --name rocketchat --restart=always -p ${docker_port}:3000 --link db --env ROOT_URL=http://localhost --env MONGO_OPLOG_URL=mongodb://db:27017/rs5 -d rocket.chat
-
 			clear
 			ip_address
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
 		docker_app_update() {
 			docker rm -f rocketchat
 			docker rmi -f rocket.chat:latest
@@ -16121,7 +13399,6 @@ while true; do
 			echo "rocket.chat has been installed"
 			check_docker_app_ip
 		}
-
 		docker_app_uninstall() {
 			docker rm -f rocketchat
 			docker rmi -f rocket.chat
@@ -16130,22 +13407,14 @@ while true; do
 			rm -rf /home/docker/mongo
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
 		  ;;
-
-
-
 	  11|zentao)
 		local app_id="11"
 		local docker_name="zentao-server"
 		local docker_img="idoop/zentao:latest"
 		local docker_port=82
-
-
 		docker_rum() {
-
-
 			docker run -d -p ${docker_port}:80 \
 			  -e ADMINER_USER="root" -e ADMINER_PASSWD="password" \
 			  -e BIND_ADDRESS="false" \
@@ -16154,28 +13423,20 @@ while true; do
 			  --name zentao-server \
 			  --restart=always \
 			  idoop/zentao:latest
-
-
 		}
-
 		local docker_describe="ZenTao is a universal project management software"
 		local docker_url="Official website introduction: https://www.zentao.net/"
 		local docker_use="echo \"Initial username: admin\""
 		local docker_passwd="echo \"Initial password: 123456\""
 		local app_size="2"
 		docker_app
-
 		  ;;
-
 	  12|qinglong)
 		local app_id="12"
 		local docker_name="qinglong"
 		local docker_img="whyour/qinglong:latest"
 		local docker_port=5700
-
 		docker_rum() {
-
-
 			docker run -d \
 			  -v /home/docker/qinglong/data:/ql/data \
 			  -p ${docker_port}:5700 \
@@ -16183,20 +13444,15 @@ while true; do
 			  --hostname qinglong \
 			  --restart=always \
 			  whyour/qinglong:latest
-
-
 		}
-
 		local docker_describe="Qinglong Panel is a scheduled task management platform"
 		local docker_url="Official website introduction:${gh_proxy}github.com/whyour/qinglong"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
 	  13|cloudreve)
-
 		local app_id="13"
 		local app_name="cloudreve network disk"
 		local app_text="cloudreve is a network disk system that supports multiple cloud storages"
@@ -16204,7 +13460,6 @@ while true; do
 		local docker_name="cloudreve"
 		local docker_port="5212"
 		local app_size="2"
-
 		docker_app_install() {
 			cd /home/ && mkdir -p docker/cloud && cd docker/cloud && mkdir temp_data && mkdir -vp cloudreve/{uploads,avatar} && touch cloudreve/conf.ini && touch cloudreve/cloudreve.db && mkdir -p aria2/config && mkdir -p data/aria2 && chmod -R 777 data/aria2
 			curl -o /home/docker/cloud/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/harvey/docker/main/cloudreve-docker-compose.yml
@@ -16215,30 +13470,23 @@ while true; do
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
-
 		docker_app_update() {
 			cd /home/docker/cloud/ && docker compose down --rmi all
 			cd /home/docker/cloud/ && docker compose up -d
 		}
-
-
 		docker_app_uninstall() {
 			cd /home/docker/cloud/ && docker compose down --rmi all
 			rm -rf /home/docker/cloud
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
 		  ;;
-
 	  14|easyimage)
 		local app_id="14"
 		local docker_name="easyimage"
 		local docker_img="ddsderek/easyimage:latest"
 		local docker_port=8014
 		docker_rum() {
-
 			docker run -d \
 			  --name easyimage \
 			  -p ${docker_port}:80 \
@@ -16249,9 +13497,7 @@ while true; do
 			  -v /home/docker/easyimage/i:/app/web/i \
 			  --restart=always \
 			  ddsderek/easyimage:latest
-
 		}
-
 		local docker_describe="Simple drawing bed is a simple drawing bed program"
 		local docker_url="Official website introduction:${gh_proxy}github.com/icret/EasyImages2.0"
 		local docker_use=""
@@ -16259,15 +13505,12 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  15|emby)
 		local app_id="15"
 		local docker_name="emby"
 		local docker_img="linuxserver/emby:latest"
 		local docker_port=8015
-
 		docker_rum() {
-
 			docker run -d --name=emby --restart=always \
 				-v /home/docker/emby/config:/config \
 				-v /home/docker/emby/share1:/mnt/share1 \
@@ -16276,10 +13519,7 @@ while true; do
 				-p ${docker_port}:8096 \
 				-e UID=1000 -e GID=100 -e GIDLIST=100 \
 				linuxserver/emby:latest
-
 		}
-
-
 		local docker_describe="emby is a master-slave architecture media server software that can be used to organize video and audio on the server and stream audio and video to client devices"
 		local docker_url="Official website introduction: https://emby.media/"
 		local docker_use=""
@@ -16287,37 +13527,27 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  16|looking)
 		local app_id="16"
 		local docker_name="looking-glass"
 		local docker_img="wikihostinc/looking-glass-server"
 		local docker_port=8016
-
-
 		docker_rum() {
-
 			docker run -d --name looking-glass --restart=always -p ${docker_port}:80 wikihostinc/looking-glass-server
-
 		}
-
 		local docker_describe="Speedtest speed measurement panel is a VPS network speed test tool with multiple test functions and can also monitor VPS inbound and outbound traffic in real time."
 		local docker_url="Official website introduction:${gh_proxy}github.com/wikihost-opensource/als"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
 	  17|adguardhome)
-
 		local app_id="17"
 		local docker_name="adguardhome"
 		local docker_img="adguard/adguardhome"
 		local docker_port=8017
-
 		docker_rum() {
-
 			docker run -d \
 				--name adguardhome \
 				-v /home/docker/adguardhome/work:/opt/adguardhome/work \
@@ -16327,52 +13557,36 @@ while true; do
 				-p ${docker_port}:3000/tcp \
 				--restart=always \
 				adguard/adguardhome
-
-
 		}
-
-
 		local docker_describe="AdGuardHome is a network-wide ad blocking and anti-tracking software that will be more than just a DNS server in the future."
 		local docker_url="Official website introduction: https://hub.docker.com/r/adguard/adguardhome"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
 	  18|onlyoffice)
-
 		local app_id="18"
 		local docker_name="onlyoffice"
 		local docker_img="onlyoffice/documentserver"
 		local docker_port=8018
-
 		docker_rum() {
-
 			docker run -d -p ${docker_port}:80 \
 				--restart=always \
 				--name onlyoffice \
 				-v /home/docker/onlyoffice/DocumentServer/logs:/var/log/onlyoffice  \
 				-v /home/docker/onlyoffice/DocumentServer/data:/var/www/onlyoffice/Data  \
 				 onlyoffice/documentserver
-
-
 		}
-
 		local docker_describe="onlyoffice is an open source online office tool, so powerful!"
 		local docker_url="Official website introduction: https://www.onlyoffice.com/"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="2"
 		docker_app
-
 		  ;;
-
 	  19|safeline)
 		send_stats "Build a thunder pool"
-
 		local app_id="19"
 		local docker_name=safeline-mgt
 		local docker_port=9443
@@ -16386,33 +13600,27 @@ while true; do
 				check_docker_app_ip
 			fi
 			echo ""
-
 			echo "------------------------"
 			echo "1. Install 2. Update 3. Reset password 4. Uninstall"
 			echo "------------------------"
 			echo "0. Return to the previous menu"
 			echo "------------------------"
 			read -e -p "Enter your selection:" choice
-
 			case $choice in
 				1)
 					install_docker
 					check_disk_space 5
 					bash -c "$(curl -fsSLk https://waf-ce.chaitin.cn/release/latest/setup.sh)"
-
 					add_app_id
 					clear
 					echo "The Leichi WAF panel has been installed"
 					check_docker_app_ip
 					docker exec safeline-mgt resetadmin
-
 					;;
-
 				2)
 					bash -c "$(curl -fsSLk https://waf-ce.chaitin.cn/release/latest/upgrade.sh)"
 					docker rmi $(docker images | grep "safeline" | grep "none" | awk '{print $3}')
 					echo ""
-
 					add_app_id
 					clear
 					echo "The Leichi WAF panel has been updated"
@@ -16424,7 +13632,6 @@ while true; do
 				4)
 					cd /data/safeline
 					docker compose down --rmi all
-
 					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
 					echo "If you are in the default installation directory, the project has been uninstalled now. If you customize the installation directory, you need to go to the installation directory and execute it yourself:"
 					echo "docker compose down && docker compose down --rmi all"
@@ -16432,21 +13639,16 @@ while true; do
 				*)
 					break
 					;;
-
 			esac
 			break_end
 		done
-
 		  ;;
-
 	  20|portainer)
 		local app_id="20"
 		local docker_name="portainer"
 		local docker_img="portainer/portainer"
 		local docker_port=8020
-
 		docker_rum() {
-
 			docker run -d \
 				--name portainer \
 				-p ${docker_port}:9000 \
@@ -16454,33 +13656,22 @@ while true; do
 				-v /home/docker/portainer:/data \
 				--restart=always \
 				portainer/portainer
-
 		}
-
-
 		local docker_describe="portainer is a lightweight docker container management panel"
 		local docker_url="Official website introduction: https://www.portainer.io/"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
 	  21|vscode)
 		local app_id="21"
 		local docker_name="vscode-web"
 		local docker_img="codercom/code-server"
 		local docker_port=8021
-
-
 		docker_rum() {
-
 			docker run -d -p ${docker_port}:8080 -v /home/docker/vscode-web:/home/coder/.local/share/code-server --name vscode-web --restart=always codercom/code-server
-
 		}
-
-
 		local docker_describe="VScode is a powerful online code writing tool"
 		local docker_url="Official website introduction:${gh_proxy}github.com/coder/code-server"
 		local docker_use="sleep 3"
@@ -16488,27 +13679,19 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
-
 	  22|uptime-kuma)
 		local app_id="22"
 		local docker_name="uptime-kuma"
 		local docker_img="louislam/uptime-kuma:latest"
 		local docker_port=8022
-
-
 		docker_rum() {
-
 			docker run -d \
 				--name=uptime-kuma \
 				-p ${docker_port}:3001 \
 				-v /home/docker/uptime-kuma/uptime-kuma-data:/app/data \
 				--restart=always \
 				louislam/uptime-kuma:latest
-
 		}
-
-
 		local docker_describe="Uptime Kuma Easy-to-use self-hosted monitoring tool"
 		local docker_url="Official website introduction:${gh_proxy}github.com/louislam/uptime-kuma"
 		local docker_use=""
@@ -16516,19 +13699,14 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  23|memos)
 		local app_id="23"
 		local docker_name="memos"
 		local docker_img="neosmemo/memos:stable"
 		local docker_port=8023
-
 		docker_rum() {
-
 			docker run -d --name memos -p ${docker_port}:5230 -v /home/docker/memos:/var/opt/memos --restart=always neosmemo/memos:stable
-
 		}
-
 		local docker_describe="Memos is a lightweight, self-hosted memo center"
 		local docker_url="Official website introduction:${gh_proxy}github.com/usememos/memos"
 		local docker_use=""
@@ -16536,15 +13714,12 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  24|webtop)
 		local app_id="24"
 		local docker_name="webtop"
 		local docker_img="lscr.io/linuxserver/webtop:latest"
 		local docker_port=8024
-
 		docker_rum() {
-
 			read -e -p "Set login username:" admin
 			read -e -p "Set login user password:" admin_password
 			docker run -d \
@@ -16566,10 +13741,7 @@ while true; do
 			  --shm-size="1gb" \
 			  --restart=always \
 			  lscr.io/linuxserver/webtop:latest
-
 		}
-
-
 		local docker_describe="webtop is based on the Chinese version of Alpine container. If the IP cannot be accessed, please add a domain name for access."
 		local docker_url="Official website introduction: https://docs.linuxserver.io/images/docker-webtop/"
 		local docker_use=""
@@ -16577,20 +13749,15 @@ while true; do
 		local app_size="2"
 		docker_app
 		  ;;
-
 	  25|nextcloud)
 		local app_id="25"
 		local docker_name="nextcloud"
 		local docker_img="nextcloud:latest"
 		local docker_port=8025
 		local rootpasswd=$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c16)
-
 		docker_rum() {
-
 			docker run -d --name nextcloud --restart=always -p ${docker_port}:80 -v /home/docker/nextcloud:/var/www/html -e NEXTCLOUD_ADMIN_USER=nextcloud -e NEXTCLOUD_ADMIN_PASSWORD=$rootpasswd nextcloud
-
 		}
-
 		local docker_describe="With over 400,000 deployments, Nextcloud is the most popular local content collaboration platform you can download"
 		local docker_url="Official website introduction: https://nextcloud.com/"
 		local docker_use="echo \"Account: nextcloud Password:$rootpasswd\""
@@ -16598,19 +13765,14 @@ while true; do
 		local app_size="3"
 		docker_app
 		  ;;
-
 	  26|qd)
 		local app_id="26"
 		local docker_name="qd"
 		local docker_img="qdtoday/qd:latest"
 		local docker_port=8026
-
 		docker_rum() {
-
 			docker run -d --name qd -p ${docker_port}:80 -v /home/docker/qd/config:/usr/src/app/config qdtoday/qd
-
 		}
-
 		local docker_describe="QD-Today is an HTTP request scheduled task automatic execution framework"
 		local docker_url="Official website introduction: https://qd-today.github.io/qd/zh_CN/"
 		local docker_use=""
@@ -16618,19 +13780,14 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  27|dockge)
 		local app_id="27"
 		local docker_name="dockge"
 		local docker_img="louislam/dockge:latest"
 		local docker_port=8027
-
 		docker_rum() {
-
 			docker run -d --name dockge --restart=always -p ${docker_port}:5001 -v /var/run/docker.sock:/var/run/docker.sock -v /home/docker/dockge/data:/app/data -v  /home/docker/dockge/stacks:/home/docker/dockge/stacks -e DOCKGE_STACKS_DIR=/home/docker/dockge/stacks louislam/dockge
-
 		}
-
 		local docker_describe="dockge is a visual docker-compose container management panel"
 		local docker_url="Official website introduction:${gh_proxy}github.com/louislam/dockge"
 		local docker_use=""
@@ -16638,19 +13795,14 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  28|speedtest)
 		local app_id="28"
 		local docker_name="speedtest"
 		local docker_img="ghcr.io/librespeed/speedtest"
 		local docker_port=8028
-
 		docker_rum() {
-
 			docker run -d -p ${docker_port}:8080 --name speedtest --restart=always ghcr.io/librespeed/speedtest
-
 		}
-
 		local docker_describe="librespeed is a lightweight speed testing tool implemented in Javascript that can be used out of the box"
 		local docker_url="Official website introduction:${gh_proxy}github.com/librespeed/speedtest"
 		local docker_use=""
@@ -16658,24 +13810,19 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  29|searxng)
 		local app_id="29"
 		local docker_name="searxng"
 		local docker_img="searxng/searxng"
 		local docker_port=8029
-
 		docker_rum() {
-
 			docker run -d \
 			  --name searxng \
 			  --restart=always \
 			  -p ${docker_port}:8080 \
 			  -v "/home/docker/searxng:/etc/searxng" \
 			  searxng/searxng
-
 		}
-
 		local docker_describe="searxng is a private and private search engine site"
 		local docker_url="Official website introduction: https://hub.docker.com/r/alandoyle/searxng"
 		local docker_use=""
@@ -16683,16 +13830,13 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  30|photoprism)
 		local app_id="30"
 		local docker_name="photoprism"
 		local docker_img="photoprism/photoprism:latest"
 		local docker_port=8030
 		local rootpasswd=$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c16)
-
 		docker_rum() {
-
 			docker run -d \
 				--name photoprism \
 				--restart=always \
@@ -16704,10 +13848,7 @@ while true; do
 				-v /home/docker/photoprism/storage:/photoprism/storage \
 				-v /home/docker/photoprism/Pictures:/photoprism/originals \
 				photoprism/photoprism
-
 		}
-
-
 		local docker_describe="Photoprism is a very powerful private photo album system"
 		local docker_url="Official website introduction: https://www.photoprism.app/"
 		local docker_use="echo \"Account: admin Password:$rootpasswd\""
@@ -16715,16 +13856,12 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
-
 	  31|s-pdf)
 		local app_id="31"
 		local docker_name="s-pdf"
 		local docker_img="frooodle/s-pdf:latest"
 		local docker_port=8031
-
 		docker_rum() {
-
 			docker run -d \
 				--name s-pdf \
 				--restart=always \
@@ -16735,7 +13872,6 @@ while true; do
 				 -e DOCKER_ENABLE_SECURITY=false \
 				 frooodle/s-pdf:latest
 		}
-
 		local docker_describe="This is a powerful locally hosted web-based PDF manipulation tool using docker that allows you to perform various operations on PDF files such as split merge, convert, reorganize, add images, rotate, compress, etc."
 		local docker_url="Official website introduction:${gh_proxy}github.com/Stirling-Tools/Stirling-PDF"
 		local docker_use=""
@@ -16743,20 +13879,14 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  32|drawio)
 		local app_id="32"
 		local docker_name="drawio"
 		local docker_img="jgraph/drawio"
 		local docker_port=8032
-
 		docker_rum() {
-
 			docker run -d --restart=always --name drawio -p ${docker_port}:8080 -v /home/docker/drawio:/var/lib/drawio jgraph/drawio
-
 		}
-
-
 		local docker_describe="This is a powerful charting software. You can draw mind maps, topology diagrams, and flow charts."
 		local docker_url="Official website introduction: https://www.drawio.com/"
 		local docker_use=""
@@ -16764,24 +13894,19 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  33|sun-panel)
 		local app_id="33"
 		local docker_name="sun-panel"
 		local docker_img="hslr/sun-panel"
 		local docker_port=8033
-
 		docker_rum() {
-
 			docker run -d --restart=always -p ${docker_port}:3002 \
 				-v /home/docker/sun-panel/conf:/app/conf \
 				-v /home/docker/sun-panel/uploads:/app/uploads \
 				-v /home/docker/sun-panel/database:/app/database \
 				--name sun-panel \
 				hslr/sun-panel
-
 		}
-
 		local docker_describe="Sun-Panel server, NAS navigation panel, Homepage, browser homepage"
 		local docker_url="Official website introduction: https://doc.sun-panel.top/zh_cn/"
 		local docker_use="echo \"Account: admin@sun.cc Password: 12345678\""
@@ -16789,15 +13914,12 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  34|pingvin-share)
 		local app_id="34"
 		local docker_name="pingvin-share"
 		local docker_img="stonith404/pingvin-share"
 		local docker_port=8034
-
 		docker_rum() {
-
 			docker run -d \
 				--name pingvin-share \
 				--restart=always \
@@ -16805,7 +13927,6 @@ while true; do
 				-v /home/docker/pingvin-share/data:/opt/app/backend/data \
 				stonith404/pingvin-share
 		}
-
 		local docker_describe="Pingvin Share is a self-buildable file sharing platform and an alternative to WeTransfer"
 		local docker_url="Official website introduction:${gh_proxy}github.com/stonith404/pingvin-share"
 		local docker_use=""
@@ -16813,16 +13934,12 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
-
 	  35|moments)
 		local app_id="35"
 		local docker_name="moments"
 		local docker_img="kingwrcy/moments:latest"
 		local docker_port=8035
-
 		docker_rum() {
-
 			docker run -d --restart=always \
 				-p ${docker_port}:3000 \
 				-v /home/docker/moments/data:/app/data \
@@ -16831,8 +13948,6 @@ while true; do
 				--name moments \
 				kingwrcy/moments:latest
 		}
-
-
 		local docker_describe="Minimalist Moments, high imitation WeChat Moments, record your wonderful life"
 		local docker_url="Official website introduction:${gh_proxy}github.com/kingwrcy/moments?tab=readme-ov-file"
 		local docker_use="echo \"Account: admin Password: a123456\""
@@ -16840,23 +13955,17 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
-
-
 	  36|lobe-chat)
 		local app_id="36"
 		local docker_name="lobe-chat"
 		local docker_img="lobehub/lobe-chat:latest"
 		local docker_port=8036
-
 		docker_rum() {
-
 			docker run -d -p ${docker_port}:3210 \
 				--name lobe-chat \
 				--restart=always \
 				lobehub/lobe-chat
 		}
-
 		local docker_describe="LobeChat aggregates the mainstream AI large models on the market, ChatGPT/Claude/Gemini/Groq/Ollama"
 		local docker_url="Official website introduction:${gh_proxy}github.com/lobehub/lobe-chat"
 		local docker_use=""
@@ -16864,20 +13973,14 @@ while true; do
 		local app_size="2"
 		docker_app
 		  ;;
-
 	  37|myip)
 		local app_id="37"
 		local docker_name="myip"
 		local docker_img="jason5ng32/myip:latest"
 		local docker_port=8037
-
 		docker_rum() {
-
 			docker run -d -p ${docker_port}:18966 --name myip jason5ng32/myip:latest
-
 		}
-
-
 		local docker_describe="It is a multifunctional IP toolbox that allows you to view your own IP information and connectivity, and displays it using a web panel."
 		local docker_url="Official website introduction:${gh_proxy}github.com/jason5ng32/MyIP/blob/main/README_ZH.md"
 		local docker_use=""
@@ -16885,7 +13988,6 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  38|xiaoya)
 		send_stats "Xiaoya family bucket"
 		clear
@@ -16893,25 +13995,18 @@ while true; do
 		check_disk_space 1
 		bash -c "$(curl --insecure -fsSL https://ddsrem.com/xiaoya_install.sh)"
 		  ;;
-
 	  39|bililive)
-
 		if [ ! -d /home/docker/bililive-go/ ]; then
 			mkdir -p /home/docker/bililive-go/ > /dev/null 2>&1
 			wget -O /home/docker/bililive-go/config.yml ${gh_proxy}raw.githubusercontent.com/hr3lxphr6j/bililive-go/master/config.yml > /dev/null 2>&1
 		fi
-
 		local app_id="39"
 		local docker_name="bililive-go"
 		local docker_img="chigusa/bililive-go"
 		local docker_port=8039
-
 		docker_rum() {
-
 			docker run --restart=always --name bililive-go -v /home/docker/bililive-go/config.yml:/etc/bililive-go/config.yml -v /home/docker/bililive-go/Videos:/srv/bililive -p ${docker_port}:8080 -d chigusa/bililive-go
-
 		}
-
 		local docker_describe="Bililive-go is a live broadcast recording tool that supports multiple live broadcast platforms"
 		local docker_url="Official website introduction:${gh_proxy}github.com/hr3lxphr6j/bililive-go"
 		local docker_use=""
@@ -16919,7 +14014,6 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  40|webssh)
 		local app_id="40"
 		local docker_name="webssh"
@@ -16928,7 +14022,6 @@ while true; do
 		docker_rum() {
 			docker run -d -p ${docker_port}:5032 --restart=always --name webssh -e TZ=Asia/Shanghai jrohy/webssh
 		}
-
 		local docker_describe="Simple online ssh connection tool and sftp tool"
 		local docker_url="Official website introduction:${gh_proxy}github.com/Jrohy/webssh"
 		local docker_use=""
@@ -16936,42 +14029,30 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  41|haozi|acepanel)
-
 		local app_id="41"
 		local lujing="[ -d "/www/server/panel" ]"
 		local panelname="AcePanel original mouse panel"
 		local panelurl="Official address:${gh_proxy}github.com/acepanel/panel"
-
 		panel_app_install() {
 			cd ~
 			bash <(curl -sSLm 10 https://dl.acepanel.net/helper.sh)
 		}
-
 		panel_app_manage() {
 			acepanel help
 		}
-
 		panel_app_uninstall() {
 			cd ~
 			bash <(curl -sSLm 10 https://dl.acepanel.net/helper.sh)
-
 		}
-
 		install_panel
-
 		  ;;
-
-
 	  42|nexterm)
 		local app_id="42"
 		local docker_name="nexterm"
 		local docker_img="germannewsmaker/nexterm:latest"
 		local docker_port=8042
-
 		docker_rum() {
-
 			ENCRYPTION_KEY=$(openssl rand -hex 32)
 			docker run -d \
 			  --name nexterm \
@@ -16980,9 +14061,7 @@ while true; do
 			  -v /home/docker/nexterm:/app/data \
 			  --restart=always \
 			  germannewsmaker/nexterm:latest
-
 		}
-
 		local docker_describe="nexterm is a powerful online SSH/VNC/RDP connection tool."
 		local docker_url="Official website introduction:${gh_proxy}github.com/gnmyt/Nexterm"
 		local docker_use=""
@@ -16990,20 +14069,14 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  43|hbbs)
 		local app_id="43"
 		local docker_name="hbbs"
 		local docker_img="rustdesk/rustdesk-server"
 		local docker_port=0000
-
 		docker_rum() {
-
 			docker run --name hbbs -v /home/docker/hbbs/data:/root -td --net=host --restart=always rustdesk/rustdesk-server hbbs
-
 		}
-
-
 		local docker_describe="Rustdesk's open source remote desktop (server) is similar to its own Sunflower private server."
 		local docker_url="Official website introduction: https://rustdesk.com/zh-cn/"
 		local docker_use="docker logs hbbs"
@@ -17011,19 +14084,14 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  44|hbbr)
 		local app_id="44"
 		local docker_name="hbbr"
 		local docker_img="rustdesk/rustdesk-server"
 		local docker_port=0000
-
 		docker_rum() {
-
 			docker run --name hbbr -v /home/docker/hbbr/data:/root -td --net=host --restart=always rustdesk/rustdesk-server hbbr
-
 		}
-
 		local docker_describe="Rustdesk's open source remote desktop (relay) is similar to its own Sunflower private server."
 		local docker_url="Official website introduction: https://rustdesk.com/zh-cn/"
 		local docker_use="echo \"Go to the official website to download the remote desktop client: https://rustdesk.com/zh-cn/\""
@@ -17031,15 +14099,12 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  45|registry)
 		local app_id="45"
 		local docker_name="registry"
 		local docker_img="registry:2"
 		local docker_port=8045
-
 		docker_rum() {
-
 			docker run -d \
 				-p ${docker_port}:5000 \
 				--name registry \
@@ -17047,9 +14112,7 @@ while true; do
 				-e REGISTRY_PROXY_REMOTEURL=https://registry-1.docker.io \
 				--restart=always \
 				registry:2
-
 		}
-
 		local docker_describe="Docker Registry is a service for storing and distributing Docker images."
 		local docker_url="Official website introduction: https://hub.docker.com/_/registry"
 		local docker_use=""
@@ -17057,19 +14120,14 @@ while true; do
 		local app_size="2"
 		docker_app
 		  ;;
-
 	  46|ghproxy)
 		local app_id="46"
 		local docker_name="ghproxy"
 		local docker_img="wjqserver/ghproxy:latest"
 		local docker_port=8046
-
 		docker_rum() {
-
 			docker run -d --name ghproxy --restart=always -p ${docker_port}:8080 -v /home/docker/ghproxy/config:/data/ghproxy/config wjqserver/ghproxy:latest
-
 		}
-
 		local docker_describe="GHProxy implemented using Go is used to accelerate the pulling of Github repositories in some areas."
 		local docker_url="Official website introduction:${gh_https_url}github.com/WJQSERVER-STUDIO/ghproxy"
 		local docker_use=""
@@ -17077,9 +14135,7 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  47|prometheus|grafana)
-
 		local app_id="47"
 		local app_name="Prometheus monitoring"
 		local app_text="Prometheus+Grafana enterprise-level monitoring system"
@@ -17087,7 +14143,6 @@ while true; do
 		local docker_name="grafana"
 		local docker_port="8047"
 		local app_size="2"
-
 		docker_app_install() {
 			prometheus_install
 			clear
@@ -17096,7 +14151,6 @@ while true; do
 			check_docker_app_ip
 			echo "The initial username and password are: admin"
 		}
-
 		docker_app_update() {
 			docker rm -f node-exporter prometheus grafana
 			docker rmi -f prom/node-exporter
@@ -17104,37 +14158,28 @@ while true; do
 			docker rmi -f grafana/grafana:latest
 			docker_app_install
 		}
-
 		docker_app_uninstall() {
 			docker rm -f node-exporter prometheus grafana
 			docker rmi -f prom/node-exporter
 			docker rmi -f prom/prometheus:latest
 			docker rmi -f grafana/grafana:latest
-
 			rm -rf /home/docker/monitoring
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
 		  ;;
-
 	  48|node-exporter)
 		local app_id="48"
 		local docker_name="node-exporter"
 		local docker_img="prom/node-exporter"
 		local docker_port=8048
-
 		docker_rum() {
-
 			docker run -d \
 				--name=node-exporter \
 				-p ${docker_port}:9100 \
 				--restart=always \
 				prom/node-exporter
-
-
 		}
-
 		local docker_describe="This is a Prometheus host data collection component, please deploy it on the monitored host."
 		local docker_url="Official website introduction:${gh_https_url}github.com/prometheus/node_exporter"
 		local docker_use=""
@@ -17142,15 +14187,12 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  49|cadvisor)
 		local app_id="49"
 		local docker_name="cadvisor"
 		local docker_img="gcr.io/cadvisor/cadvisor:latest"
 		local docker_port=8049
-
 		docker_rum() {
-
 			docker run -d \
 				--name=cadvisor \
 				--restart=always \
@@ -17162,9 +14204,7 @@ while true; do
 				gcr.io/cadvisor/cadvisor:latest \
 				-housekeeping_interval=10s \
 				-docker_only=true
-
 		}
-
 		local docker_describe="This is a Prometheus container data collection component, please deploy it on the monitored host."
 		local docker_url="Official website introduction:${gh_https_url}github.com/google/cadvisor"
 		local docker_use=""
@@ -17172,22 +14212,16 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
-
 	  50|changedetection)
 		local app_id="50"
 		local docker_name="changedetection"
 		local docker_img="dgtlmoon/changedetection.io:latest"
 		local docker_port=8050
-
 		docker_rum() {
-
 			docker run -d --restart=always -p ${docker_port}:5000 \
 				-v /home/docker/datastore:/datastore \
 				--name changedetection dgtlmoon/changedetection.io:latest
-
 		}
-
 		local docker_describe="This is a small tool for website change detection, replenishment monitoring and notification"
 		local docker_url="Official website introduction:${gh_https_url}github.com/dgtlmoon/changedetection.io"
 		local docker_use=""
@@ -17195,32 +14229,24 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
-
 	  51|pve)
 		clear
 		send_stats "PVE open chick"
 		check_disk_space 1
 		curl -L ${gh_proxy}raw.githubusercontent.com/oneclickvirt/pve/main/scripts/install_pve.sh -o install_pve.sh && chmod +x install_pve.sh && bash install_pve.sh
 		  ;;
-
-
 	  52|dpanel)
 		local app_id="52"
 		local docker_name="dpanel"
 		local docker_img="dpanel/dpanel:lite"
 		local docker_port=8052
-
 		docker_rum() {
-
 			docker run -d --name dpanel --restart=always \
 				-p ${docker_port}:8080 -e APP_NAME=dpanel \
 				-v /var/run/docker.sock:/var/run/docker.sock \
 				-v /home/docker/dpanel:/dpanel \
 				dpanel/dpanel:lite
-
 		}
-
 		local docker_describe="Docker visual panel system provides complete docker management functions."
 		local docker_url="Official website introduction:${gh_https_url}github.com/donknap/dpanel"
 		local docker_use=""
@@ -17228,19 +14254,14 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  53|llama3)
 		local app_id="53"
 		local docker_name="ollama"
 		local docker_img="ghcr.io/open-webui/open-webui:ollama"
 		local docker_port=8053
-
 		docker_rum() {
-
 			docker run -d -p ${docker_port}:8080 -v /home/docker/ollama:/root/.ollama -v /home/docker/ollama/open-webui:/app/backend/data --name ollama --restart=always ghcr.io/open-webui/open-webui:ollama
-
 		}
-
 		local docker_describe="OpenWebUI is a large language model web page framework that is connected to the new llama3 large language model."
 		local docker_url="Official website introduction:${gh_https_url}github.com/open-webui/open-webui"
 		local docker_use="docker exec ollama ollama run llama3.2:1b"
@@ -17248,51 +14269,37 @@ while true; do
 		local app_size="5"
 		docker_app
 		  ;;
-
 	  54|amh)
-
 		local app_id="54"
 		local lujing="[ -d "/www/server/panel" ]"
 		local panelname="AMH panel"
 		local panelurl="Official address: https://amh.sh/index.htm?amh"
-
 		panel_app_install() {
 			cd ~
 			wget https://dl.amh.sh/amh.sh && bash amh.sh
 		}
-
 		panel_app_manage() {
 			panel_app_install
 		}
-
 		panel_app_uninstall() {
 			panel_app_install
 		}
-
 		install_panel
 		  ;;
-
-
 	  55|frps)
 		frps_panel
 		  ;;
-
 	  56|frpc)
 		frpc_panel
 		  ;;
-
 	  57|deepseek)
 		local app_id="57"
 		local docker_name="ollama"
 		local docker_img="ghcr.io/open-webui/open-webui:ollama"
 		local docker_port=8053
-
 		docker_rum() {
-
 			docker run -d -p ${docker_port}:8080 -v /home/docker/ollama:/root/.ollama -v /home/docker/ollama/open-webui:/app/backend/data --name ollama --restart=always ghcr.io/open-webui/open-webui:ollama
-
 		}
-
 		local docker_describe="OpenWebUI is a large language model web page framework that is connected to the new DeepSeek R1 large language model."
 		local docker_url="Official website introduction:${gh_https_url}github.com/open-webui/open-webui"
 		local docker_use="docker exec ollama ollama run deepseek-r1:1.5b"
@@ -17300,8 +14307,6 @@ while true; do
 		local app_size="5"
 		docker_app
 		  ;;
-
-
 	  58|dify)
 		local app_id="58"
 		local app_name="DifyKnowledge Base"
@@ -17310,24 +14315,19 @@ while true; do
 		local docker_name="docker-nginx-1"
 		local docker_port="8058"
 		local app_size="3"
-
 		docker_app_install() {
 			install git
 			mkdir -p  /home/docker/ && cd /home/docker/ && git clone ${gh_proxy}github.com/langgenius/dify.git && cd dify/docker && cp .env.example .env
 			sed -i "s/^EXPOSE_NGINX_PORT=.*/EXPOSE_NGINX_PORT=${docker_port}/; s/^EXPOSE_NGINX_SSL_PORT=.*/EXPOSE_NGINX_SSL_PORT=8858/" /home/docker/dify/docker/.env
-
 			docker compose up -d
-
 			chown -R 1001:1001 /home/docker/dify/docker/volumes/app/storage
 			chmod -R 755 /home/docker/dify/docker/volumes/app/storage
 			docker compose down
 			docker compose up -d
-
 			clear
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
 		docker_app_update() {
 			cd  /home/docker/dify/docker/ && docker compose down --rmi all
 			cd  /home/docker/dify/
@@ -17335,17 +14335,13 @@ while true; do
 			sed -i 's/^EXPOSE_NGINX_PORT=.*/EXPOSE_NGINX_PORT=8058/; s/^EXPOSE_NGINX_SSL_PORT=.*/EXPOSE_NGINX_SSL_PORT=8858/' /home/docker/dify/docker/.env
 			cd  /home/docker/dify/docker/ && docker compose up -d
 		}
-
 		docker_app_uninstall() {
 			cd  /home/docker/dify/docker/ && docker compose down --rmi all
 			rm -rf /home/docker/dify
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
 	  59|new-api)
 		local app_id="59"
 		local app_name="NewAPI"
@@ -17354,53 +14350,39 @@ while true; do
 		local docker_name="new-api"
 		local docker_port="8059"
 		local app_size="3"
-
 		docker_app_install() {
 			install git
 			mkdir -p  /home/docker/ && cd /home/docker/ && git clone ${gh_proxy}github.com/Calcium-Ion/new-api.git && cd new-api
-
 			sed -i -e "s/- \"3000:3000\"/- \"${docker_port}:3000\"/g" \
 				   -e 's/container_name: redis/container_name: redis-new-api/g' \
 				   -e 's/container_name: mysql/container_name: mysql-new-api/g' \
 				   docker-compose.yml
-
-
 			docker compose up -d
 			clear
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
 		docker_app_update() {
 			cd  /home/docker/new-api/ && docker compose down --rmi all
 			cd  /home/docker/new-api/
-
 			git pull ${gh_proxy}github.com/Calcium-Ion/new-api.git main > /dev/null 2>&1
 			sed -i -e "s/- \"3000:3000\"/- \"${docker_port}:3000\"/g" \
 				   -e 's/container_name: redis/container_name: redis-new-api/g' \
 				   -e 's/container_name: mysql/container_name: mysql-new-api/g' \
 				   docker-compose.yml
-
 			docker compose up -d
 			clear
 			echo "Installation completed"
 			check_docker_app_ip
-
 		}
-
 		docker_app_uninstall() {
 			cd  /home/docker/new-api/ && docker compose down --rmi all
 			rm -rf /home/docker/new-api
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
-
 	  60|jms)
-
 		local app_id="60"
 		local app_name="JumpServer open source bastion machine"
 		local app_text="It is an open source privileged access management (PAM) tool. This program occupies port 80 and does not support adding domain names for access."
@@ -17408,7 +14390,6 @@ while true; do
 		local docker_name="jms_web"
 		local docker_port="80"
 		local app_size="2"
-
 		docker_app_install() {
 			curl -sSL ${gh_proxy}github.com/jumpserver/jumpserver/releases/latest/download/quick_start.sh | bash
 			clear
@@ -17417,15 +14398,11 @@ while true; do
 			echo "Initial username: admin"
 			echo "Initial password: ChangeMe"
 		}
-
-
 		docker_app_update() {
 			cd /opt/jumpserver-installer*/
 			./jmsctl.sh upgrade
 			echo "App has been updated"
 		}
-
-
 		docker_app_uninstall() {
 			cd /opt/jumpserver-installer*/
 			./jmsctl.sh uninstall
@@ -17434,26 +14411,20 @@ while true; do
 			rm -rf jumpserver
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
 		  ;;
-
 	  61|libretranslate)
 		local app_id="61"
 		local docker_name="libretranslate"
 		local docker_img="libretranslate/libretranslate:latest"
 		local docker_port=8061
-
 		docker_rum() {
-
 			docker run -d \
 				-p ${docker_port}:5000 \
 				--name libretranslate \
 				libretranslate/libretranslate \
 				--load-only ko,zt,zh,en,ja,pt,es,fr,de,ru
-
 		}
-
 		local docker_describe="Free open source machine translation API, fully self-hosted, and its translation engine is powered by the open source Argos Translate library."
 		local docker_url="Official website introduction:${gh_https_url}github.com/LibreTranslate/LibreTranslate"
 		local docker_use=""
@@ -17461,9 +14432,6 @@ while true; do
 		local app_size="5"
 		docker_app
 		  ;;
-
-
-
 	  62|ragflow)
 		local app_id="62"
 		local app_name="RAGFlow knowledge base"
@@ -17472,7 +14440,6 @@ while true; do
 		local docker_name="ragflow-server"
 		local docker_port="8062"
 		local app_size="8"
-
 		docker_app_install() {
 			install git
 			mkdir -p  /home/docker/ && cd /home/docker/ && git clone ${gh_proxy}github.com/infiniflow/ragflow.git && cd ragflow/docker
@@ -17482,7 +14449,6 @@ while true; do
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
 		docker_app_update() {
 			cd  /home/docker/ragflow/docker/ && docker compose down --rmi all
 			cd  /home/docker/ragflow/
@@ -17491,30 +14457,21 @@ while true; do
 			sed -i "s/- 80:80/- ${docker_port}:80/; /- 443:443/d" docker-compose.yml
 			docker compose up -d
 		}
-
 		docker_app_uninstall() {
 			cd  /home/docker/ragflow/docker/ && docker compose down --rmi all
 			rm -rf /home/docker/ragflow
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
-
 	  63|open-webui)
 		local app_id="63"
 		local docker_name="open-webui"
 		local docker_img="ghcr.io/open-webui/open-webui:main"
 		local docker_port=8063
-
 		docker_rum() {
-
 			docker run -d -p ${docker_port}:8080 -v /home/docker/open-webui:/app/backend/data --name open-webui --restart=always ghcr.io/open-webui/open-webui:main
-
 		}
-
 		local docker_describe="OpenWebUI is a large language model web page framework, the official simplified version supports API access to all major models."
 		local docker_url="Official website introduction:${gh_https_url}github.com/open-webui/open-webui"
 		local docker_use=""
@@ -17522,17 +14479,14 @@ while true; do
 		local app_size="3"
 		docker_app
 		  ;;
-
 	  64|it-tools)
 		local app_id="64"
 		local docker_name="it-tools"
 		local docker_img="corentinth/it-tools:latest"
 		local docker_port=8064
-
 		docker_rum() {
 			docker run -d --name it-tools --restart=always -p ${docker_port}:80 corentinth/it-tools:latest
 		}
-
 		local docker_describe="Very useful tool for developers and IT workers"
 		local docker_url="Official website introduction:${gh_https_url}github.com/CorentinTh/it-tools"
 		local docker_use=""
@@ -17540,20 +14494,15 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
-
 	  65|n8n)
 		local app_id="65"
 		local docker_name="n8n"
 		local docker_img="docker.n8n.io/n8nio/n8n"
 		local docker_port=8065
-
 		docker_rum() {
-
 			add_yuming
 			mkdir -p /home/docker/n8n
 			chmod -R 777 /home/docker/n8n
-
 			docker run -d --name n8n \
 			  --restart=always \
 			  -p ${docker_port}:5678 \
@@ -17563,12 +14512,9 @@ while true; do
 			  -e N8N_PROTOCOL=https \
 			  -e WEBHOOK_URL=https://${yuming}/ \
 			  docker.n8n.io/n8nio/n8n
-
 			ldnmp_Proxy ${yuming} 127.0.0.1 ${docker_port}
 			block_container_port "$docker_name" "$ipv4_address"
-
 		}
-
 		local docker_describe="It is a powerful automated workflow platform"
 		local docker_url="Official website introduction:${gh_https_url}github.com/n8n-io/n8n"
 		local docker_use=""
@@ -17576,18 +14522,14 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  66|yt)
 		yt_menu_pro
 		  ;;
-
-
 	  67|ddns)
 		local app_id="67"
 		local docker_name="ddns-go"
 		local docker_img="jeessy/ddns-go"
 		local docker_port=8067
-
 		docker_rum() {
 			docker run -d \
 				--name ddns-go \
@@ -17595,9 +14537,7 @@ while true; do
 				-p ${docker_port}:9876 \
 				-v /home/docker/ddns-go:/root \
 				jeessy/ddns-go
-
 		}
-
 		local docker_describe="Automatically update your public IP (IPv4/IPv6) to major DNS service providers in real time to achieve dynamic domain name resolution."
 		local docker_url="Official website introduction:${gh_https_url}github.com/jeessy2/ddns-go"
 		local docker_use=""
@@ -17605,17 +14545,14 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
 	  68|allinssl)
 		local app_id="68"
 		local docker_name="allinssl"
 		local docker_img="allinssl/allinssl:latest"
 		local docker_port=8068
-
 		docker_rum() {
 			docker run -d --name allinssl -p ${docker_port}:8888 -v /home/docker/allinssl/data:/www/allinssl/data -e ALLINSSL_USER=allinssl -e ALLINSSL_PWD=allinssldocker -e ALLINSSL_URL=allinssl allinssl/allinssl:latest
 		}
-
 		local docker_describe="Open source free SSL certificate automation management platform"
 		local docker_url="Official website introduction: https://allinssl.com"
 		local docker_use="echo \"Security entrance: /allinssl\""
@@ -17623,20 +14560,15 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
-
 	  69|sftpgo)
 		local app_id="69"
 		local docker_name="sftpgo"
 		local docker_img="drakkan/sftpgo:latest"
 		local docker_port=8069
-
 		docker_rum() {
-
 			mkdir -p /home/docker/sftpgo/data
 			mkdir -p /home/docker/sftpgo/config
 			chown -R 1000:1000 /home/docker/sftpgo
-
 			docker run -d \
 			  --name sftpgo \
 			  --restart=always \
@@ -17645,9 +14577,7 @@ while true; do
 			  --mount type=bind,source=/home/docker/sftpgo/data,target=/srv/sftpgo \
 			  --mount type=bind,source=/home/docker/sftpgo/config,target=/var/lib/sftpgo \
 			  drakkan/sftpgo:latest
-
 		}
-
 		local docker_describe="Open source free anytime, anywhere SFTP FTP WebDAV file transfer tool"
 		local docker_url="Official website introduction: https://sftpgo.com/"
 		local docker_use=""
@@ -17655,18 +14585,13 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
-
 	  70|astrbot)
 		local app_id="70"
 		local docker_name="astrbot"
 		local docker_img="soulter/astrbot:latest"
 		local docker_port=8070
-
 		docker_rum() {
-
 			mkdir -p /home/docker/astrbot/data
-
 			docker run -d \
 			  -p ${docker_port}:6185 \
 			  -p 6195:6195 \
@@ -17677,9 +14602,7 @@ while true; do
 			  --restart=always \
 			  --name astrbot \
 			  soulter/astrbot:latest
-
 		}
-
 		local docker_describe="Open source AI chatbot framework, supporting WeChat, QQ, and TG access to large AI models"
 		local docker_url="Official website introduction: https://astrbot.app/"
 		local docker_use="echo \"Username: astrbot Password: astrbot\""
@@ -17687,16 +14610,12 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
-
 	  71|navidrome)
 		local app_id="71"
 		local docker_name="navidrome"
 		local docker_img="deluan/navidrome:latest"
 		local docker_port=8071
-
 		docker_rum() {
-
 			docker run -d \
 			  --name navidrome \
 			  --restart=always \
@@ -17706,9 +14625,7 @@ while true; do
 			  -p ${docker_port}:4533 \
 			  -e ND_LOGLEVEL=info \
 			  deluan/navidrome:latest
-
 		}
-
 		local docker_describe="It is a lightweight, high-performance music streaming server"
 		local docker_url="Official website introduction: https://www.navidrome.org/"
 		local docker_use=""
@@ -17716,91 +14633,63 @@ while true; do
 		local app_size="1"
 		docker_app
 		  ;;
-
-
 	  72|bitwarden)
-
 		local app_id="72"
 		local docker_name="bitwarden"
 		local docker_img="vaultwarden/server"
 		local docker_port=8072
-
 		docker_rum() {
-
 			docker run -d \
 				--name bitwarden \
 				--restart=always \
 				-p ${docker_port}:80 \
 				-v /home/docker/bitwarden/data:/data \
 				vaultwarden/server
-
 		}
-
 		local docker_describe="A password manager that puts you in control of your data"
 		local docker_url="Official website introduction: https://bitwarden.com/"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
-
 		  ;;
-
-
-
 	  73|libretv)
-
 		local app_id="73"
 		local docker_name="libretv"
 		local docker_img="bestzwei/libretv:latest"
 		local docker_port=8073
-
 		docker_rum() {
-
 			read -e -p "Set LibreTV login password:" app_passwd
-
 			docker run -d \
 			  --name libretv \
 			  --restart=always \
 			  -p ${docker_port}:8080 \
 			  -e PASSWORD=${app_passwd} \
 			  bestzwei/libretv:latest
-
 		}
-
 		local docker_describe="Free online video search and viewing platform"
 		local docker_url="Official website introduction:${gh_https_url}github.com/LibreSpark/LibreTV"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
-
 	  74|moontv)
-
 		local app_id="74"
-
 		local app_name="moontv private film and television"
 		local app_text="Free online video search and viewing platform"
 		local app_url="Video introduction:${gh_https_url}github.com/MoonTechLab/LunaTV"
 		local docker_name="moontv-core"
 		local docker_port="8074"
 		local app_size="2"
-
 		docker_app_install() {
 			read -e -p "Set login username:" admin
 			read -e -p "Set login user password:" admin_password
 			read -e -p "Enter authorization code:" shouquanma
-
-
 			mkdir -p /home/docker/moontv
 			mkdir -p /home/docker/moontv/config
 			mkdir -p /home/docker/moontv/data
 			cd /home/docker/moontv
-
 			curl -o /home/docker/moontv/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/harvey/docker/main/moontv-docker-compose.yml
 			sed -i "s/3000:3000/${docker_port}:3000/g" /home/docker/moontv/docker-compose.yml
 			sed -i "s|admin_password|${admin_password}|g" /home/docker/moontv/docker-compose.yml
@@ -17812,93 +14701,64 @@ while true; do
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
-
 		docker_app_update() {
 			cd /home/docker/moontv/ && docker compose down --rmi all
 			cd /home/docker/moontv/ && docker compose up -d
 		}
-
-
 		docker_app_uninstall() {
 			cd /home/docker/moontv/ && docker compose down --rmi all
 			rm -rf /home/docker/moontv
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
-
 	  75|melody)
-
 		local app_id="75"
 		local docker_name="melody"
 		local docker_img="foamzou/melody:latest"
 		local docker_port=8075
-
 		docker_rum() {
-
 			docker run -d \
 			  --name melody \
 			  --restart=always \
 			  -p ${docker_port}:5566 \
 			  -v /home/docker/melody/.profile:/app/backend/.profile \
 			  foamzou/melody:latest
-
-
 		}
-
 		local docker_describe="Your music wizard, designed to help you better manage your music."
 		local docker_url="Official website introduction:${gh_https_url}github.com/foamzou/melody"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
-
 		  ;;
-
-
 	  76|dosgame)
-
 		local app_id="76"
 		local docker_name="dosgame"
 		local docker_img="oldiy/dosgame-web-docker:latest"
 		local docker_port=8076
-
 		docker_rum() {
 			docker run -d \
 				--name dosgame \
 				--restart=always \
 				-p ${docker_port}:262 \
 				oldiy/dosgame-web-docker:latest
-
 		}
-
 		local docker_describe="It is a Chinese DOS game collection website"
 		local docker_url="Official website introduction:${gh_https_url}github.com/rwv/chinese-dos-games"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="2"
 		docker_app
-
-
 		  ;;
-
 	  77|xunlei)
-
 		local app_id="77"
 		local docker_name="xunlei"
 		local docker_img="cnk3x/xunlei"
 		local docker_port=8077
-
 		docker_rum() {
-
 			read -e -p "Set login username:" app_use
 			read -e -p "Set login password:" app_passwd
-
 			docker run -d \
 			  --name xunlei \
 			  --restart=always \
@@ -17909,22 +14769,15 @@ while true; do
 			  -v /home/docker/xunlei/downloads:/xunlei/downloads \
 			  -p ${docker_port}:2345 \
 			  cnk3x/xunlei
-
 		}
-
 		local docker_describe="Xunlei, your offline high-speed BT magnetic download tool"
 		local docker_url="Official website introduction:${gh_https_url}github.com/cnk3x/xunlei"
 		local docker_use="echo \"Log in to Xunlei with your mobile phone and enter the invitation code. Invitation code: Xunlei Niutong\""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
-
 	  78|PandaWiki)
-
 		local app_id="78"
 		local app_name="PandaWiki"
 		local app_text="PandaWiki is an open source intelligent document management system driven by AI large models. It is strongly recommended not to customize port deployment."
@@ -17932,34 +14785,23 @@ while true; do
 		local docker_name="panda-wiki-nginx"
 		local docker_port="2443"
 		local app_size="2"
-
 		docker_app_install() {
 			bash -c "$(curl -fsSLk https://release.baizhi.cloud/panda-wiki/manager.sh)"
 		}
-
 		docker_app_update() {
 			docker_app_install
 		}
-
-
 		docker_app_uninstall() {
 			docker_app_install
 		}
-
 		docker_app_plus
 		  ;;
-
-
-
 	  79|beszel)
-
 		local app_id="79"
 		local docker_name="beszel"
 		local docker_img="henrygd/beszel"
 		local docker_port=8079
-
 		docker_rum() {
-
 			mkdir -p /home/docker/beszel && \
 			docker run -d \
 			  --name beszel \
@@ -17967,21 +14809,15 @@ while true; do
 			  -v /home/docker/beszel:/beszel_data \
 			  -p ${docker_port}:8090 \
 			  henrygd/beszel
-
 		}
-
 		local docker_describe="Beszel is lightweight and easy-to-use server monitoring"
 		local docker_url="Official website introduction: https://beszel.dev/zh/"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
 	  80|linkwarden)
-
 		  local app_id="80"
 		  local app_name="linkwarden bookmark management"
 		  local app_text="An open source, self-hosted bookmark management platform that supports tagging, search, and team collaboration."
@@ -17989,44 +14825,33 @@ while true; do
 		  local docker_name="linkwarden-linkwarden-1"
 		  local docker_port="8080"
 		  local app_size="3"
-
 		  docker_app_install() {
 			  install git openssl
 			  mkdir -p /home/docker/linkwarden && cd /home/docker/linkwarden
-
 			  # Download the official docker-compose and env files
 			  curl -O ${gh_proxy}raw.githubusercontent.com/linkwarden/linkwarden/refs/heads/main/docker-compose.yml
 			  curl -L ${gh_proxy}raw.githubusercontent.com/linkwarden/linkwarden/refs/heads/main/.env.sample -o ".env"
-
 			  # Generate random keys and passwords
 			  local ADMIN_EMAIL="admin@example.com"
 			  local ADMIN_PASSWORD=$(openssl rand -hex 8)
-
 			  sed -i "s|^NEXTAUTH_URL=.*|NEXTAUTH_URL=http://localhost:${docker_port}/api/v1/auth|g" .env
 			  sed -i "s|^NEXTAUTH_SECRET=.*|NEXTAUTH_SECRET=$(openssl rand -hex 32)|g" .env
 			  sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 16)|g" .env
 			  sed -i "s|^MEILI_MASTER_KEY=.*|MEILI_MASTER_KEY=$(openssl rand -hex 32)|g" .env
-
 			  # Add administrator account information
 			  echo "ADMIN_EMAIL=${ADMIN_EMAIL}" >> .env
 			  echo "ADMIN_PASSWORD=${ADMIN_PASSWORD}" >> .env
-
 			  sed -i "s/3000:3000/${docker_port}:3000/g" /home/docker/linkwarden/docker-compose.yml
-
 			  # Start container
 			  docker compose up -d
-
 			  clear
 			  echo "Installation completed"
 		  	  check_docker_app_ip
-
 		  }
-
 		  docker_app_update() {
 			  cd /home/docker/linkwarden && docker compose down --rmi all
 			  curl -O ${gh_proxy}raw.githubusercontent.com/linkwarden/linkwarden/refs/heads/main/docker-compose.yml
 			  curl -L ${gh_proxy}raw.githubusercontent.com/linkwarden/linkwarden/refs/heads/main/.env.sample -o ".env.new"
-
 			  # Keep original variables
 			  source .env
 			  mv .env.new .env
@@ -18037,22 +14862,15 @@ while true; do
 			  echo "ADMIN_EMAIL=$ADMIN_EMAIL" >> .env
 			  echo "ADMIN_PASSWORD=$ADMIN_PASSWORD" >> .env
 			  sed -i "s/3000:3000/${docker_port}:3000/g" /home/docker/linkwarden/docker-compose.yml
-
 			  docker compose up -d
 		  }
-
 		  docker_app_uninstall() {
 			  cd /home/docker/linkwarden && docker compose down --rmi all
 			  rm -rf /home/docker/linkwarden
 			  echo "App has been uninstalled"
 		  }
-
 		  docker_app_plus
-
 		  ;;
-
-
-
 	  81|jitsi)
 		  local app_id="81"
 		  local app_name="JitsiMeet video conference"
@@ -18061,9 +14879,7 @@ while true; do
 		  local docker_name="jitsi"
 		  local docker_port="8081"
 		  local app_size="3"
-
 		  docker_app_install() {
-
 			  add_yuming
 			  mkdir -p /home/docker/jitsi && cd /home/docker/jitsi
 			  wget $(wget -q -O - https://api.github.com/repos/jitsi/docker-jitsi-meet/releases/latest | grep zip | cut -d\" -f4)
@@ -18075,20 +14891,15 @@ while true; do
 			  sed -i "s|^HTTP_PORT=.*|HTTP_PORT=${docker_port}|" .env
 			  sed -i "s|^#PUBLIC_URL=https://meet.example.com:\${HTTPS_PORT}|PUBLIC_URL=https://$yuming:443|" .env
 			  docker compose up -d
-
 			  ldnmp_Proxy ${yuming} 127.0.0.1 ${docker_port}
 			  block_container_port "$docker_name" "$ipv4_address"
-
 		  }
-
 		  docker_app_update() {
 			  cd /home/docker/jitsi
 			  cd "$(ls -dt */ | head -n 1)"
 			  docker compose down --rmi all
 			  docker compose up -d
-
 		  }
-
 		  docker_app_uninstall() {
 			  cd /home/docker/jitsi
 			  cd "$(ls -dt */ | head -n 1)"
@@ -18096,53 +14907,35 @@ while true; do
 			  rm -rf /home/docker/jitsi
 			  echo "App has been uninstalled"
 		  }
-
 		  docker_app_plus
-
 		  ;;
-
-
-
 	  82|gpt-load)
-
 		local app_id="82"
 		local docker_name="gpt-load"
 		local docker_img="tbphp/gpt-load:latest"
 		local docker_port=8082
-
 		docker_rum() {
-
 			read -e -p "set up${docker_name}Login key (sk-a combination of letters and numbers starting with) such as: sk-159harveyyyds163:" app_passwd
-
 			mkdir -p /home/docker/gpt-load && \
 			docker run -d --name gpt-load \
 				-p ${docker_port}:3001 \
 				-e AUTH_KEY=${app_passwd} \
 				-v "/home/docker/gpt-load/data":/app/data \
 				tbphp/gpt-load:latest
-
 		}
-
 		local docker_describe="High-performance AI interface transparent proxy service"
 		local docker_url="Official website introduction: https://www.gpt-load.com/"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
-
 	  83|komari)
-
 		local app_id="83"
 		local docker_name="komari"
 		local docker_img="ghcr.io/komari-monitor/komari:latest"
 		local docker_port=8083
-
 		docker_rum() {
-
 			mkdir -p /home/docker/komari && \
 			docker run -d \
 			  --name komari \
@@ -18153,29 +14946,20 @@ while true; do
 			  -e TZ=Asia/Shanghai \
 			  --restart=always \
 			  ghcr.io/komari-monitor/komari:latest
-
 		}
-
 		local docker_describe="Lightweight self-hosted server monitoring tool"
 		local docker_url="Official website introduction:${gh_https_url}github.com/komari-monitor/komari/tree/main"
 		local docker_use="echo \"Default account: admin Default password: 1212156\""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
-
 	  84|wallos)
-
 		local app_id="84"
 		local docker_name="wallos"
 		local docker_img="bellamy/wallos:latest"
 		local docker_port=8084
-
 		docker_rum() {
-
 			mkdir -p /home/docker/wallos && \
 			docker run -d --name wallos \
 			  -v /home/docker/wallos/db:/var/www/html/db \
@@ -18184,20 +14968,15 @@ while true; do
 			  -p ${docker_port}:80 \
 			  --restart=always \
 			  bellamy/wallos:latest
-
 		}
-
 		local docker_describe="Open source personal subscription tracker for financial management"
 		local docker_url="Official website introduction:${gh_https_url}github.com/ellite/Wallos"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
 	  85|immich)
-
 		  local app_id="85"
 		  local app_name="immich picture video manager"
 		  local app_text="High-performance self-hosted photo and video management solution."
@@ -18205,52 +14984,36 @@ while true; do
 		  local docker_name="immich_server"
 		  local docker_port="8085"
 		  local app_size="3"
-
 		  docker_app_install() {
 			  install git openssl wget
 			  mkdir -p /home/docker/${docker_name} && cd /home/docker/${docker_name}
-
 			  wget -O docker-compose.yml ${gh_proxy}github.com/immich-app/immich/releases/latest/download/docker-compose.yml
 			  wget -O .env ${gh_proxy}github.com/immich-app/immich/releases/latest/download/example.env
 			  sed -i "s/2283:2283/${docker_port}:2283/g" /home/docker/${docker_name}/docker-compose.yml
-
 			  docker compose up -d
-
 			  clear
 			  echo "Installation completed"
 		  	  check_docker_app_ip
-
 		  }
-
 		  docker_app_update() {
 				cd /home/docker/${docker_name} && docker compose down --rmi all
 				docker_app_install
 		  }
-
 		  docker_app_uninstall() {
 			  cd /home/docker/${docker_name} && docker compose down --rmi all
 			  rm -rf /home/docker/${docker_name}
 			  echo "App has been uninstalled"
 		  }
-
 		  docker_app_plus
-
-
 		  ;;
-
-
 	  86|jellyfin)
-
 		local app_id="86"
 		local docker_name="jellyfin"
 		local docker_img="jellyfin/jellyfin"
 		local docker_port=8086
-
 		docker_rum() {
-
 			mkdir -p /home/docker/jellyfin/media
 			chmod -R 777 /home/docker/jellyfin
-
 			docker run -d \
 			  --name jellyfin \
 			  --user root \
@@ -18261,57 +15024,40 @@ while true; do
 			  -p 7359:7359/udp \
 			  --restart=always \
 			  jellyfin/jellyfin
-
-
 		}
-
 		local docker_describe="Is an open source media server software"
 		local docker_url="Official website introduction: https://jellyfin.org/"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
 	  87|synctv)
-
 		local app_id="87"
 		local docker_name="synctv"
 		local docker_img="synctvorg/synctv"
 		local docker_port=8087
-
 		docker_rum() {
-
 			docker run -d \
 				--name synctv \
 				-v /home/docker/synctv:/root/.synctv \
 				-p ${docker_port}:8080 \
 				--restart=always \
 				synctvorg/synctv
-
 		}
-
 		local docker_describe="A program to watch movies and live broadcasts together remotely. It provides simultaneous viewing, live broadcast, chat and other functions"
 		local docker_url="Official website introduction:${gh_https_url}github.com/synctv-org/synctv"
 		local docker_use="echo \"Initial account and password: root. Please change the login password in time after logging in\""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
 	  88|owncast)
-
 		local app_id="88"
 		local docker_name="owncast"
 		local docker_img="owncast/owncast:latest"
 		local docker_port=8088
-
 		docker_rum() {
-
 			docker run -d \
 				--name owncast \
 				-p ${docker_port}:8080 \
@@ -18319,62 +15065,41 @@ while true; do
 				-v /home/docker/owncast/data:/app/data \
 				--restart=always \
 				owncast/owncast:latest
-
-
 		}
-
 		local docker_describe="Open source, free self-built live broadcast platform"
 		local docker_url="Official website introduction: https://owncast.online"
 		local docker_use="echo \"The access address is followed by /admin to access the administrator page\""
 		local docker_passwd="echo \"Initial account: admin Initial password: abc123 Please change the login password in time after logging in\""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
-
 	  89|file-code-box)
-
 		local app_id="89"
 		local docker_name="file-code-box"
 		local docker_img="lanol/filecodebox:latest"
 		local docker_port=8089
-
 		docker_rum() {
-
 			docker run -d \
 			  --name file-code-box \
 			  -p ${docker_port}:12345 \
 			  -v /home/docker/file-code-box/data:/app/data \
 			  --restart=always \
 			  lanol/filecodebox:latest
-
 		}
-
 		local docker_describe="Share texts and files with anonymous passwords, and pick up files like express delivery"
 		local docker_url="Official website introduction:${gh_https_url}github.com/vastsa/FileCodeBox"
 		local docker_use="echo \"The access address is followed by /#/admin to access the administrator page\""
 		local docker_passwd="echo \"Administrator password: FileCodeBox2023\""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
-
-
 	  90|matrix)
-
 		local app_id="90"
 		local docker_name="matrix"
 		local docker_img="matrixdotorg/synapse:latest"
 		local docker_port=8090
-
 		docker_rum() {
-
 			add_yuming
-
 			if [ ! -d /home/docker/matrix/data ]; then
 				docker run --rm \
 				  -v /home/docker/matrix/data:/data \
@@ -18383,61 +15108,45 @@ while true; do
 				  --name matrix \
 				  matrixdotorg/synapse:latest generate
 			fi
-
 			docker run -d \
 			  --name matrix \
 			  -v /home/docker/matrix/data:/data \
 			  -p ${docker_port}:8008 \
 			  --restart=always \
 			  matrixdotorg/synapse:latest
-
 			echo "Create an initial user or administrator. Please set the following username and password and whether you are an administrator."
 			docker exec -it matrix register_new_matrix_user \
 			  http://localhost:8008 \
 			  -c /data/homeserver.yaml
-
 			sed -i '/^enable_registration:/d' /home/docker/matrix/data/homeserver.yaml
 			sed -i '/^# vim:ft=yaml/i enable_registration: true' /home/docker/matrix/data/homeserver.yaml
 			sed -i '/^enable_registration_without_verification:/d' /home/docker/matrix/data/homeserver.yaml
 			sed -i '/^# vim:ft=yaml/i enable_registration_without_verification: true' /home/docker/matrix/data/homeserver.yaml
-
 			docker restart matrix
-
 			ldnmp_Proxy ${yuming} 127.0.0.1 ${docker_port}
 			block_container_port "$docker_name" "$ipv4_address"
-
 		}
-
 		local docker_describe="Matrix is ​​a decentralized chat protocol"
 		local docker_url="Official website introduction: https://matrix.org/"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
-
 	  91|gitea)
-
 		local app_id="91"
-
 		local app_name="gitea private code repository"
 		local app_text="A free new generation code hosting platform that provides an experience close to GitHub."
 		local app_url="Video introduction:${gh_https_url}github.com/go-gitea/gitea"
 		local docker_name="gitea"
 		local docker_port="8091"
 		local app_size="2"
-
 		docker_app_install() {
-
 			mkdir -p /home/docker/gitea
 			mkdir -p /home/docker/gitea/gitea
 			mkdir -p /home/docker/gitea/data
 			mkdir -p /home/docker/gitea/postgres
 			cd /home/docker/gitea
-
 			curl -o /home/docker/gitea/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/harvey/docker/main/gitea-docker-compose.yml
 			sed -i "s/3000:3000/${docker_port}:3000/g" /home/docker/gitea/docker-compose.yml
 			cd /home/docker/gitea/
@@ -18446,36 +15155,23 @@ while true; do
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
-
 		docker_app_update() {
 			cd /home/docker/gitea/ && docker compose down --rmi all
 			cd /home/docker/gitea/ && docker compose up -d
 		}
-
-
 		docker_app_uninstall() {
 			cd /home/docker/gitea/ && docker compose down --rmi all
 			rm -rf /home/docker/gitea
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
-
-
-
 	  92|filebrowser)
-
 		local app_id="92"
 		local docker_name="filebrowser"
 		local docker_img="hurlenko/filebrowser"
 		local docker_port=8092
-
 		docker_rum() {
-
 			docker run -d \
 				--name filebrowser \
 				--restart=always \
@@ -18484,57 +15180,42 @@ while true; do
 				-v /home/docker/filebrowser/config:/config \
 				-e FB_BASEURL=/filebrowser \
 				hurlenko/filebrowser
-
 		}
-
 		local docker_describe="Is a web-based file manager"
 		local docker_url="Official website introduction: https://filebrowser.org/"
 		local docker_use="docker logs filebrowser"
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
 	93|dufs)
-
 		local app_id="93"
 		local docker_name="dufs"
 		local docker_img="sigoden/dufs"
 		local docker_port=8093
-
 		docker_rum() {
-
 			docker run -d \
 			  --name ${docker_name} \
 			  --restart=always \
 			  -v /home/docker/${docker_name}:/data \
 			  -p ${docker_port}:5000 \
 			  ${docker_img} /data -A
-
 		}
-
 		local docker_describe="Minimalist static file server, supports upload and download"
 		local docker_url="Official website introduction:${gh_https_url}github.com/sigoden/dufs"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		;;
-
 	94|gopeed)
-
 		local app_id="94"
 		local docker_name="gopeed"
 		local docker_img="liwei2633/gopeed"
 		local docker_port=8094
-
 		docker_rum() {
-
 			read -e -p "Set login username:" app_use
 			read -e -p "Set login password:" app_passwd
-
 			docker run -d \
 			  --name ${docker_name} \
 			  --restart=always \
@@ -18542,41 +15223,29 @@ while true; do
 			  -v /home/docker/${docker_name}/storage:/app/storage \
 			  -p ${docker_port}:9999 \
 			  ${docker_img} -u ${app_use} -p ${app_passwd}
-
 		}
-
 		local docker_describe="Distributed high-speed download tool, supporting multiple protocols"
 		local docker_url="Official website introduction:${gh_https_url}github.com/GopeedLab/gopeed"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		;;
-
-
-
 	  95|paperless)
-
 		local app_id="95"
-
 		local app_name="paperless document management platform"
 		local app_text="An open source electronic document management system, its main purpose is to digitize and manage your paper documents."
 		local app_url="Video introduction: https://docs.paperless-ngx.com/"
 		local docker_name="paperless-webserver-1"
 		local docker_port="8095"
 		local app_size="2"
-
 		docker_app_install() {
-
 			mkdir -p /home/docker/paperless
 			mkdir -p /home/docker/paperless/export
 			mkdir -p /home/docker/paperless/consume
 			cd /home/docker/paperless
-
 			curl -o /home/docker/paperless/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/paperless-ngx/paperless-ngx/refs/heads/main/docker/compose/docker-compose.postgres-tika.yml
 			curl -o /home/docker/paperless/docker-compose.env ${gh_proxy}raw.githubusercontent.com/paperless-ngx/paperless-ngx/refs/heads/main/docker/compose/.env
-
 			sed -i "s/8000:8000/${docker_port}:8000/g" /home/docker/paperless/docker-compose.yml
 			cd /home/docker/paperless
 			docker compose up -d
@@ -18584,98 +15253,65 @@ while true; do
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
-
 		docker_app_update() {
 			cd /home/docker/paperless/ && docker compose down --rmi all
 			docker_app_install
 		}
-
-
 		docker_app_uninstall() {
 			cd /home/docker/paperless/ && docker compose down --rmi all
 			rm -rf /home/docker/paperless
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
-
-
 	  96|2fauth)
-
 		local app_id="96"
-
 		local app_name="2FAuth self-hosted two-step authenticator"
 		local app_text="Self-hosted two-factor authentication (2FA) account management and verification code generation tool."
 		local app_url="Official website:${gh_https_url}github.com/Bubka/2FAuth"
 		local docker_name="2fauth"
 		local docker_port="8096"
 		local app_size="1"
-
 		docker_app_install() {
-
 			add_yuming
-
 			mkdir -p /home/docker/2fauth
 			mkdir -p /home/docker/2fauth/data
 			chmod -R 777 /home/docker/2fauth/
 			cd /home/docker/2fauth
-
 			curl -o /home/docker/2fauth/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/harvey/docker/main/2fauth-docker-compose.yml
-
 			sed -i "s/8000:8000/${docker_port}:8000/g" /home/docker/2fauth/docker-compose.yml
 			sed -i "s/yuming.com/${yuming}/g" /home/docker/2fauth/docker-compose.yml
 			cd /home/docker/2fauth
 			docker compose up -d
-
 			ldnmp_Proxy ${yuming} 127.0.0.1 ${docker_port}
 			block_container_port "$docker_name" "$ipv4_address"
-
 			clear
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
-
 		docker_app_update() {
 			cd /home/docker/2fauth/ && docker compose down --rmi all
 			docker_app_install
 		}
-
-
 		docker_app_uninstall() {
 			cd /home/docker/2fauth/ && docker compose down --rmi all
 			rm -rf /home/docker/2fauth
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
-
-
 	97|wgs)
-
 		local app_id="97"
 		local docker_name="wireguard"
 		local docker_img="lscr.io/linuxserver/wireguard:latest"
 		local docker_port=8097
-
 		docker_rum() {
-
 		read -e -p  "Please enter the number of clients in the network (default 5):" COUNT
 		COUNT=${COUNT:-5}
 		read -e -p  "Please enter the WireGuard network segment (default 10.13.13.0):" NETWORK
 		NETWORK=${NETWORK:-10.13.13.0}
-
 		PEERS=$(seq -f "wg%02g" 1 "$COUNT" | paste -sd,)
-
 		ip link delete wg0 &>/dev/null
-
 		ip_address
 		docker run -d \
 		  --name=wireguard \
@@ -18696,27 +15332,21 @@ while true; do
 		  -v /lib/modules:/lib/modules \
 		  --restart=always \
 		  lscr.io/linuxserver/wireguard:latest
-
-
 		sleep 3
-
 		docker exec wireguard sh -c "
 		f='/config/wg_confs/wg0.conf'
 		sed -i 's/51820/${docker_port}/g' \$f
 		"
-
 		docker exec wireguard sh -c "
 		for d in /config/peer_*; do
 		  sed -i 's/51820/${docker_port}/g' \$d/*.conf
 		done
 		"
-
 		docker exec wireguard sh -c '
 		for d in /config/peer_*; do
 		  sed -i "/^DNS/d" "$d"/*.conf
 		done
 		'
-
 		docker exec wireguard sh -c '
 		for d in /config/peer_*; do
 		  for f in "$d"/*.conf; do
@@ -18725,7 +15355,6 @@ while true; do
 		  done
 		done
 		'
-
 		docker exec wireguard bash -c '
 		for d in /config/peer_*; do
 		  cd "$d" || continue
@@ -18734,9 +15363,7 @@ while true; do
 		  qrencode -o "$base_name.png" < "$conf_file"
 		done
 		'
-
 		docker restart wireguard
-
 		sleep 2
 		echo
 		echo -e "${gl_huang}All client QR code configurations:${gl_bai}"
@@ -18752,41 +15379,28 @@ while true; do
 		echo -e "${gl_lv}3. Use a script to deploy the WG client on Linux and copy the configuration code to connect to the network.${gl_bai}"
 		echo -e "${gl_lv}Official client download method: https://www.wireguard.com/install/${gl_bai}"
 		break_end
-
 		}
-
 		local docker_describe="Modern, high-performance virtual private network tools"
 		local docker_url="Official website introduction: https://www.wireguard.com/"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		;;
-
-
 	98|wgc)
-
 		local app_id="98"
 		local docker_name="wireguardc"
 		local docker_img="kjlion/wireguard:alpine"
 		local docker_port=51820
-
 		docker_rum() {
-
 			mkdir -p /home/docker/wireguard/config/
-
 			local CONFIG_FILE="/home/docker/wireguard/config/wg0.conf"
-
 			# Create directory if it does not exist
 			mkdir -p "$(dirname "$CONFIG_FILE")"
-
 			echo "Please paste your client configuration and press Enter twice to save:"
-
 			# initialize variables
 			input=""
 			empty_line_count=0
-
 			# Read user input line by line
 			while IFS= read -r line; do
 				if [[ -z "$line" ]]; then
@@ -18799,14 +15413,10 @@ while true; do
 					input+="$line"$'\n'
 				fi
 			done
-
 			# Write configuration file
 			echo "$input" > "$CONFIG_FILE"
-
 			echo "Client configuration saved to$CONFIG_FILE"
-
 			ip link delete wg0 &>/dev/null
-
 			docker run -d \
 			  --name wireguardc \
 			  --network host \
@@ -18816,88 +15426,60 @@ while true; do
 			  -v /lib/modules:/lib/modules:ro \
 			  --restart=always \
 			  kjlion/wireguard:alpine
-
 			sleep 3
-
 			docker logs wireguardc
-
 		break_end
-
 		}
-
 		local docker_describe="Modern, high-performance virtual private network tools"
 		local docker_url="Official website introduction: https://www.wireguard.com/"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		;;
-
-
 	  99|dsm)
-
 		local app_id="99"
-
 		local app_name="dsm synology virtual machine"
 		local app_text="Virtual DSM in Docker container"
 		local app_url="Official website:${gh_https_url}github.com/vdsm/virtual-dsm"
 		local docker_name="dsm"
 		local docker_port="8099"
 		local app_size="16"
-
 		docker_app_install() {
-
 			read -e -p "Set the number of CPU cores (default 2):" CPU_CORES
 			local CPU_CORES=${CPU_CORES:-2}
-
 			read -e -p "Set memory size (default 4G):" RAM_SIZE
 			local RAM_SIZE=${RAM_SIZE:-4}
-
 			mkdir -p /home/docker/dsm
 			mkdir -p /home/docker/dsm/dev
 			chmod -R 777 /home/docker/dsm/
 			cd /home/docker/dsm
-
 			curl -o /home/docker/dsm/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/harvey/docker/main/dsm-docker-compose.yml
-
 			sed -i "s/5000:5000/${docker_port}:5000/g" /home/docker/dsm/docker-compose.yml
 			sed -i "s|CPU_CORES: "2"|CPU_CORES: "${CPU_CORES}"|g" /home/docker/dsm/docker-compose.yml
 			sed -i "s|RAM_SIZE: "2G"|RAM_SIZE: "${RAM_SIZE}G"|g" /home/docker/dsm/docker-compose.yml
 			cd /home/docker/dsm
 			docker compose up -d
-
 			clear
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
-
 		docker_app_update() {
 			cd /home/docker/dsm/ && docker compose down --rmi all
 			docker_app_install
 		}
-
-
 		docker_app_uninstall() {
 			cd /home/docker/dsm/ && docker compose down --rmi all
 			rm -rf /home/docker/dsm
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
-
-
 	100|syncthing)
-
 		local app_id="100"
 		local docker_name="syncthing"
 		local docker_img="syncthing/syncthing:latest"
 		local docker_port=8100
-
 		docker_rum() {
 			docker run -d \
 			  --name=syncthing \
@@ -18910,17 +15492,13 @@ while true; do
 			  -v /home/docker/syncthing:/var/syncthing \
 			  syncthing/syncthing:latest
 		}
-
 		local docker_describe="An open source peer-to-peer file synchronization tool, similar to Dropbox and Resilio Sync, but completely decentralized."
 		local docker_url="Official website introduction:${gh_https_url}github.com/syncthing/syncthing"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		;;
-
-
 	  101|moneyprinterturbo)
 		local app_id="101"
 		local app_name="AI video generation tool"
@@ -18929,66 +15507,48 @@ while true; do
 		local docker_name="moneyprinterturbo"
 		local docker_port="8101"
 		local app_size="3"
-
 		docker_app_install() {
 			install git
 			mkdir -p  /home/docker/ && cd /home/docker/ && git clone ${gh_proxy}github.com/harry0703/MoneyPrinterTurbo.git && cd MoneyPrinterTurbo/
 			sed -i "s/8501:8501/${docker_port}:8501/g" /home/docker/MoneyPrinterTurbo/docker-compose.yml
-
 			docker compose up -d
 			clear
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
 		docker_app_update() {
 			cd  /home/docker/MoneyPrinterTurbo/ && docker compose down --rmi all
 			cd  /home/docker/MoneyPrinterTurbo/
-
 			git pull ${gh_proxy}github.com/harry0703/MoneyPrinterTurbo.git main > /dev/null 2>&1
 			sed -i "s/8501:8501/${docker_port}:8501/g" /home/docker/MoneyPrinterTurbo/docker-compose.yml
 			cd  /home/docker/MoneyPrinterTurbo/ && docker compose up -d
 		}
-
 		docker_app_uninstall() {
 			cd  /home/docker/MoneyPrinterTurbo/ && docker compose down --rmi all
 			rm -rf /home/docker/MoneyPrinterTurbo
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
-
-
 	  102|vocechat)
-
 		local app_id="102"
 		local docker_name="vocechat-server"
 		local docker_img="privoce/vocechat-server:latest"
 		local docker_port=8102
-
 		docker_rum() {
-
 			docker run -d --restart=always \
 			  -p ${docker_port}:3000 \
 			  --name vocechat-server \
 			  -v /home/docker/vocechat/data:/home/vocechat-server/data \
 			  privoce/vocechat-server:latest
-
 		}
-
 		local docker_describe="It is a personal cloud social media chat service that supports independent deployment."
 		local docker_url="Official website introduction:${gh_https_url}github.com/Privoce/vocechat-web"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
 	  103|umami)
 		local app_id="103"
 		local app_name="Umami website statistics tool"
@@ -18997,12 +15557,10 @@ while true; do
 		local docker_name="umami-umami-1"
 		local docker_port="8103"
 		local app_size="1"
-
 		docker_app_install() {
 			install git
 			mkdir -p  /home/docker/ && cd /home/docker/ && git clone ${gh_proxy}github.com/umami-software/umami.git && cd umami
 			sed -i "s/3000:3000/${docker_port}:3000/g" /home/docker/umami/docker-compose.yml
-
 			docker compose up -d
 			clear
 			echo "Installation completed"
@@ -19010,7 +15568,6 @@ while true; do
 			echo "Initial username: admin"
 			echo "Initial password: umami"
 		}
-
 		docker_app_update() {
 			cd  /home/docker/umami/ && docker compose down --rmi all
 			cd  /home/docker/umami/
@@ -19018,33 +15575,23 @@ while true; do
 			sed -i "s/8501:8501/${docker_port}:8501/g" /home/docker/umami/docker-compose.yml
 			cd  /home/docker/umami/ && docker compose up -d
 		}
-
 		docker_app_uninstall() {
 			cd  /home/docker/umami/ && docker compose down --rmi all
 			rm -rf /home/docker/umami
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
 	  104|nginx-stream)
 		stream_panel
 		  ;;
-
-
 	  105|siyuan)
-
 		local app_id="105"
 		local docker_name="siyuan"
 		local docker_img="b3log/siyuan"
 		local docker_port=8105
-
 		docker_rum() {
-
 			read -e -p "Set login password:" app_passwd
-
 			docker run -d \
 			  --name siyuan \
 			  --restart=always \
@@ -19055,55 +15602,39 @@ while true; do
 			  b3log/siyuan \
 			  --workspace=/siyuan/workspace/ \
 			  --accessAuthCode="${app_passwd}"
-
 		}
-
 		local docker_describe="Siyuan Notes is a privacy-first knowledge management system"
 		local docker_url="Official website introduction:${gh_https_url}github.com/siyuan-note/siyuan"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
 	  106|drawnix)
-
 		local app_id="106"
 		local docker_name="drawnix"
 		local docker_img="pubuzhixing/drawnix"
 		local docker_port=8106
-
 		docker_rum() {
-
 			docker run -d \
 			   --restart=always  \
 			   --name drawnix \
 			   -p ${docker_port}:80 \
 			  pubuzhixing/drawnix
-
 		}
-
 		local docker_describe="It is a powerful open source whiteboard tool that integrates mind maps, flow charts, etc."
 		local docker_url="Official website introduction:${gh_https_url}github.com/plait-board/drawnix"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
 	  107|pansou)
-
 		local app_id="107"
 		local docker_name="pansou"
 		local docker_img="ghcr.io/fish2018/pansou-web"
 		local docker_port=8107
-
 		docker_rum() {
-
 			docker run -d \
 			  --name pansou \
 			  --restart=always \
@@ -19117,21 +15648,14 @@ libvio,leijing,xb6v,xys,ddys,hdmoli,yuhuage,u3c3,javdb,clxiong,jutoushe,
 sdso,xiaoji,xdyh,haisou,bixin,djgou,nyaa,xinjuc,aikanzy,qupanshe,xdpan,
 discourse,yunsou,ahhhhfs,nsgame,gying" \
 			  ghcr.io/fish2018/pansou-web
-
 		}
-
 		local docker_describe="PanSou is a high-performance network disk resource search API service."
 		local docker_url="Official website introduction:${gh_https_url}github.com/fish2018/pansou"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
-
-
 	  108|langbot)
 		local app_id="108"
 		local app_name="LangBot chatbot"
@@ -19140,18 +15664,15 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		local docker_name="langbot_plugin_runtime"
 		local docker_port="8108"
 		local app_size="1"
-
 		docker_app_install() {
 			install git
 			mkdir -p  /home/docker/ && cd /home/docker/ && git clone ${gh_proxy}github.com/langbot-app/LangBot && cd LangBot/docker
 			sed -i "s/5300:5300/${docker_port}:5300/g" /home/docker/LangBot/docker/docker-compose.yaml
-
 			docker compose up -d
 			clear
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
 		docker_app_update() {
 			cd  /home/docker/LangBot/docker && docker compose down --rmi all
 			cd  /home/docker/LangBot/
@@ -19159,28 +15680,19 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			sed -i "s/5300:5300/${docker_port}:5300/g" /home/docker/LangBot/docker/docker-compose.yaml
 			cd  /home/docker/LangBot/docker/ && docker compose up -d
 		}
-
 		docker_app_uninstall() {
 			cd  /home/docker/LangBot/docker/ && docker compose down --rmi all
 			rm -rf /home/docker/LangBot
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
-
 	  109|zfile)
-
 		local app_id="109"
 		local docker_name="zfile"
 		local docker_img="zhaojun1998/zfile:latest"
 		local docker_port=8109
-
 		docker_rum() {
-
-
 			docker run -d --name=zfile --restart=always \
 				-p ${docker_port}:8080 \
 				-v /home/docker/zfile/db:/root/.zfile-v4/db \
@@ -19188,20 +15700,14 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 				-v /home/docker/zfile/file:/data/file \
 				-v /home/docker/zfile/application.properties:/root/.zfile-v4/application.properties \
 				zhaojun1998/zfile:latest
-
-
 		}
-
 		local docker_describe="It is an online network disk program suitable for individuals or small teams."
 		local docker_url="Official website introduction:${gh_https_url}github.com/zfile-dev/zfile"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
 	  110|karakeep)
 		local app_id="110"
 		local app_name="karakeep bookmark management"
@@ -19210,18 +15716,15 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		local docker_name="docker-web-1"
 		local docker_port="8110"
 		local app_size="1"
-
 		docker_app_install() {
 			install git
 			mkdir -p  /home/docker/ && cd /home/docker/ && git clone ${gh_proxy}github.com/karakeep-app/karakeep.git && cd karakeep/docker && cp .env.sample .env
 			sed -i "s/3000:3000/${docker_port}:3000/g" /home/docker/karakeep/docker/docker-compose.yml
-
 			docker compose up -d
 			clear
 			echo "Installation completed"
 			check_docker_app_ip
 		}
-
 		docker_app_update() {
 			cd  /home/docker/karakeep/docker/ && docker compose down --rmi all
 			cd  /home/docker/karakeep/
@@ -19229,88 +15732,61 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			sed -i "s/3000:3000/${docker_port}:3000/g" /home/docker/karakeep/docker/docker-compose.yml
 			cd  /home/docker/karakeep/docker/ && docker compose up -d
 		}
-
 		docker_app_uninstall() {
 			cd  /home/docker/karakeep/docker/ && docker compose down --rmi all
 			rm -rf /home/docker/karakeep
 			echo "App has been uninstalled"
 		}
-
 		docker_app_plus
-
 		  ;;
-
-
-
 	  111|convertx)
-
 		local app_id="111"
 		local docker_name="convertx"
 		local docker_img="ghcr.io/c4illin/convertx:latest"
 		local docker_port=8111
-
 		docker_rum() {
-
 			docker run -d --name=${docker_name} --restart=always \
 				-p ${docker_port}:3000 \
 				-v /home/docker/convertx:/app/data \
 				${docker_img}
-
 		}
-
 		local docker_describe="It is a powerful multi-format file conversion tool (supports documents, images, audio and video, etc.) It is strongly recommended to add domain name access"
 		local docker_url="Project address:${gh_https_url}github.com/c4illin/ConvertX"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="2"
 		docker_app
-
 		  ;;
-
-
 	  112|lucky)
-
 		local app_id="112"
 		local docker_name="lucky"
 		local docker_img="gdy666/lucky:v2"
 		# Since Lucky uses the host network mode, the port here is only for record/explanation reference and is actually controlled by the application itself (default 16601)
 		local docker_port=8112
-
 		docker_rum() {
-
 			docker run -d --name=${docker_name} --restart=always \
 				--network host \
 				-v /home/docker/lucky/conf:/app/conf \
 				-v /var/run/docker.sock:/var/run/docker.sock \
 				${docker_img}
-
 			echo "Waiting for Lucky to initialize..."
 			sleep 10
 			docker exec lucky /app/lucky -rSetHttpAdminPort ${docker_port}
-
 		}
-
 		local docker_describe="Lucky is a large intranet penetration and port forwarding management tool that supports DDNS, reverse proxy, WOL and other functions."
 		local docker_url="Project address:${gh_https_url}github.com/gdy666/lucky"
 		local docker_use="echo \"Default account password: 666\""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
-
 	  113|firefox)
-
 		local app_id="113"
 		local docker_name="firefox"
 		local docker_img="jlesage/firefox:latest"
 		local docker_port=8113
-
 		docker_rum() {
-
 			read -e -p "Set login password:" admin_password
-
 			docker run -d --name=${docker_name} --restart=always \
 				-p ${docker_port}:5800 \
 				-v /home/docker/firefox:/config:rw \
@@ -19319,32 +15795,25 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 				-e VNC_PASSWORD="${admin_password}" \
 				${docker_img}
 		}
-
 		local docker_describe="It is a Firefox browser running in Docker that supports direct access to the desktop browser interface through the web page."
 		local docker_url="Project address:${gh_https_url}github.com/jlesage/docker-firefox"
 		local docker_use=""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
-
 		  ;;
-
 	  114|Moltbot|ClawdBot|moltbot|clawdbot|openclaw|OpenClaw)
 	  	  moltbot_menu
 		  ;;
-
 	  115|hermes)
 	  	  bash <(curl -sL ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/hermes_manager.sh)
 		  ;;
-
 	  b)
 	  	clear
 	  	send_stats "All application backup"
-
 	  	local backup_filename="app_$(date +"%Y%m%d%H%M%S").tar.gz"
 	  	echo -e "${gl_kjlan}Backing up$backup_filename ...${gl_bai}"
 	  	cd / && tar czvf "$backup_filename" home
-
 	  	while true; do
 			clear
 			echo "Backup file created: /$backup_filename"
@@ -19371,9 +15840,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 				;;
 			esac
 	  	done
-
 		  ;;
-
 	  r)
 	  	root_use
 	  	send_stats "Restore all apps"
@@ -19382,17 +15849,14 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 	  	ls -lt /app*.gz | awk '{print $NF}'
 	  	echo ""
 	  	read -e -p  "Press the Enter key to restore the latest backup, enter the backup file name to restore the specified backup, enter 0 to exit:" filename
-
 	  	if [ "$filename" == "0" ]; then
 			  break_end
 			  linux_panel
 	  	fi
-
 	  	# If the user does not enter a file name, the latest compressed package is used
 	  	if [ -z "$filename" ]; then
 			  local filename=$(ls -t /app*.tar.gz | head -1)
 	  	fi
-
 	  	if [ -n "$filename" ]; then
 		  	  echo -e "${gl_kjlan}Unzipping$filename ...${gl_bai}"
 		  	  cd / && tar -xzf "$filename"
@@ -19400,9 +15864,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 	  	else
 			  echo "No compressed package found."
 	  	fi
-
 		  ;;
-
 	  0)
 		  harvey
 		  ;;
@@ -19426,14 +15888,9 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 	esac
 	break_end
 	sub_choice=""
-
 done
 }
-
-
-
 linux_work() {
-
 	while true; do
 	  clear
 	  send_stats "Backend workspace"
@@ -19465,16 +15922,13 @@ linux_work() {
 	  echo -e "${gl_kjlan}0.   ${gl_bai}Return to main menu"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  read -e -p "Please enter your choice:" sub_choice
-
 	  case $sub_choice in
-
 		  1)
 			  clear
 			  install tmux
 			  local SESSION_NAME="work1"
 			  send_stats "Start workspace$SESSION_NAME"
 			  tmux_run
-
 			  ;;
 		  2)
 			  clear
@@ -19539,7 +15993,6 @@ linux_work() {
 			  send_stats "Start workspace$SESSION_NAME"
 			  tmux_run
 			  ;;
-
 		  21)
 			while true; do
 			  clear
@@ -19576,26 +16029,21 @@ linux_work() {
 			  esac
 			done
 			  ;;
-
 		  22)
 			  read -e -p "Please enter the name of the workspace you created or entered, such as 1001 kj001 work1:" SESSION_NAME
 			  tmux_run
 			  send_stats "Custom workspace"
 			  ;;
-
-
 		  23)
 			  read -e -p "Please enter the command you want to execute in the background, such as: curl -fsSL https://get.docker.com | sh:" tmuxd
 			  tmux_run_d
 			  send_stats "Inject commands into the background workspace"
 			  ;;
-
 		  24)
 			  read -e -p "Please enter the name of the workspace you want to delete:" gongzuoqu_name
 			  tmux kill-window -t $gongzuoqu_name
 			  send_stats "Delete workspace"
 			  ;;
-
 		  0)
 			  harvey
 			  ;;
@@ -19604,33 +16052,17 @@ linux_work() {
 			  ;;
 	  esac
 	  break_end
-
 	done
-
-
 }
-
-
-
-
-
-
-
-
-
-
 # Intelligent switching mirror source function
 switch_mirror() {
 	# Optional parameter, default is false
 	local upgrade_software=${1:-false}
 	local clean_cache=${2:-false}
-
 	# Get user country
 	local country
 	country=$(curl -s ipinfo.io/country)
-
 	echo "Countries detected:$country"
-
 	if [ "$country" = "CN" ]; then
 		echo "Use domestic mirror sources..."
 		bash <(curl -sSL https://linuxmirrors.cn/main.sh) \
@@ -19670,13 +16102,10 @@ switch_mirror() {
 		fi
 	fi
 }
-
-
 fail2ban_panel() {
 		  root_use
 		  send_stats "ssh defense"
 		  while true; do
-
 				check_f2b_status
 				echo -e "SSH defense program$check_f2b_status"
 				echo "fail2ban is an SSH tool to prevent brute force cracking"
@@ -19733,15 +16162,8 @@ fail2ban_panel() {
 						;;
 				esac
 		  done
-
 }
-
-
-
-
-
 net_menu() {
-
 	send_stats "Network card management tool"
 	show_nics() {
 		echo "================ Current network card information ================"
@@ -19755,7 +16177,6 @@ net_menu() {
 		done
 		echo "================================================"
 	}
-
 	while true; do
 		clear
 		show_nics
@@ -19768,7 +16189,6 @@ net_menu() {
 		echo "0. Return to the previous menu"
 		echo "===================================="
 		read -erp "Please select an action:" choice
-
 		case $choice in
 			1)
 				send_stats "Enable network card"
@@ -19812,12 +16232,8 @@ net_menu() {
 		esac
 	done
 }
-
-
-
 log_menu() {
 	send_stats "System log management tool"
-
 	show_log_overview() {
 		echo "============= System log overview ============="
 		echo "Hostname: $(hostname)"
@@ -19830,7 +16246,6 @@ log_menu() {
 		journalctl --disk-usage 2>/dev/null
 		echo "========================================"
 	}
-
 	while true; do
 		clear
 		show_log_overview
@@ -19844,7 +16259,6 @@ log_menu() {
 		echo "0. Return to the previous menu"
 		echo "======================================="
 		read -erp "Please select an action:" choice
-
 		case $choice in
 			1)
 				send_stats "View recent logs"
@@ -19914,16 +16328,10 @@ log_menu() {
 		esac
 	done
 }
-
-
-
 env_menu() {
-
 	BASHRC="$HOME/.bashrc"
 	PROFILE="$HOME/.profile"
-
 	send_stats "System variable management tool"
-
 	show_env_vars() {
 		clear
 		send_stats "Currently in effect environment variables"
@@ -19933,22 +16341,17 @@ env_menu() {
 		for v in USER HOME SHELL LANG PWD; do
 			printf "%-20s %s\n" "$v" "${!v}"
 		done
-
 		echo
 		echo "PATH:"
 		echo "$PATH" | tr ':' '\n' | nl -ba
-
 		echo
 		echo "========== Variables defined in the configuration file (parsing) =========="
-
 		parse_file_vars() {
 			local file="$1"
 			[ -f "$file" ] || return
-
 			echo
 			echo ">>> Source file:$file"
 			echo "-----------------------------------------------"
-
 			# Extract export VAR=xxx or VAR=xxx
 			grep -Ev '^\s*#|^\s*$' "$file" \
 			| grep -E '^(export[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*=' \
@@ -19958,16 +16361,12 @@ env_menu() {
 				printf "%-20s %s\n" "$var" "$val"
 			done
 		}
-
 		parse_file_vars "$HOME/.bashrc"
 		parse_file_vars "$HOME/.profile"
-
 		echo
 		echo "==============================================="
 		read -erp "Press Enter to continue..."
 	}
-
-
 	view_file() {
 		local file="$1"
 		send_stats "View variable file$file"
@@ -19981,14 +16380,12 @@ env_menu() {
 		fi
 		read -erp "Press Enter to continue..."
 	}
-
 	edit_file() {
 		local file="$1"
 		send_stats "Edit variable file$file"
 		install nano
 		nano "$file"
 	}
-
 	source_files() {
 		echo "Reloading environment variables..."
 		send_stats "Reloading environment variables"
@@ -19997,7 +16394,6 @@ env_menu() {
 		echo "✔ Environment variables have been reloaded"
 		read -erp "Press Enter to continue..."
 	}
-
 	while true; do
 		clear
 		echo "=========== System environment variable management =========="
@@ -20013,7 +16409,6 @@ env_menu() {
 		echo "0. Return to the previous menu"
 		echo "--------------------------------------"
 		read -erp "Please select an action:" choice
-
 		case "$choice" in
 			1)
 				show_env_vars
@@ -20043,26 +16438,20 @@ env_menu() {
 		esac
 	done
 }
-
-
 create_user_with_sshkey() {
 	local new_username="$1"
 	local is_sudo="${2:-false}"
 	local sshkey_vl
-
 	if [[ -z "$new_username" ]]; then
 		echo "Usage: create_user_with_sshkey <username>"
 		return 1
 	fi
-
 	# Create user
 	useradd -m -s /bin/bash "$new_username" || return 1
-
 	echo "Example of importing public key:"
 	echo "  - URL：      ${gh_https_url}github.com/torvalds.keys"
 	echo "- Paste directly: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI..."
 	read -e -p "Please import${new_username}public key:" sshkey_vl
-
 	case "$sshkey_vl" in
 		http://*|https://*)
 			send_stats "Import SSH public key from URL"
@@ -20077,13 +16466,9 @@ create_user_with_sshkey() {
 			return 1
 			;;
 	esac
-
-
 	# Fix permissions
 	chown -R "$new_username:$new_username" "/home/$new_username/.ssh"
-
 	install sudo
-
 	# sudo password-free
 	if [[ "$is_sudo" == "true" ]]; then
 		cat >"/etc/sudoers.d/$new_username" <<EOF
@@ -20091,31 +16476,13 @@ $new_username ALL=(ALL) NOPASSWD:ALL
 EOF
 		chmod 440 "/etc/sudoers.d/$new_username"
 	fi
-
 	sed -i '/^\s*#\?\s*UsePAM\s\+/d' /etc/ssh/sshd_config
 	echo 'UsePAM yes' >> /etc/ssh/sshd_config
 	passwd -l "$new_username" &>/dev/null
 	restart_ssh
-
 	echo "user$new_usernameCreation completed"
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 linux_Settings() {
-
 	while true; do
 	  clear
 	  # send_stats "System Tools"
@@ -20147,14 +16514,13 @@ linux_Settings() {
 	  echo -e "${gl_kjlan}------------------------"
 	  echo -e "${gl_kjlan}41.  ${gl_bai}System log management tool${gl_huang}★${gl_bai}                 ${gl_kjlan}42.  ${gl_bai}System variable management tool"
 	  echo -e "${gl_kjlan}------------------------"
-	  echo -e "${gl_kjlan}61.  ${gl_bai}message board${gl_kjlan}66.  ${gl_bai}One-stop system tuning${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}66.  ${gl_bai}One-stop system tuning${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}99.  ${gl_bai}Restart the server${gl_kjlan}100. ${gl_bai}Privacy and security"
 	  echo -e "${gl_kjlan}101. ${gl_bai}Advanced usage of k command${gl_huang}★${gl_bai}                    ${gl_kjlan}102. ${gl_bai}Uninstall tech lion script"
 	  echo -e "${gl_kjlan}------------------------"
 	  echo -e "${gl_kjlan}0.   ${gl_bai}Return to main menu"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  read -e -p "Please enter your choice:" sub_choice
-
 	  case $sub_choice in
 		  1)
 			  while true; do
@@ -20175,7 +16541,6 @@ linux_Settings() {
 				  linux_Settings
 			  done
 			  ;;
-
 		  2)
 			  clear
 			  send_stats "Set your login password"
@@ -20186,7 +16551,6 @@ linux_Settings() {
 			  clear
 			  add_sshpasswd
 			  ;;
-
 		  4)
 			root_use
 			send_stats "py version management"
@@ -20201,21 +16565,16 @@ linux_Settings() {
 			echo "Check more versions: https://www.python.org/downloads/"
 			echo "------------"
 			read -e -p "Enter the python version number you want to install (enter 0 to exit):" py_new_v
-
-
 			if [[ "$py_new_v" == "0" ]]; then
 				send_stats "Script PY management"
 				break_end
 				linux_Settings
 			fi
-
-
 			if ! grep -q 'export PYENV_ROOT="\$HOME/.pyenv"' ~/.bashrc; then
 				if command -v yum &>/dev/null; then
 					yum update -y && yum install git -y
 					yum groupinstall "Development Tools" -y
 					yum install openssl-devel bzip2-devel libffi-devel ncurses-devel zlib-devel readline-devel sqlite-devel xz-devel findutils -y
-
 					curl -O https://www.openssl.org/source/openssl-1.1.1u.tar.gz
 					tar -xzf openssl-1.1.1u.tar.gz
 					cd openssl-1.1.1u
@@ -20225,11 +16584,9 @@ linux_Settings() {
 					echo "/usr/local/openssl/lib" > /etc/ld.so.conf.d/openssl-1.1.1u.conf
 					ldconfig -v
 					cd ..
-
 					export LDFLAGS="-L/usr/local/openssl/lib"
 					export CPPFLAGS="-I/usr/local/openssl/include"
 					export PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig"
-
 				elif command -v apt &>/dev/null; then
 					apt update -y && apt install git -y
 					apt install build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev libgdbm-dev libnss3-dev libedit-dev -y
@@ -20240,10 +16597,8 @@ linux_Settings() {
 					echo "Unknown package manager!"
 					return
 				fi
-
 				curl https://pyenv.run | bash
 				cat << EOF >> ~/.bashrc
-
 export PYENV_ROOT="\$HOME/.pyenv"
 if [[ -d "\$PYENV_ROOT/bin" ]]; then
   export PATH="\$PYENV_ROOT/bin:\$PATH"
@@ -20251,54 +16606,40 @@ fi
 eval "\$(pyenv init --path)"
 eval "\$(pyenv init -)"
 eval "\$(pyenv virtualenv-init -)"
-
 EOF
-
 			fi
-
 			sleep 1
 			source ~/.bashrc
 			sleep 1
 			pyenv install $py_new_v
 			pyenv global $py_new_v
-
 			rm -rf /tmp/python-build.*
 			rm -rf $(pyenv root)/cache/*
-
 			local VERSION=$(python -V 2>&1 | awk '{print $2}')
 			echo -e "Current python version number:${gl_huang}$VERSION${gl_bai}"
 			send_stats "Script PY version switching"
-
 			  ;;
-
 		  5)
 			  root_use
 			  send_stats "open port"
 			  iptables_open
 			  remove iptables-persistent ufw firewalld iptables-services > /dev/null 2>&1
 			  echo "All ports are open"
-
 			  ;;
 		  6)
 			root_use
 			send_stats "Modify SSH port"
-
 			while true; do
 				clear
 				sed -i 's/^\s*#\?\s*Port/Port/' /etc/ssh/sshd_config
-
 				# Read the current SSH port number
 				local current_port=$(grep -E '^ *Port [0-9]+' /etc/ssh/sshd_config | awk '{print $2}')
-
 				# Print current SSH port number
 				echo -e "The current SSH port number is:${gl_huang}$current_port ${gl_bai}"
-
 				echo "------------------------"
 				echo "The port number ranges from 1 to 65535. (Enter 0 to exit)"
-
 				# Prompt user for new SSH port number
 				read -e -p "Please enter the new SSH port number:" new_port
-
 				# Determine whether the port number is within the valid range
 				if [[ $new_port =~ ^[0-9]+$ ]]; then  # 检查输入是否为数字
 					if [[ $new_port -ge 1 && $new_port -le 65535 ]]; then
@@ -20318,17 +16659,11 @@ EOF
 					break_end
 				fi
 			done
-
-
 			  ;;
-
-
 		  7)
 			set_dns_ui
 			  ;;
-
 		  8)
-
 			dd_xitong
 			  ;;
 		  9)
@@ -20339,17 +16674,12 @@ EOF
 				break_end
 				linux_Settings
 			fi
-
 			create_user_with_sshkey $new_username true
-
 			ssh-keygen -l -f /home/$new_username/.ssh/authorized_keys &>/dev/null && {
 				passwd -l root &>/dev/null
 				sed -i 's/^[[:space:]]*#\?[[:space:]]*PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
 			}
-
 			;;
-
-
 		  10)
 			root_use
 			send_stats "Set v4/v6 priority"
@@ -20357,14 +16687,11 @@ EOF
 				clear
 				echo "Set v4/v6 priority"
 				echo "------------------------"
-
-
 				if grep -Eq '^\s*precedence\s+::ffff:0:0/96\s+100\s*$' /etc/gai.conf 2>/dev/null; then
 					echo -e "Current network priority settings:${gl_huang}IPv4${gl_bai}priority"
 				else
 					echo -e "Current network priority settings:${gl_huang}IPv6${gl_bai}priority"
 				fi
-
 				echo ""
 				echo "------------------------"
 				echo "1. IPv4 first 2. IPv6 first 3. IPv6 repair tool"
@@ -20372,7 +16699,6 @@ EOF
 				echo "0. Return to the previous menu"
 				echo "------------------------"
 				read -e -p "Choose your preferred network:" choice
-
 				case $choice in
 					1)
 						prefer_ipv4
@@ -20382,27 +16708,22 @@ EOF
 						echo "Switched to IPv6 priority"
 						send_stats "Switched to IPv6 priority"
 						;;
-
 					3)
 						clear
 						bash <(curl -L -s jhb.ovh/jb/v6.sh)
 						echo "This function is provided by jhb, thank him!"
 						send_stats "ipv6 repair"
 						;;
-
 					*)
 						break
 						;;
-
 				esac
 			done
 			;;
-
 		  11)
 			clear
 			ss -tulnape
 			;;
-
 		  12)
 			root_use
 			send_stats "Set up virtual memory"
@@ -20412,7 +16733,6 @@ EOF
 				local swap_used=$(free -m | awk 'NR==3{print $3}')
 				local swap_total=$(free -m | awk 'NR==3{print $2}')
 				local swap_info=$(free -m | awk 'NR==3{used=$3; total=$2; if (total == 0) {percentage=0} else {percentage=used*100/total}; printf "%dM/%dM (%d%%)", used, total, percentage}')
-
 				echo -e "Current virtual memory:${gl_huang}$swap_info${gl_bai}"
 				echo "------------------------"
 				echo "1. Allocate 1024M 2. Allocate 2048M 3. Allocate 4096M 4. Custom size"
@@ -20420,37 +16740,30 @@ EOF
 				echo "0. Return to the previous menu"
 				echo "------------------------"
 				read -e -p "Please enter your choice:" choice
-
 				case "$choice" in
 				  1)
 					send_stats "1G virtual memory has been set"
 					add_swap 1024
-
 					;;
 				  2)
 					send_stats "2G virtual memory has been set"
 					add_swap 2048
-
 					;;
 				  3)
 					send_stats "4G virtual memory has been set up"
 					add_swap 4096
-
 					;;
-
 				  4)
 					read -e -p "Please enter the virtual memory size (unit M):" new_swap
 					add_swap "$new_swap"
 					send_stats "Custom virtual memory set"
 					;;
-
 				  *)
 					break
 					;;
 				esac
 			done
 			;;
-
 		  13)
 			  while true; do
 				root_use
@@ -20468,8 +16781,6 @@ EOF
 					fi
 					printf "%-20s %-30s %-20s %-10s\n" "$username" "$homedir" "$groups" "$sudo_status"
 				done < /etc/passwd
-
-
 				  echo ""
 				  echo "Account operations"
 				  echo "------------------------"
@@ -20482,20 +16793,16 @@ EOF
 				  echo "0. Return to the previous menu"
 				  echo "------------------------"
 				  read -e -p "Please enter your choice:" sub_choice
-
 				  case $sub_choice in
 					  1)
 					   # Prompt user for new username
 					   read -e -p "Please enter a new username:" new_username
 					   create_user_with_sshkey $new_username false
-
 						  ;;
-
 					  2)
 					   # Prompt user for new username
 					   read -e -p "Please enter a new username:" new_username
 					   create_user_with_sshkey $new_username true
-
 						  ;;
 					  3)
 					   read -e -p "Please enter username:" username
@@ -20504,7 +16811,6 @@ EOF
 $username ALL=(ALL) NOPASSWD:ALL
 EOF
 					  chmod 440 "/etc/sudoers.d/$username"
-
 						  ;;
 					  4)
 					   read -e -p "Please enter username:" username
@@ -20517,15 +16823,12 @@ EOF
 					   read -e -p "Please enter the username you want to delete:" username
 					   userdel -r "$username"
 						  ;;
-
 					  *)
 						  break  # 跳出循环，退出菜单
 						  ;;
 				  esac
-
 			  done
 			  ;;
-
 		  14)
 			clear
 			send_stats "User information generator"
@@ -20535,13 +16838,11 @@ EOF
 				username="user$(< /dev/urandom tr -dc _a-z0-9 | head -c6)"
 				echo "random username$i: $username"
 			done
-
 			echo ""
 			echo "random name"
 			echo "------------------------"
 			local first_names=("John" "Jane" "Michael" "Emily" "David" "Sophia" "William" "Olivia" "James" "Emma" "Ava" "Liam" "Mia" "Noah" "Isabella")
 			local last_names=("Smith" "Johnson" "Brown" "Davis" "Wilson" "Miller" "Jones" "Garcia" "Martinez" "Williams" "Lee" "Gonzalez" "Rodriguez" "Hernandez")
-
 			# Generate 5 random user names
 			for i in {1..5}; do
 				local first_name_index=$((RANDOM % ${#first_names[@]}))
@@ -20549,7 +16850,6 @@ EOF
 				local user_name="${first_names[$first_name_index]} ${last_names[$last_name_index]}"
 				echo "Random user name$i: $user_name"
 			done
-
 			echo ""
 			echo "Random UUID"
 			echo "------------------------"
@@ -20557,7 +16857,6 @@ EOF
 				uuid=$(cat /proc/sys/kernel/random/uuid)
 				echo "Random UUID$i: $uuid"
 			done
-
 			echo ""
 			echo "16-digit random password"
 			echo "------------------------"
@@ -20565,7 +16864,6 @@ EOF
 				local password=$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c16)
 				echo "random password$i: $password"
 			done
-
 			echo ""
 			echo "32-bit random password"
 			echo "------------------------"
@@ -20574,26 +16872,20 @@ EOF
 				echo "random password$i: $password"
 			done
 			echo ""
-
 			  ;;
-
 		  15)
 			root_use
 			send_stats "Change time zone"
 			while true; do
 				clear
 				echo "System time information"
-
 				# Get the current system time zone
 				local timezone=$(current_timezone)
-
 				# Get the current system time
 				local current_time=$(date +"%Y-%m-%d %H:%M:%S")
-
 				# Show time zone and time
 				echo "Current system time zone:$timezone"
 				echo "Current system time:$current_time"
-
 				echo ""
 				echo "time zone switch"
 				echo "------------------------"
@@ -20619,8 +16911,6 @@ EOF
 				echo "0. Return to the previous menu"
 				echo "------------------------"
 				read -e -p "Please enter your choice:" sub_choice
-
-
 				case $sub_choice in
 					1) set_timedate Asia/Shanghai ;;
 					2) set_timedate Asia/Hong_Kong ;;
@@ -20648,21 +16938,15 @@ EOF
 				esac
 			done
 			  ;;
-
 		  16)
-
 			bbrv3
 			  ;;
-
 		  17)
 			  iptables_panel
-
 			  ;;
-
 		  18)
 		  root_use
 		  send_stats "Modify hostname"
-
 		  while true; do
 			  clear
 			  local current_hostname=$(uname -n)
@@ -20680,19 +16964,16 @@ EOF
 					  sed -i "s/$current_hostname/$new_hostname/g" /etc/hostname
 					  systemctl restart systemd-hostnamed
 				  fi
-
 				  if grep -q "127.0.0.1" /etc/hosts; then
 					  sed -i "s/127.0.0.1 .*/127.0.0.1       $new_hostname localhost localhost.localdomain/g" /etc/hosts
 				  else
 					  echo "127.0.0.1       $new_hostname localhost localhost.localdomain" >> /etc/hosts
 				  fi
-
 				  if grep -q "^::1" /etc/hosts; then
 					  sed -i "s/^::1 .*/::1             $new_hostname localhost localhost.localdomain ipv6-localhost ipv6-loopback/g" /etc/hosts
 				  else
 					  echo "::1             $new_hostname localhost localhost.localdomain ipv6-localhost ipv6-loopback" >> /etc/hosts
 				  fi
-
 				  echo "The hostname has been changed to:$new_hostname"
 				  send_stats "Hostname changed"
 				  sleep 1
@@ -20702,7 +16983,6 @@ EOF
 			  fi
 		  done
 			  ;;
-
 		  19)
 		  root_use
 		  send_stats "Change system update source"
@@ -20715,7 +16995,6 @@ EOF
 		  echo "0. Return to the previous menu"
 		  echo "------------------------"
 		  read -e -p "Enter your selection:" choice
-
 		  case $choice in
 			  1)
 				  send_stats "Mainland China default source"
@@ -20733,15 +17012,11 @@ EOF
 				  send_stats "Intelligent switching of update sources"
 				  switch_mirror false false
 				  ;;
-
 			  *)
 				  echo "Canceled"
 				  ;;
-
 		  esac
-
 			  ;;
-
 		  20)
 		  send_stats "Scheduled task management"
 			  while true; do
@@ -20758,7 +17033,6 @@ EOF
 				  echo "0. Return to the previous menu"
 				  echo "------------------------"
 				  read -e -p "Please enter your choice:" sub_choice
-
 				  case $sub_choice in
 					  1)
 						  read -e -p "Please enter the execution command of the new task:" newquest
@@ -20767,7 +17041,6 @@ EOF
 						  echo "3. Daily tasks 4. Hourly tasks"
 						  echo "------------------------"
 						  read -e -p "Please enter your choice:" dingshi
-
 						  case $dingshi in
 							  1)
 								  read -e -p "On what day of the month do you choose to execute the task? (1-30):" day
@@ -20805,9 +17078,7 @@ EOF
 						  ;;
 				  esac
 			  done
-
 			  ;;
-
 		  21)
 			  root_use
 			  send_stats "Local host resolution"
@@ -20824,13 +17095,11 @@ EOF
 				  echo "0. Return to the previous menu"
 				  echo "------------------------"
 				  read -e -p "Please enter your choice:" host_dns
-
 				  case $host_dns in
 					  1)
 						  read -e -p "Please enter a new parsing record format: 110.25.5.33 harvey.pro:" addhost
 						  echo "$addhost" >> /etc/hosts
 						  send_stats "Local host resolution is added"
-
 						  ;;
 					  2)
 						  read -e -p "Please enter the keywords of the parsed content that need to be deleted:" delhost
@@ -20843,12 +17112,9 @@ EOF
 				  esac
 			  done
 			  ;;
-
 		  22)
 			fail2ban_panel
 			  ;;
-
-
 		  23)
 			root_use
 			send_stats "Current limiting shutdown function"
@@ -20861,7 +17127,6 @@ EOF
 				output_status
 				echo -e "${gl_kjlan}Total received:${gl_bai}$rx"
 				echo -e "${gl_kjlan}Total sent:${gl_bai}$tx"
-
 				# Check if Limiting_Shut_down.sh file exists
 				if [ -f ~/Limiting_Shut_down.sh ]; then
 					# Get the value of threshold_gb
@@ -20872,7 +17137,6 @@ EOF
 				else
 					echo -e "${gl_hui}The current limiting shutdown function is not currently enabled${gl_bai}"
 				fi
-
 				echo
 				echo "------------------------------------------------"
 				echo "The system will detect whether the actual traffic reaches the threshold every minute, and will automatically shut down the server after reaching the threshold!"
@@ -20882,7 +17146,6 @@ EOF
 				echo "0. Return to the previous menu"
 				echo "------------------------"
 				read -e -p "Please enter your choice:" Limiting
-
 				case "$Limiting" in
 				  1)
 					# Enter new virtual memory size
@@ -20893,7 +17156,6 @@ EOF
 					tx_threshold_gb=${tx_threshold_gb:-100}
 					read -e -p "Please enter the traffic reset date (default resets on the 1st of every month):" cz_day
 					cz_day=${cz_day:-1}
-
 					cd ~
 					curl -Ss -o ~/Limiting_Shut_down.sh ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/Limiting_Shut_down1.sh
 					chmod +x ~/Limiting_Shut_down.sh
@@ -20920,12 +17182,9 @@ EOF
 				esac
 			done
 			  ;;
-
-
 		  24)
 			sshkey_panel
 			  ;;
-
 		  25)
 			  root_use
 			  send_stats "Telegraph warning"
@@ -20936,7 +17195,6 @@ EOF
 			  echo "When the threshold is reached, a warning message will be sent to the user."
 			  echo -e "${gl_hui}- Regarding traffic, restarting the server will recalculate -${gl_bai}"
 			  read -e -p "Are you sure you want to continue? (Y/N):" choice
-
 			  case "$choice" in
 				[Yy])
 				  send_stats "Telegram warning enabled"
@@ -20955,12 +17213,10 @@ EOF
 				  tmux new -d -s TG-check-notify "~/TG-check-notify.sh"
 				  crontab -l | grep -v '~/TG-check-notify.sh' | crontab - > /dev/null 2>&1
 				  (crontab -l ; echo "@reboot tmux new -d -s TG-check-notify '~/TG-check-notify.sh'") | crontab - > /dev/null 2>&1
-
 				  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/TG-SSH-check-notify.sh > /dev/null 2>&1
 				  sed -i "3i$(grep '^TELEGRAM_BOT_TOKEN=' ~/TG-check-notify.sh)" TG-SSH-check-notify.sh > /dev/null 2>&1
 				  sed -i "4i$(grep '^CHAT_ID=' ~/TG-check-notify.sh)" TG-SSH-check-notify.sh
 				  chmod +x ~/TG-SSH-check-notify.sh
-
 				  # Add to ~/.profile file
 				  if ! grep -q 'bash ~/TG-SSH-check-notify.sh' ~/.profile > /dev/null 2>&1; then
 					  echo 'bash ~/TG-SSH-check-notify.sh' >> ~/.profile
@@ -20968,9 +17224,7 @@ EOF
 						 echo 'source ~/.profile' >> ~/.bashrc
 					  fi
 				  fi
-
 				  source ~/.profile
-
 				  clear
 				  echo "TG-bot early warning system has been activated"
 				  echo -e "${gl_hui}You can also put the TG-check-notify.sh warning file in the root directory on other machines and use it directly!${gl_bai}"
@@ -20983,7 +17237,6 @@ EOF
 				  ;;
 			  esac
 			  ;;
-
 		  26)
 			  root_use
 			  send_stats "Fix high-risk SSH vulnerabilities"
@@ -20993,26 +17246,21 @@ EOF
 			  ~/upgrade_openssh9.8p1.sh
 			  rm -f ~/upgrade_openssh9.8p1.sh
 			  ;;
-
 		  27)
 			  elrepo
 			  ;;
 		  28)
 			  Kernel_optimize
 			  ;;
-
 		  29)
 			  clamav
 			  ;;
-
 		  30)
 			  linux_file
 			  ;;
-
 		  31)
 			  linux_language
 			  ;;
-
 		  32)
 			  shell_bianse
 			  ;;
@@ -21037,46 +17285,28 @@ EOF
 				  done
 				  return 1
 			  }
-
 			  history_file=$(get_history_file) && cat -n "$history_file"
 			  ;;
-
 		  38)
 			  rsync_manager
 			  ;;
-
-
 		  39)
 			  clear
 			  linux_fav
 			  ;;
-
 		  40)
 			  clear
 			  net_menu
 			  ;;
-
 		  41)
 			  clear
 			  log_menu
 			  ;;
-
 		  42)
 			  clear
 			  env_menu
 			  ;;
-
-
-		  61)
-			clear
-			send_stats "message board"
-			echo "Visit the official message board of Technology Lion. If you have any ideas about the script, please leave a message to exchange!"
-			echo "https://board.harvey.pro"
-			echo "Public password: harvey.sh"
-			  ;;
-
 		  66)
-
 			  root_use
 			  send_stats "One-stop tuning"
 			  echo "One-stop system tuning"
@@ -21096,7 +17326,6 @@ EOF
 			  echo -e "12. Linux system kernel parameter optimization${gl_huang}Automatically tune according to network environment${gl_bai}"
 			  echo "------------------------------------------------"
 			  read -e -p "Are you sure you want one-click maintenance? (Y/N):" choice
-
 			  case "$choice" in
 				[Yy])
 				  clear
@@ -21105,15 +17334,12 @@ EOF
 				  switch_mirror false false
 				  linux_update
 				  echo -e "[${gl_lv}OK${gl_bai}] 1/12. Update the system to the latest"
-
 				  echo "------------------------------------------------"
 				  linux_clean
 				  echo -e "[${gl_lv}OK${gl_bai}] 2/12. Clean up system junk files"
-
 				  echo "------------------------------------------------"
 				  add_swap 1024
 				  echo -e "[${gl_lv}OK${gl_bai}] 3/12. Set up virtual memory${gl_huang}1G${gl_bai}"
-
 				  echo "------------------------------------------------"
 				  new_ssh_port 5522
 				  echo -e "[${gl_lv}OK${gl_bai}] 4/12. Set the SSH port number to${gl_huang}5522${gl_bai}"
@@ -21122,35 +17348,28 @@ EOF
 				  cd ~
 				  f2b_status
 				  echo -e "[${gl_lv}OK${gl_bai}] 5/12. Start fail2ban to defend against SSH brute force cracking"
-
 				  echo "------------------------------------------------"
 				  echo -e "[${gl_lv}OK${gl_bai}] 6/12. Open all ports"
-
 				  echo "------------------------------------------------"
 				  bbr_on
 				  echo -e "[${gl_lv}OK${gl_bai}] 7/12. Open${gl_huang}BBR${gl_bai}accelerate"
-
 				  echo "------------------------------------------------"
 				  set_timedate Asia/Shanghai
 				  echo -e "[${gl_lv}OK${gl_bai}] 8/12. 设置时区到${gl_huang}Shanghai${gl_bai}"
-
 				  echo "------------------------------------------------"
 				  auto_optimize_dns
 				  echo -e "[${gl_lv}OK${gl_bai}] 9/12. Automatically optimize DNS address${gl_huang}${gl_bai}"
 				  echo "------------------------------------------------"
 				  prefer_ipv4
 				  echo -e "[${gl_lv}OK${gl_bai}] 10/12. Set the network to${gl_huang}IPv4 priority${gl_bai}}"
-
 				  echo "------------------------------------------------"
 				  install_docker
 				  install wget sudo tar unzip socat btop nano vim
 				  echo -e "[${gl_lv}OK${gl_bai}] 11/12. Install basic tools${gl_huang}docker wget sudo tar unzip socat btop nano vim${gl_bai}"
 				  echo "------------------------------------------------"
-
 				  curl -sS ${gh_proxy}raw.githubusercontent.com/harvey/sh/refs/heads/main/network-optimize.sh | bash
 				  echo -e "[${gl_lv}OK${gl_bai}] 12/12. Linux system kernel parameter optimization"
 				  echo -e "${gl_lv}One-stop system tuning has been completed${gl_bai}"
-
 				  ;;
 				[Nn])
 				  echo "Canceled"
@@ -21159,16 +17378,13 @@ EOF
 				  echo "Invalid selection, please enter Y or N."
 				  ;;
 			  esac
-
 			  ;;
-
 		  99)
 			  clear
 			  send_stats "Restart the system"
 			  server_reboot
 			  ;;
 		  100)
-
 			root_use
 			while true; do
 			  clear
@@ -21179,7 +17395,6 @@ EOF
 			  else
 			  	local status_message="Uncertain status"
 			  fi
-
 			  echo "Privacy and security"
 			  echo "The script will collect data on users’ use of functions, optimize the script experience, and create more fun and useful functions."
 			  echo "The script version number, time of use, system version, CPU architecture, country of the machine and name of the function used will be collected,"
@@ -21213,12 +17428,10 @@ EOF
 			  esac
 			done
 			  ;;
-
 		  101)
 			  clear
 			  k_info
 			  ;;
-
 		  102)
 			  clear
 			  send_stats "Uninstall tech lion script"
@@ -21226,7 +17439,6 @@ EOF
 			  echo "------------------------------------------------"
 			  echo "The harvey script will be completely uninstalled without affecting your other functions."
 			  read -e -p "Are you sure you want to continue? (Y/N):" choice
-
 			  case "$choice" in
 				[Yy])
 				  clear
@@ -21246,28 +17458,16 @@ EOF
 				  ;;
 			  esac
 			  ;;
-
 		  0)
 			  harvey
-
 			  ;;
 		  *)
 			  echo "Invalid input!"
 			  ;;
 	  esac
 	  break_end
-
 	done
-
-
-
 }
-
-
-
-
-
-
 linux_file() {
 	root_use
 	send_stats "file manager"
@@ -21292,7 +17492,6 @@ linux_file() {
 		echo "0. Return to the previous menu"
 		echo "------------------------"
 		read -e -p "Please enter your choice:" Limiting
-
 		case "$Limiting" in
 			1)  # 进入目录
 				read -e -p "Please enter the directory name:" dirname
@@ -21365,7 +17564,6 @@ linux_file() {
 				tar -xzvf "$filename" && echo "Unzipped$filename" || echo "Decompression failed"
 				send_stats "Unzip files/directories"
 				;;
-
 			23) # 移动文件或目录
 				read -e -p "Please enter the file or directory path to be moved:" src_path
 				if [ ! -e "$src_path" ]; then
@@ -21373,19 +17571,15 @@ linux_file() {
 					send_stats "Failed to move file or directory: File or directory does not exist"
 					continue
 				fi
-
 				read -e -p "Please enter the destination path (including new file or directory name):" dest_path
 				if [ -z "$dest_path" ]; then
 					echo "Error: Please enter destination path."
 					send_stats "Failed to move file or directory: Destination path not specified"
 					continue
 				fi
-
 				mv "$src_path" "$dest_path" && echo "File or directory moved to$dest_path" || echo "Failed to move file or directory"
 				send_stats "Move a file or directory"
 				;;
-
-
 		   24) # 复制文件目录
 				read -e -p "Please enter the file or directory path to copy:" src_path
 				if [ ! -e "$src_path" ]; then
@@ -21393,20 +17587,16 @@ linux_file() {
 					send_stats "Copying file or directory failed: File or directory does not exist"
 					continue
 				fi
-
 				read -e -p "Please enter the destination path (including new file or directory name):" dest_path
 				if [ -z "$dest_path" ]; then
 					echo "Error: Please enter destination path."
 					send_stats "Copying file or directory failed: Destination path not specified"
 					continue
 				fi
-
 				# Use the -r option to copy directories recursively
 				cp -r "$src_path" "$dest_path" && echo "File or directory copied to$dest_path" || echo "Failed to copy file or directory"
 				send_stats "Copy a file or directory"
 				;;
-
-
 			 25) # 传送文件至远端服务器
 				read -e -p "Please enter the file path to be transferred:" file_to_transfer
 				if [ ! -f "$file_to_transfer" ]; then
@@ -21414,24 +17604,19 @@ linux_file() {
 					send_stats "Failed to transfer file: file does not exist"
 					continue
 				fi
-
 				kj_ssh_read_host_user_port "Please enter the remote server IP:" "Please enter the remote server username (default root):" "Please enter the login port (default 22):" "root" "22"
 				local remote_ip="$KJ_SSH_HOST"
 				local remote_user="$KJ_SSH_USER"
 				local remote_port="$KJ_SSH_PORT"
-
 				kj_ssh_read_password "Please enter the remote server password:"
 				local remote_password="$KJ_SSH_PASSWORD"
-
 				# Clear old entries for known hosts
 				ssh-keygen -f "/root/.ssh/known_hosts" -R "$remote_ip"
 				sleep 2  # 等待时间
-
 				# Transfer files using scp
 				scp -P "$remote_port" -o StrictHostKeyChecking=no "$file_to_transfer" "$remote_user@$remote_ip:/home/" <<EOF
 $remote_password
 EOF
-
 				if [ $? -eq 0 ]; then
 					echo "The file has been transferred to the remote server home directory."
 					send_stats "File transfer successful"
@@ -21439,12 +17624,8 @@ EOF
 					echo "File transfer failed."
 					send_stats "File transfer failed"
 				fi
-
 				break_end
 				;;
-
-
-
 			0)  # 返回上一级选单
 				send_stats "Return to the previous menu"
 				break
@@ -21456,30 +17637,18 @@ EOF
 		esac
 	done
 }
-
-
-
-
-
-
 cluster_python3() {
 	install python3 python3-paramiko
 	cd ~/cluster/
 	curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/python-for-vps/main/cluster/$py_task
 	python3 ~/cluster/$py_task
 }
-
-
 run_commands_on_servers() {
-
 	install sshpass
-
 	local SERVERS_FILE="$HOME/cluster/servers.py"
 	local SERVERS=$(grep -oP '{"name": "\K[^"]+|"hostname": "\K[^"]+|"port": \K[^,]+|"username": "\K[^"]+|"password": "\K[^"]+' "$SERVERS_FILE")
-
 	# Convert the extracted information into an array
 	IFS=$'\n' read -r -d '' -a SERVER_ARRAY <<< "$SERVERS"
-
 	# Traverse the server and execute commands
 	for ((i=0; i<${#SERVER_ARRAY[@]}; i+=5)); do
 		local name=${SERVER_ARRAY[i]}
@@ -21494,20 +17663,15 @@ run_commands_on_servers() {
 	done
 	echo
 	break_end
-
 }
-
-
 linux_cluster() {
 mkdir cluster
 if [ ! -f ~/cluster/servers.py ]; then
 	cat > ~/cluster/servers.py << EOF
 servers = [
-
 ]
 EOF
 fi
-
 while true; do
 	  clear
 	  send_stats "Cluster control center"
@@ -21520,14 +17684,13 @@ while true; do
 	  echo -e "${gl_kjlan}4.  ${gl_bai}Backup cluster${gl_kjlan}5.  ${gl_bai}Restore cluster"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  echo -e "${gl_kjlan}Execute tasks in batches${gl_bai}"
-	  echo -e "${gl_kjlan}11. ${gl_bai}Install technology lion script${gl_kjlan}12. ${gl_bai}Update system${gl_kjlan}13. ${gl_bai}Clean the system"
+	  echo -e "${gl_kjlan}11. ${gl_bai}Install Harvey script${gl_kjlan}12. ${gl_bai}Update system${gl_kjlan}13. ${gl_bai}Clean the system"
 	  echo -e "${gl_kjlan}14. ${gl_bai}Install docker${gl_kjlan}15. ${gl_bai}Install BBR3${gl_kjlan}16. ${gl_bai}Set 1G virtual memory"
 	  echo -e "${gl_kjlan}17. ${gl_bai}Set time zone to Shanghai${gl_kjlan}18. ${gl_bai}Open all ports${gl_kjlan}51. ${gl_bai}Custom instructions"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  echo -e "${gl_kjlan}0.  ${gl_bai}Return to main menu"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  read -e -p "Please enter your choice:" sub_choice
-
 	  case $sub_choice in
 		  1)
 			  send_stats "Add cluster server"
@@ -21538,9 +17701,7 @@ while true; do
 			  read -e -p "Server username (root):" server_username
 			  local server_username=${server_username:-root}
 			  read -e -p "Server user password:" server_password
-
 			  sed -i "/servers = \[/a\    {\"name\": \"$server_name\", \"hostname\": \"$server_ip\", \"port\": $server_port, \"username\": \"$server_username\", \"password\": \"$server_password\", \"remote_path\": \"/home/\"}," ~/cluster/servers.py
-
 			  ;;
 		  2)
 			  send_stats "Delete cluster server"
@@ -21552,14 +17713,12 @@ while true; do
 			  install nano
 			  nano ~/cluster/servers.py
 			  ;;
-
 		  4)
 			  clear
 			  send_stats "Backup cluster"
 			  echo -e "please change${gl_huang}/root/cluster/servers.py${gl_bai}Download the file and complete the backup!"
 			  break_end
 			  ;;
-
 		  5)
 			  clear
 			  send_stats "Restore cluster"
@@ -21567,7 +17726,6 @@ while true; do
 			  echo -e "Please upload your${gl_huang}servers.py${gl_bai}file to${gl_huang}/root/cluster/${gl_bai}Restore completed!"
 			  break_end
 			  ;;
-
 		  11)
 			  local py_task="install_harvey.py"
 			  cluster_python3
@@ -21593,26 +17751,18 @@ while true; do
 		  18)
 			  run_commands_on_servers "k iptables_open"
 			  ;;
-
 		  51)
 			  send_stats "Custom execution command"
 			  read -e -p "Please enter the command for batch execution:" mingling
 			  run_commands_on_servers "${mingling}"
 			  ;;
-
 		  *)
 			  harvey
 			  ;;
 	  esac
 done
-
 }
-
-
-
-
 harvey_Affiliates() {
-
 clear
 send_stats "Advertising column"
 echo "Advertising column"
@@ -21659,12 +17809,7 @@ echo -e "${gl_kjlan}Script official website:${gl_bai}https://harvey.sh          
 echo "------------------------"
 echo ""
 }
-
-
-
-
 games_server_tools() {
-
 	while true; do
 	  clear
 	  echo -e "Collection of game server opening scripts"
@@ -21675,9 +17820,7 @@ games_server_tools() {
 	  echo -e "${gl_kjlan}0. ${gl_bai}Return to main menu"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  read -e -p "Please enter your choice:" sub_choice
-
 	  case $sub_choice in
-
 		  1) send_stats "Eudemons Parlu server opening script" ; cd ~
 			 curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/palworld.sh ; chmod +x palworld.sh ; ./palworld.sh
 			 exit
@@ -21686,44 +17829,17 @@ games_server_tools() {
 			 curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/mc.sh ; chmod +x mc.sh ; ./mc.sh
 			 exit
 			 ;;
-
 		  0)
 			harvey
 			;;
-
 		  *)
 			echo "Invalid input!"
 			;;
 	  esac
 	  break_end
-
 	done
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 harvey_update() {
-
 send_stats "Script update"
 cd ~
 while true; do
@@ -21732,11 +17848,9 @@ while true; do
 	echo "------------------------"
 	echo "All logs:${gh_proxy}raw.githubusercontent.com/harvey/sh/main/harvey_sh_log.txt"
 	echo "------------------------"
-
 	curl -s --max-time 15 ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/harvey_sh_log.txt | tail -n 30
 	# Only download the first 5 lines to get the version number to avoid downloading the entire script
 	local sh_v_new=$(curl -s --max-time 15 -r 0-200 ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/harvey.sh | grep -o 'sh_v="[0-9.]*"' | head -1 | cut -d '"' -f 2)
-
 	if [ -z "$sh_v_new" ]; then
 		echo -e "${gl_hong}Unable to obtain the latest version information, please check the network connection${gl_bai}"
 	elif [ "$sh_v" = "$sh_v_new" ]; then
@@ -21746,16 +17860,12 @@ while true; do
 		echo "New version discovered!"
 		echo -e "Current version v$sh_vlatest version${gl_huang}v$sh_v_new${gl_bai}"
 	fi
-
-
 	local cron_job="harvey.sh"
 	local existing_cron=$(crontab -l 2>/dev/null | grep -F "$cron_job")
-
 	if [ -n "$existing_cron" ]; then
 		echo "------------------------"
 		echo -e "${gl_lv}Automatic updates are turned on, and the script will be automatically updated at 2 a.m. every day!${gl_bai}"
 	fi
-
 	echo "------------------------"
 	echo "1. Update now 2. Turn on automatic updates 3. Turn off automatic updates"
 	echo "------------------------"
@@ -21772,10 +17882,8 @@ while true; do
 			else
 				download_url="${gh_proxy}raw.githubusercontent.com/harvey/sh/main/harvey.sh"
 			fi
-
 			# Back up current script
 			cp -f ~/harvey.sh ~/harvey.sh.bak 2>/dev/null
-
 			# Download to temporary file, verify and then replace
 			local tmp_file=$(mktemp ~/harvey_tmp.XXXXXX)
 			if curl -sS --max-time 60 --fail -o "$tmp_file" "$download_url" && \
@@ -21818,7 +17926,6 @@ while true; do
 				cron_proxy="https://"
 				cron_sed_cmd=""
 			fi
-
 			# Build a robust auto-update command: Download to temporary file → Verify → Backup → Replace → Restore local settings → Deploy
 			SH_Update_task="cd ~ && tmp=\$(mktemp ~/harvey_tmp.XXXXXX) && curl -sS --max-time 60 --fail -o \"\$tmp\" ${cron_proxy}raw.githubusercontent.com/harvey/sh/main/harvey.sh && [ -s \"\$tmp\" ] && head -1 \"\$tmp\" | grep -q '^#!/bin/bash' && cp -f ~/harvey.sh ~/harvey.sh.bak 2>/dev/null && chmod +x \"\$tmp\" && mv -f \"\$tmp\" ~/harvey.sh"
 			# Additional settings recovery
@@ -21831,7 +17938,6 @@ while true; do
 			SH_Update_task="$SH_Update_task; cp -f ~/harvey.sh /usr/local/bin/k 2>/dev/null; ln -sf /usr/local/bin/k /usr/bin/k 2>/dev/null"
 			# Clean temporary files when download fails
 			SH_Update_task="$SH_Update_task || rm -f \"\$tmp\" 2>/dev/null"
-
 			check_crontab_installed
 			(crontab -l | grep -v "harvey.sh") | crontab -
 			(crontab -l 2>/dev/null; echo "$(shuf -i 0-59 -n 1) 2 * * * bash -c '$SH_Update_task'") | crontab -
@@ -21851,13 +17957,7 @@ while true; do
 			;;
 	esac
 done
-
 }
-
-
-
-
-
 harvey_sh() {
 while true; do
 clear
@@ -21890,7 +17990,6 @@ echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}0.   ${gl_bai}Exit script"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 read -e -p "Please enter your choice:" choice
-
 case $choice in
   1) linux_info ;;
   2) clear ; send_stats "System update" ; linux_update ;;
@@ -21917,8 +18016,6 @@ esac
 	break_end
 done
 }
-
-
 k_info() {
 send_stats "k command reference examples"
 echo "-------------------"
@@ -21971,11 +18068,7 @@ echo "Display system information k info"
 echo "ROOT key management k sshkey"
 echo "SSH public key import (URL) k sshkey <url>"
 echo "SSH public key import (GitHub) k sshkey github <user>"
-
 }
-
-
-
 if [ "$#" -eq 0 ]; then
 	# Without arguments, run interactive logic
 	harvey_sh
@@ -22016,25 +18109,20 @@ else
 		ssh|远程连接)
 			ssh_manager
 			;;
-
 		rsync|远程同步)
 			rsync_manager
 			;;
-
 		rsync_run)
 			shift
 			send_stats "Scheduled rsync synchronization"
 			run_task "$@"
 			;;
-
 		disk|硬盘管理)
 			disk_manager
 			;;
-
 		wp|wordpress)
 			shift
 			ldnmp_wp "$@"
-
 			;;
 		fd|rp|反代)
 			shift
@@ -22049,70 +18137,53 @@ else
 	  		  block_container_port "$docker_name" "$ipv4_address"
 	  		fi
 			;;
-
 		loadbalance|负载均衡)
 			ldnmp_Proxy_backend
 			;;
-
-
 		stream|L4负载均衡)
 			ldnmp_Proxy_backend_stream
 			;;
-
 		swap)
 			shift
 			send_stats "Quickly set up virtual memory"
 			add_swap "$@"
 			;;
-
 		time|时区)
 			shift
 			send_stats "Quickly set time zone"
 			set_timedate "$@"
 			;;
-
-
 		iptables_open)
 			iptables_open
 			;;
-
 		frps)
 			frps_panel
 			;;
-
 		frpc)
 			frpc_panel
 			;;
-
-
 		打开端口|dkdk)
 			shift
 			open_port "$@"
 			;;
-
 		关闭端口|gbdk)
 			shift
 			close_port "$@"
 			;;
-
 		放行IP|fxip)
 			shift
 			allow_ip "$@"
 			;;
-
 		阻止IP|zzip)
 			shift
 			block_ip "$@"
 			;;
-
 		防火墙|fhq)
 			iptables_panel
 			;;
-
 		命令收藏夹|fav)
 			linux_fav
 			;;
-
 		status|状态)
 			shift
 			send_stats "Check software status"
@@ -22133,13 +18204,11 @@ else
 			send_stats "Software restart"
 			restart "$@"
 			;;
-
 		enable|autostart|开机启动)
 			shift
 			send_stats "Software starts automatically when booting"
 			enable "$@"
 			;;
-
 		ssl)
 			shift
 			if [ "$1" = "ps" ]; then
@@ -22155,7 +18224,6 @@ else
 				k_info
 			fi
 			;;
-
 		docker)
 			shift
 			case $1 in
@@ -22176,7 +18244,6 @@ else
 					;;
 			esac
 			;;
-
 		web)
 		   shift
 			if [ "$1" = "cache" ]; then
@@ -22191,29 +18258,21 @@ else
 				k_info
 			fi
 			;;
-
-
 		app)
 			shift
 			send_stats "Apply$@"
 			linux_panel "$@"
 			;;
-
 		claw|oc|OpenClaw)
 			moltbot_menu
 			;;
-
 		info)
 			linux_info
 			;;
-
 		fail2ban|f2b)
 			fail2ban_panel
 			;;
-
-
 		sshkey)
-
 			shift
 			case "$1" in
 				"" )
@@ -22243,7 +18302,6 @@ else
 					echo "k sshkey github <user> Import SSH public key from GitHub"
 					;;
 			esac
-
 			;;
 		*)
 			k_info

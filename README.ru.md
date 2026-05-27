@@ -4,7 +4,7 @@
 </div>
 
 <div align="center" style="margin-top:-200px;">
-<h1 style="font-size:150px;">HARVEY.SH - инструмент для создания скриптов Technology Lion с одним ключом</h1>
+<h1 style="font-size:150px;">HARVEY.SH - инструмент для создания скриптов Harvey с одним ключом</h1>
 </div>
 
 

@@ -18,7 +18,7 @@ fi
 
 # 检查是否安装
 
-# --- 科技lion 增强版 API 管理核心 ---
+# --- Harvey 增强版 API 管理核心 ---
 CONFIG_FILE="$HOME/.hermes/config.yaml"
 
 config_tool() {
