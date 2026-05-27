@@ -32,14 +32,14 @@ run_command() {
 	fi
 }
 canshu_v6() {
-	if grep -q '^canshu="V6"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^canshu="V6"' /usr/local/bin/H > /dev/null 2>&1; then
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/harvey.sh
 	elif grep -q '^canshu="V6"' ~/harvey.sh.bak > /dev/null 2>&1; then
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/harvey.sh
 	fi
 }
 CheckFirstRun_true() {
-	if grep -q '^permission_granted="true"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^permission_granted="true"' /usr/local/bin/H > /dev/null 2>&1; then
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
 	elif grep -q '^permission_granted="true"' ~/harvey.sh.bak > /dev/null 2>&1; then
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
@@ -63,7 +63,7 @@ send_stats() {
 	) &
 }
 yinsiyuanquan2() {
-if grep -q '^ENABLE_STATS="false"' /usr/local/bin/k > /dev/null 2>&1; then
+if grep -q '^ENABLE_STATS="false"' /usr/local/bin/H > /dev/null 2>&1; then
 	sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 elif grep -q '^ENABLE_STATS="false"' ~/harvey.sh.bak > /dev/null 2>&1; then
 	sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
@@ -76,10 +76,10 @@ sed -i '/^alias k=/d' ~/.bashrc > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.profile > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.bash_profile > /dev/null 2>&1
 cp -f ./harvey.sh ~/harvey.sh > /dev/null 2>&1
-cp -f ~/harvey.sh /usr/local/bin/k > /dev/null 2>&1
-ln -sf /usr/local/bin/k /usr/bin/k > /dev/null 2>&1
+cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
+ln -sf /usr/local/bin/H /usr/bin/H > /dev/null 2>&1
 CheckFirstRun_false() {
-	if grep -q '^permission_granted="false"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^permission_granted="false"' /usr/local/bin/H > /dev/null 2>&1; then
 		UserLicenseAgreement
 	fi
 }
@@ -94,7 +94,7 @@ UserLicenseAgreement() {
 	if [ "$user_input" = "y" ] || [ "$user_input" = "Y" ]; then
 		send_stats "ライセンス契約"
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
-		sed -i 's/^permission_granted="false"/permission_granted="true"/' /usr/local/bin/k
+		sed -i 's/^permission_granted="false"/permission_granted="true"/' /usr/local/bin/H
 	else
 		send_stats "許可が拒否されました"
 		clear
@@ -16530,11 +16530,11 @@ linux_Settings() {
 					   break_end
 					   linux_Settings
 				  fi
-				  find /usr/local/bin/ -type l -exec bash -c 'test "$(readlink -f {})" = "/usr/local/bin/k" && rm -f {}' \;
+				  find /usr/local/bin/ -type l -exec bash -c 'test "$(readlink -f {})" = "/usr/local/bin/H" && rm -f {}' \;
 				  if [ "$kuaijiejian" != "k" ]; then
-					  ln -sf /usr/local/bin/k /usr/local/bin/$kuaijiejian
+					  ln -sf /usr/local/bin/H /usr/local/bin/$kuaijiejian
 				  fi
-				  ln -sf /usr/local/bin/k /usr/bin/$kuaijiejian > /dev/null 2>&1
+				  ln -sf /usr/local/bin/H /usr/bin/$kuaijiejian > /dev/null 2>&1
 				  echo "ショートカットキーが設定されている"
 				  send_stats "スクリプトのショートカットキーが設定されました"
 				  break_end
@@ -17388,9 +17388,9 @@ EOF
 			root_use
 			while true; do
 			  clear
-			  if grep -q '^ENABLE_STATS="true"' /usr/local/bin/k > /dev/null 2>&1; then
+			  if grep -q '^ENABLE_STATS="true"' /usr/local/bin/H > /dev/null 2>&1; then
 			  	local status_message="${gl_lv}データの収集${gl_bai}"
-			  elif grep -q '^ENABLE_STATS="false"' /usr/local/bin/k > /dev/null 2>&1; then
+			  elif grep -q '^ENABLE_STATS="false"' /usr/local/bin/H > /dev/null 2>&1; then
 			  	local status_message="${gl_hui}コレクションは終了しました${gl_bai}"
 			  else
 			  	local status_message="不確実なステータス"
@@ -17410,14 +17410,14 @@ EOF
 			  case $sub_choice in
 				  1)
 					  cd ~
-					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' /usr/local/bin/k
+					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' /usr/local/bin/H
 					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' ~/harvey.sh
 					  echo "収集が開始されました"
 					  send_stats "プライバシーとセキュリティの収集がオンになっています"
 					  ;;
 				  2)
 					  cd ~
-					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' /usr/local/bin/k
+					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' /usr/local/bin/H
 					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 					  echo "コレクションは終了しました"
 					  send_stats "プライバシーとセキュリティの収集がオフになっています"
@@ -17443,7 +17443,7 @@ EOF
 				[Yy])
 				  clear
 				  (crontab -l | grep -v "harvey.sh") | crontab -
-				  rm -f /usr/local/bin/k
+				  rm -f /usr/local/bin/H
 				  rm ~/harvey.sh
 				  echo "スクリプトはアンインストールされました、さようなら!"
 				  break_end
@@ -17894,8 +17894,8 @@ while true; do
 				canshu_v6
 				CheckFirstRun_true
 				yinsiyuanquan2
-				cp -f ~/harvey.sh /usr/local/bin/k > /dev/null 2>&1
-				ln -sf /usr/local/bin/k /usr/bin/k > /dev/null 2>&1
+				cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
+				ln -sf /usr/local/bin/H /usr/bin/H > /dev/null 2>&1
 				echo -e "${gl_lv}スクリプトが最新バージョンに更新されました。${gl_huang}v$sh_v_new${gl_bai}"
 				send_stats "スクリプトは最新です$sh_v_new"
 			else
@@ -17934,8 +17934,8 @@ while true; do
 			fi
 			# 古いスクリプトからpermission_grantedおよびENABLE_STATS設定を復元します
 			SH_Update_task="$SH_Update_task && grep -q 'permission_granted=\"true\"' ~/harvey.sh.bak 2>/dev/null && sed -i 's/permission_granted=\"false\"/permission_granted=\"true\"/' ~/harvey.sh; grep -q 'ENABLE_STATS=\"false\"' ~/harvey.sh.bak 2>/dev/null && sed -i 's/ENABLE_STATS=\"true\"/ENABLE_STATS=\"false\"/' ~/harvey.sh"
-			# /usr/local/bin/k および /usr/bin/k にデプロイします
-			SH_Update_task="$SH_Update_task; cp -f ~/harvey.sh /usr/local/bin/k 2>/dev/null; ln -sf /usr/local/bin/k /usr/bin/k 2>/dev/null"
+			# /usr/local/bin/H および /usr/bin/H にデプロイします
+			SH_Update_task="$SH_Update_task; cp -f ~/harvey.sh /usr/local/bin/H 2>/dev/null; ln -sf /usr/local/bin/H /usr/bin/H 2>/dev/null"
 			# ダウンロードが失敗した場合に一時ファイルを消去する
 			SH_Update_task="$SH_Update_task || rm -f \"\$tmp\" 2>/dev/null"
 			check_crontab_installed
@@ -17962,11 +17962,8 @@ harvey_sh() {
 while true; do
 clear
 echo -e "${gl_kjlan}"
-echo "╦╔═╔═╗ ╦╦╦  ╦╔═╗╔╗╔ ╔═╗╦ ╦"
-echo "╠╩╗║╣  ║║║  ║║ ║║║║ ╚═╗╠═╣"
-echo "╩ ╩╚═╝╚╝╩╩═╝╩╚═╝╝╚╝o╚═╝╩ ╩"
 echo -e "テクノロジー ライオン スクリプト ツールボックス v$sh_v"
-echo -e "コマンドライン入力${gl_huang}k${gl_kjlan}クイックスタートスクリプト${gl_bai}"
+echo -e "コマンドライン入力${gl_huang}H${gl_kjlan}クイックスタートスクリプト${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}システム情報の問い合わせ"
 echo -e "${gl_kjlan}2.   ${gl_bai}システムアップデート"
@@ -18062,7 +18059,7 @@ echo "リリース IP k fxip 127.0.0.0/8 |k リリース IP 127.0.0.0/8"
 echo "ブロック IP k zzip 177.5.25.36 |k ブロック IP 177.5.25.36"
 echo "コマンド お気に入り k お気に入り | k コマンドのお気に入り"
 echo "アプリケーションマーケット管理kアプリ"
-echo "申請番号の迅速な管理 k app 26 | kアプリ1パネル | k アプリ npm"
+echo "申請番号の迅速な管理 H app 26 | kアプリ1パネル | k アプリ npm"
 echo "フェイル 2 バン管理 k フェイル 2 バン | k f2b"
 echo "システム情報を表示 k info"
 echo "ROOT キー管理 k sshkey"

@@ -32,14 +32,14 @@ run_command() {
 	fi
 }
 canshu_v6() {
-	if grep -q '^canshu="V6"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^canshu="V6"' /usr/local/bin/H > /dev/null 2>&1; then
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/harvey.sh
 	elif grep -q '^canshu="V6"' ~/harvey.sh.bak > /dev/null 2>&1; then
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/harvey.sh
 	fi
 }
 CheckFirstRun_true() {
-	if grep -q '^permission_granted="true"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^permission_granted="true"' /usr/local/bin/H > /dev/null 2>&1; then
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
 	elif grep -q '^permission_granted="true"' ~/harvey.sh.bak > /dev/null 2>&1; then
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
@@ -63,7 +63,7 @@ send_stats() {
 	) &
 }
 yinsiyuanquan2() {
-if grep -q '^ENABLE_STATS="false"' /usr/local/bin/k > /dev/null 2>&1; then
+if grep -q '^ENABLE_STATS="false"' /usr/local/bin/H > /dev/null 2>&1; then
 	sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 elif grep -q '^ENABLE_STATS="false"' ~/harvey.sh.bak > /dev/null 2>&1; then
 	sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
@@ -76,10 +76,10 @@ sed -i '/^alias k=/d' ~/.bashrc > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.profile > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.bash_profile > /dev/null 2>&1
 cp -f ./harvey.sh ~/harvey.sh > /dev/null 2>&1
-cp -f ~/harvey.sh /usr/local/bin/k > /dev/null 2>&1
-ln -sf /usr/local/bin/k /usr/bin/k > /dev/null 2>&1
+cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
+ln -sf /usr/local/bin/H /usr/bin/H > /dev/null 2>&1
 CheckFirstRun_false() {
-	if grep -q '^permission_granted="false"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^permission_granted="false"' /usr/local/bin/H > /dev/null 2>&1; then
 		UserLicenseAgreement
 	fi
 }
@@ -94,7 +94,7 @@ UserLicenseAgreement() {
 	if [ "$user_input" = "y" ] || [ "$user_input" = "Y" ]; then
 		send_stats "許可同意"
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
-		sed -i 's/^permission_granted="false"/permission_granted="true"/' /usr/local/bin/k
+		sed -i 's/^permission_granted="false"/permission_granted="true"/' /usr/local/bin/H
 	else
 		send_stats "許可拒絕"
 		clear
@@ -16530,11 +16530,11 @@ linux_Settings() {
 					   break_end
 					   linux_Settings
 				  fi
-				  find /usr/local/bin/ -type l -exec bash -c 'test "$(readlink -f {})" = "/usr/local/bin/k" && rm -f {}' \;
+				  find /usr/local/bin/ -type l -exec bash -c 'test "$(readlink -f {})" = "/usr/local/bin/H" && rm -f {}' \;
 				  if [ "$kuaijiejian" != "k" ]; then
-					  ln -sf /usr/local/bin/k /usr/local/bin/$kuaijiejian
+					  ln -sf /usr/local/bin/H /usr/local/bin/$kuaijiejian
 				  fi
-				  ln -sf /usr/local/bin/k /usr/bin/$kuaijiejian > /dev/null 2>&1
+				  ln -sf /usr/local/bin/H /usr/bin/$kuaijiejian > /dev/null 2>&1
 				  echo "快速鍵已設定"
 				  send_stats "腳本快捷鍵已設定"
 				  break_end
@@ -17388,9 +17388,9 @@ EOF
 			root_use
 			while true; do
 			  clear
-			  if grep -q '^ENABLE_STATS="true"' /usr/local/bin/k > /dev/null 2>&1; then
+			  if grep -q '^ENABLE_STATS="true"' /usr/local/bin/H > /dev/null 2>&1; then
 			  	local status_message="${gl_lv}正在采集数据${gl_bai}"
-			  elif grep -q '^ENABLE_STATS="false"' /usr/local/bin/k > /dev/null 2>&1; then
+			  elif grep -q '^ENABLE_STATS="false"' /usr/local/bin/H > /dev/null 2>&1; then
 			  	local status_message="${gl_hui}採集已關閉${gl_bai}"
 			  else
 			  	local status_message="無法確定的狀態"
@@ -17410,14 +17410,14 @@ EOF
 			  case $sub_choice in
 				  1)
 					  cd ~
-					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' /usr/local/bin/k
+					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' /usr/local/bin/H
 					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' ~/harvey.sh
 					  echo "已開啟擷取"
 					  send_stats "隱私與安全已開啟擷取"
 					  ;;
 				  2)
 					  cd ~
-					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' /usr/local/bin/k
+					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' /usr/local/bin/H
 					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 					  echo "已關閉採集"
 					  send_stats "隱私與安全已關閉採集"
@@ -17443,7 +17443,7 @@ EOF
 				[Yy])
 				  clear
 				  (crontab -l | grep -v "harvey.sh") | crontab -
-				  rm -f /usr/local/bin/k
+				  rm -f /usr/local/bin/H
 				  rm ~/harvey.sh
 				  echo "腳本已卸載，再見！"
 				  break_end
@@ -17894,8 +17894,8 @@ while true; do
 				canshu_v6
 				CheckFirstRun_true
 				yinsiyuanquan2
-				cp -f ~/harvey.sh /usr/local/bin/k > /dev/null 2>&1
-				ln -sf /usr/local/bin/k /usr/bin/k > /dev/null 2>&1
+				cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
+				ln -sf /usr/local/bin/H /usr/bin/H > /dev/null 2>&1
 				echo -e "${gl_lv}腳本已更新至最新版本！${gl_huang}v$sh_v_new${gl_bai}"
 				send_stats "脚本已经最新$sh_v_new"
 			else
@@ -17934,8 +17934,8 @@ while true; do
 			fi
 			# 從舊腳本恢復 permission_granted 和 ENABLE_STATS 設置
 			SH_Update_task="$SH_Update_task && grep -q 'permission_granted=\"true\"' ~/harvey.sh.bak 2>/dev/null && sed -i 's/permission_granted=\"false\"/permission_granted=\"true\"/' ~/harvey.sh; grep -q 'ENABLE_STATS=\"false\"' ~/harvey.sh.bak 2>/dev/null && sed -i 's/ENABLE_STATS=\"true\"/ENABLE_STATS=\"false\"/' ~/harvey.sh"
-			# 部署到 /usr/local/bin/k 和 /usr/bin/k
-			SH_Update_task="$SH_Update_task; cp -f ~/harvey.sh /usr/local/bin/k 2>/dev/null; ln -sf /usr/local/bin/k /usr/bin/k 2>/dev/null"
+			# 部署到 /usr/local/bin/H 和 /usr/bin/H
+			SH_Update_task="$SH_Update_task; cp -f ~/harvey.sh /usr/local/bin/H 2>/dev/null; ln -sf /usr/local/bin/H /usr/bin/H 2>/dev/null"
 			# 下載失敗時清理暫存文件
 			SH_Update_task="$SH_Update_task || rm -f \"\$tmp\" 2>/dev/null"
 			check_crontab_installed
@@ -17962,11 +17962,8 @@ harvey_sh() {
 while true; do
 clear
 echo -e "${gl_kjlan}"
-echo "╦╔═╔═╗ ╦╦╦  ╦╔═╗╔╗╔ ╔═╗╦ ╦"
-echo "╠╩╗║╣  ║║║  ║║ ║║║║ ╚═╗╠═╣"
-echo "╩ ╩╚═╝╚╝╩╩═╝╩╚═╝╝╚╝o╚═╝╩ ╩"
 echo -e "Harvey腳本工具箱 v$sh_v"
-echo -e "命令列輸入${gl_huang}k${gl_kjlan}可快速啟動腳本${gl_bai}"
+echo -e "命令列輸入${gl_huang}H${gl_kjlan}可快速啟動腳本${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}系統資訊查詢"
 echo -e "${gl_kjlan}2.   ${gl_bai}系統更新"
@@ -18061,8 +18058,8 @@ echo "关闭端口            k gbdk 7800 |k 关闭端口 7800"
 echo "放行IP k fxip 127.0.0.0/8 |k 放行IP 127.0.0.0/8"
 echo "阻止IP k zzip 177.5.25.36 |k 阻止IP 177.5.25.36"
 echo "命令收藏 k fav | k 指令收藏夾"
-echo "應用市場管理 k app"
-echo "應用編號快捷管理 k app 26 | k app 1panel | k app npm"
+echo "應用市場管理 H app"
+echo "應用編號快捷管理 H app 26 | H app 1panel | H app npm"
 echo "fail2ban管理 k fail2ban | k f2b"
 echo "顯示系統資訊 k info"
 echo "ROOT金鑰管理 k sshkey"

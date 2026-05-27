@@ -32,14 +32,14 @@ run_command() {
 	fi
 }
 canshu_v6() {
-	if grep -q '^canshu="V6"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^canshu="V6"' /usr/local/bin/H > /dev/null 2>&1; then
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/harvey.sh
 	elif grep -q '^canshu="V6"' ~/harvey.sh.bak > /dev/null 2>&1; then
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/harvey.sh
 	fi
 }
 CheckFirstRun_true() {
-	if grep -q '^permission_granted="true"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^permission_granted="true"' /usr/local/bin/H > /dev/null 2>&1; then
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
 	elif grep -q '^permission_granted="true"' ~/harvey.sh.bak > /dev/null 2>&1; then
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
@@ -63,7 +63,7 @@ send_stats() {
 	) &
 }
 yinsiyuanquan2() {
-if grep -q '^ENABLE_STATS="false"' /usr/local/bin/k > /dev/null 2>&1; then
+if grep -q '^ENABLE_STATS="false"' /usr/local/bin/H > /dev/null 2>&1; then
 	sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 elif grep -q '^ENABLE_STATS="false"' ~/harvey.sh.bak > /dev/null 2>&1; then
 	sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
@@ -76,10 +76,10 @@ sed -i '/^alias k=/d' ~/.bashrc > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.profile > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.bash_profile > /dev/null 2>&1
 cp -f ./harvey.sh ~/harvey.sh > /dev/null 2>&1
-cp -f ~/harvey.sh /usr/local/bin/k > /dev/null 2>&1
-ln -sf /usr/local/bin/k /usr/bin/k > /dev/null 2>&1
+cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
+ln -sf /usr/local/bin/H /usr/bin/H > /dev/null 2>&1
 CheckFirstRun_false() {
-	if grep -q '^permission_granted="false"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^permission_granted="false"' /usr/local/bin/H > /dev/null 2>&1; then
 		UserLicenseAgreement
 	fi
 }
@@ -94,7 +94,7 @@ UserLicenseAgreement() {
 	if [ "$user_input" = "y" ] || [ "$user_input" = "Y" ]; then
 		send_stats "License agreement"
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
-		sed -i 's/^permission_granted="false"/permission_granted="true"/' /usr/local/bin/k
+		sed -i 's/^permission_granted="false"/permission_granted="true"/' /usr/local/bin/H
 	else
 		send_stats "permission denied"
 		clear
@@ -16530,11 +16530,11 @@ linux_Settings() {
 					   break_end
 					   linux_Settings
 				  fi
-				  find /usr/local/bin/ -type l -exec bash -c 'test "$(readlink -f {})" = "/usr/local/bin/k" && rm -f {}' \;
+				  find /usr/local/bin/ -type l -exec bash -c 'test "$(readlink -f {})" = "/usr/local/bin/H" && rm -f {}' \;
 				  if [ "$kuaijiejian" != "k" ]; then
-					  ln -sf /usr/local/bin/k /usr/local/bin/$kuaijiejian
+					  ln -sf /usr/local/bin/H /usr/local/bin/$kuaijiejian
 				  fi
-				  ln -sf /usr/local/bin/k /usr/bin/$kuaijiejian > /dev/null 2>&1
+				  ln -sf /usr/local/bin/H /usr/bin/$kuaijiejian > /dev/null 2>&1
 				  echo "Shortcut keys have been set"
 				  send_stats "Script shortcut key has been set"
 				  break_end
@@ -17388,9 +17388,9 @@ EOF
 			root_use
 			while true; do
 			  clear
-			  if grep -q '^ENABLE_STATS="true"' /usr/local/bin/k > /dev/null 2>&1; then
+			  if grep -q '^ENABLE_STATS="true"' /usr/local/bin/H > /dev/null 2>&1; then
 			  	local status_message="${gl_lv}Collecting data${gl_bai}"
-			  elif grep -q '^ENABLE_STATS="false"' /usr/local/bin/k > /dev/null 2>&1; then
+			  elif grep -q '^ENABLE_STATS="false"' /usr/local/bin/H > /dev/null 2>&1; then
 			  	local status_message="${gl_hui}Collection is closed${gl_bai}"
 			  else
 			  	local status_message="Uncertain status"
@@ -17410,14 +17410,14 @@ EOF
 			  case $sub_choice in
 				  1)
 					  cd ~
-					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' /usr/local/bin/k
+					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' /usr/local/bin/H
 					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' ~/harvey.sh
 					  echo "Collection has been started"
 					  send_stats "Privacy and security collection has been turned on"
 					  ;;
 				  2)
 					  cd ~
-					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' /usr/local/bin/k
+					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' /usr/local/bin/H
 					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 					  echo "Collection closed"
 					  send_stats "Privacy and security collection has been turned off"
@@ -17443,7 +17443,7 @@ EOF
 				[Yy])
 				  clear
 				  (crontab -l | grep -v "harvey.sh") | crontab -
-				  rm -f /usr/local/bin/k
+				  rm -f /usr/local/bin/H
 				  rm ~/harvey.sh
 				  echo "The script has been uninstalled, bye!"
 				  break_end
@@ -17894,8 +17894,8 @@ while true; do
 				canshu_v6
 				CheckFirstRun_true
 				yinsiyuanquan2
-				cp -f ~/harvey.sh /usr/local/bin/k > /dev/null 2>&1
-				ln -sf /usr/local/bin/k /usr/bin/k > /dev/null 2>&1
+				cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
+				ln -sf /usr/local/bin/H /usr/bin/H > /dev/null 2>&1
 				echo -e "${gl_lv}The script has been updated to the latest version!${gl_huang}v$sh_v_new${gl_bai}"
 				send_stats "The script is up to date$sh_v_new"
 			else
@@ -17934,8 +17934,8 @@ while true; do
 			fi
 			# Restore permission_granted and ENABLE_STATS settings from old script
 			SH_Update_task="$SH_Update_task && grep -q 'permission_granted=\"true\"' ~/harvey.sh.bak 2>/dev/null && sed -i 's/permission_granted=\"false\"/permission_granted=\"true\"/' ~/harvey.sh; grep -q 'ENABLE_STATS=\"false\"' ~/harvey.sh.bak 2>/dev/null && sed -i 's/ENABLE_STATS=\"true\"/ENABLE_STATS=\"false\"/' ~/harvey.sh"
-			# Deploy to /usr/local/bin/k and /usr/bin/k
-			SH_Update_task="$SH_Update_task; cp -f ~/harvey.sh /usr/local/bin/k 2>/dev/null; ln -sf /usr/local/bin/k /usr/bin/k 2>/dev/null"
+			# Deploy to /usr/local/bin/H and /usr/bin/H
+			SH_Update_task="$SH_Update_task; cp -f ~/harvey.sh /usr/local/bin/H 2>/dev/null; ln -sf /usr/local/bin/H /usr/bin/H 2>/dev/null"
 			# Clean temporary files when download fails
 			SH_Update_task="$SH_Update_task || rm -f \"\$tmp\" 2>/dev/null"
 			check_crontab_installed
@@ -17962,11 +17962,8 @@ harvey_sh() {
 while true; do
 clear
 echo -e "${gl_kjlan}"
-echo "╦╔═╔═╗ ╦╦╦  ╦╔═╗╔╗╔ ╔═╗╦ ╦"
-echo "╠╩╗║╣  ║║║  ║║ ║║║║ ╚═╗╠═╣"
-echo "╩ ╩╚═╝╚╝╩╩═╝╩╚═╝╝╚╝o╚═╝╩ ╩"
 echo -e "Technology lion script toolbox v$sh_v"
-echo -e "Command line input${gl_huang}k${gl_kjlan}Quick start script${gl_bai}"
+echo -e "Command line input${gl_huang}H${gl_kjlan}Quick start script${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}System information query"
 echo -e "${gl_kjlan}2.   ${gl_bai}System update"
@@ -18061,8 +18058,8 @@ echo "Close port k gbdk 7800 |k Close port 7800"
 echo "Release IP k fxip 127.0.0.0/8 |k Release IP 127.0.0.0/8"
 echo "Block IP k zzip 177.5.25.36 |k Block IP 177.5.25.36"
 echo "command favorites k fav | k command favorites"
-echo "Application market management k app"
-echo "Quick management of application numbers k app 26 | k app 1panel | k app npm"
+echo "Application market management H app"
+echo "Quick management of application numbers H app 26 | H app 1panel | H app npm"
 echo "fail2ban management k fail2ban | k f2b"
 echo "Display system information k info"
 echo "ROOT key management k sshkey"

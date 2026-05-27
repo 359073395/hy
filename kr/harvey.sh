@@ -32,14 +32,14 @@ run_command() {
 	fi
 }
 canshu_v6() {
-	if grep -q '^canshu="V6"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^canshu="V6"' /usr/local/bin/H > /dev/null 2>&1; then
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/harvey.sh
 	elif grep -q '^canshu="V6"' ~/harvey.sh.bak > /dev/null 2>&1; then
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/harvey.sh
 	fi
 }
 CheckFirstRun_true() {
-	if grep -q '^permission_granted="true"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^permission_granted="true"' /usr/local/bin/H > /dev/null 2>&1; then
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
 	elif grep -q '^permission_granted="true"' ~/harvey.sh.bak > /dev/null 2>&1; then
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
@@ -63,7 +63,7 @@ send_stats() {
 	) &
 }
 yinsiyuanquan2() {
-if grep -q '^ENABLE_STATS="false"' /usr/local/bin/k > /dev/null 2>&1; then
+if grep -q '^ENABLE_STATS="false"' /usr/local/bin/H > /dev/null 2>&1; then
 	sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 elif grep -q '^ENABLE_STATS="false"' ~/harvey.sh.bak > /dev/null 2>&1; then
 	sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
@@ -76,10 +76,10 @@ sed -i '/^alias k=/d' ~/.bashrc > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.profile > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.bash_profile > /dev/null 2>&1
 cp -f ./harvey.sh ~/harvey.sh > /dev/null 2>&1
-cp -f ~/harvey.sh /usr/local/bin/k > /dev/null 2>&1
-ln -sf /usr/local/bin/k /usr/bin/k > /dev/null 2>&1
+cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
+ln -sf /usr/local/bin/H /usr/bin/H > /dev/null 2>&1
 CheckFirstRun_false() {
-	if grep -q '^permission_granted="false"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^permission_granted="false"' /usr/local/bin/H > /dev/null 2>&1; then
 		UserLicenseAgreement
 	fi
 }
@@ -94,7 +94,7 @@ UserLicenseAgreement() {
 	if [ "$user_input" = "y" ] || [ "$user_input" = "Y" ]; then
 		send_stats "라이센스 계약"
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
-		sed -i 's/^permission_granted="false"/permission_granted="true"/' /usr/local/bin/k
+		sed -i 's/^permission_granted="false"/permission_granted="true"/' /usr/local/bin/H
 	else
 		send_stats "허가가 거부되었습니다"
 		clear
@@ -16530,11 +16530,11 @@ linux_Settings() {
 					   break_end
 					   linux_Settings
 				  fi
-				  find /usr/local/bin/ -type l -exec bash -c 'test "$(readlink -f {})" = "/usr/local/bin/k" && rm -f {}' \;
+				  find /usr/local/bin/ -type l -exec bash -c 'test "$(readlink -f {})" = "/usr/local/bin/H" && rm -f {}' \;
 				  if [ "$kuaijiejian" != "k" ]; then
-					  ln -sf /usr/local/bin/k /usr/local/bin/$kuaijiejian
+					  ln -sf /usr/local/bin/H /usr/local/bin/$kuaijiejian
 				  fi
-				  ln -sf /usr/local/bin/k /usr/bin/$kuaijiejian > /dev/null 2>&1
+				  ln -sf /usr/local/bin/H /usr/bin/$kuaijiejian > /dev/null 2>&1
 				  echo "단축키가 설정되었습니다"
 				  send_stats "스크립트 단축키가 설정되었습니다"
 				  break_end
@@ -17388,9 +17388,9 @@ EOF
 			root_use
 			while true; do
 			  clear
-			  if grep -q '^ENABLE_STATS="true"' /usr/local/bin/k > /dev/null 2>&1; then
+			  if grep -q '^ENABLE_STATS="true"' /usr/local/bin/H > /dev/null 2>&1; then
 			  	local status_message="${gl_lv}데이터 수집${gl_bai}"
-			  elif grep -q '^ENABLE_STATS="false"' /usr/local/bin/k > /dev/null 2>&1; then
+			  elif grep -q '^ENABLE_STATS="false"' /usr/local/bin/H > /dev/null 2>&1; then
 			  	local status_message="${gl_hui}컬렉션이 닫혔습니다.${gl_bai}"
 			  else
 			  	local status_message="불확실한 상태"
@@ -17410,14 +17410,14 @@ EOF
 			  case $sub_choice in
 				  1)
 					  cd ~
-					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' /usr/local/bin/k
+					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' /usr/local/bin/H
 					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' ~/harvey.sh
 					  echo "수집이 시작되었습니다"
 					  send_stats "개인정보 보호 및 보안 수집이 사용 설정되었습니다."
 					  ;;
 				  2)
 					  cd ~
-					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' /usr/local/bin/k
+					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' /usr/local/bin/H
 					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 					  echo "컬렉션이 닫혔습니다."
 					  send_stats "개인정보 보호 및 보안 수집이 사용 중지되었습니다."
@@ -17443,7 +17443,7 @@ EOF
 				[Yy])
 				  clear
 				  (crontab -l | grep -v "harvey.sh") | crontab -
-				  rm -f /usr/local/bin/k
+				  rm -f /usr/local/bin/H
 				  rm ~/harvey.sh
 				  echo "스크립트가 제거되었습니다. 안녕!"
 				  break_end
@@ -17894,8 +17894,8 @@ while true; do
 				canshu_v6
 				CheckFirstRun_true
 				yinsiyuanquan2
-				cp -f ~/harvey.sh /usr/local/bin/k > /dev/null 2>&1
-				ln -sf /usr/local/bin/k /usr/bin/k > /dev/null 2>&1
+				cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
+				ln -sf /usr/local/bin/H /usr/bin/H > /dev/null 2>&1
 				echo -e "${gl_lv}스크립트가 최신 버전으로 업데이트되었습니다!${gl_huang}v$sh_v_new${gl_bai}"
 				send_stats "스크립트가 최신 상태입니다.$sh_v_new"
 			else
@@ -17934,8 +17934,8 @@ while true; do
 			fi
 			# 이전 스크립트에서Permission_granted 및 ENABLE_STATS 설정을 복원합니다.
 			SH_Update_task="$SH_Update_task && grep -q 'permission_granted=\"true\"' ~/harvey.sh.bak 2>/dev/null && sed -i 's/permission_granted=\"false\"/permission_granted=\"true\"/' ~/harvey.sh; grep -q 'ENABLE_STATS=\"false\"' ~/harvey.sh.bak 2>/dev/null && sed -i 's/ENABLE_STATS=\"true\"/ENABLE_STATS=\"false\"/' ~/harvey.sh"
-			# /usr/local/bin/k 및 /usr/bin/k에 배포
-			SH_Update_task="$SH_Update_task; cp -f ~/harvey.sh /usr/local/bin/k 2>/dev/null; ln -sf /usr/local/bin/k /usr/bin/k 2>/dev/null"
+			# /usr/local/bin/H 및 /usr/bin/H에 배포
+			SH_Update_task="$SH_Update_task; cp -f ~/harvey.sh /usr/local/bin/H 2>/dev/null; ln -sf /usr/local/bin/H /usr/bin/H 2>/dev/null"
 			# 다운로드 실패 시 임시 파일 정리
 			SH_Update_task="$SH_Update_task || rm -f \"\$tmp\" 2>/dev/null"
 			check_crontab_installed
@@ -17962,11 +17962,8 @@ harvey_sh() {
 while true; do
 clear
 echo -e "${gl_kjlan}"
-echo "╦╔═╔═╗ ╦╦╦  ╦╔═╗╔╗╔ ╔═╗╦ ╦"
-echo "╠╩╗║╣  ║║║  ║║ ║║║║ ╚═╗╠═╣"
-echo "╩ ╩╚═╝╚╝╩╩═╝╩╚═╝╝╚╝o╚═╝╩ ╩"
 echo -e "기술 사자 스크립트 도구 상자 v$sh_v"
-echo -e "명령줄 입력${gl_huang}k${gl_kjlan}빠른 시작 스크립트${gl_bai}"
+echo -e "명령줄 입력${gl_huang}H${gl_kjlan}빠른 시작 스크립트${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}시스템 정보 쿼리"
 echo -e "${gl_kjlan}2.   ${gl_bai}시스템 업데이트"
@@ -18062,7 +18059,7 @@ echo "릴리스 IP k fxip 127.0.0.0/8 |k 릴리스 IP 127.0.0.0/8"
 echo "IP 차단 k zzip 177.5.25.36 |k IP 177.5.25.36 차단"
 echo "명령 즐겨찾기 k 즐겨찾기 | k 명령 즐겨찾기"
 echo "애플리케이션 시장관리 kapp"
-echo "신청번호의 빠른 관리 k app 26 | k 앱 1패널 | k 앱 npm"
+echo "신청번호의 빠른 관리 H app 26 | k 앱 1패널 | k 앱 npm"
 echo "Fail2ban 관리 k Fail2ban | 케이 F2B"
 echo "시스템 정보 표시 k 정보"
 echo "ROOT 키 관리 k sshkey"

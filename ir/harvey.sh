@@ -43,14 +43,14 @@ run_command() {
 
 
 canshu_v6() {
-	if grep -q '^canshu="V6"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^canshu="V6"' /usr/local/bin/H > /dev/null 2>&1; then
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/harvey.sh
 	fi
 }
 
 
 CheckFirstRun_true() {
-	if grep -q '^permission_granted="true"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^permission_granted="true"' /usr/local/bin/H > /dev/null 2>&1; then
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
 	fi
 }
@@ -84,7 +84,7 @@ send_stats() {
 
 yinsiyuanquan2() {
 
-if grep -q '^ENABLE_STATS="false"' /usr/local/bin/k > /dev/null 2>&1; then
+if grep -q '^ENABLE_STATS="false"' /usr/local/bin/H > /dev/null 2>&1; then
 	sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 fi
 
@@ -101,12 +101,12 @@ sed -i '/^alias k=/d' ~/.bashrc > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.profile > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.bash_profile > /dev/null 2>&1
 cp -f ./harvey.sh ~/harvey.sh > /dev/null 2>&1
-cp -f ~/harvey.sh /usr/local/bin/k > /dev/null 2>&1
+cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
 
 
 
 CheckFirstRun_false() {
-	if grep -q '^permission_granted="false"' /usr/local/bin/k > /dev/null 2>&1; then
+	if grep -q '^permission_granted="false"' /usr/local/bin/H > /dev/null 2>&1; then
 		UserLicenseAgreement
 	fi
 }
@@ -124,7 +124,7 @@ UserLicenseAgreement() {
 	if [ "$user_input" = "y" ] || [ "$user_input" = "Y" ]; then
 		send_stats "رضایت مجوز"
 		sed -i 's/^permission_granted="false"/permission_granted="true"/' ~/harvey.sh
-		sed -i 's/^permission_granted="false"/permission_granted="true"/' /usr/local/bin/k
+		sed -i 's/^permission_granted="false"/permission_granted="true"/' /usr/local/bin/H
 	else
 		send_stats "رد مجوز"
 		clear
@@ -10198,8 +10198,8 @@ linux_Settings() {
 					   break_end
 					   linux_Settings
 				  fi
-				  find /usr/local/bin/ -type l -exec bash -c 'test "$(readlink -f {})" = "/usr/local/bin/k" && rm -f {}' \;
-				  ln -s /usr/local/bin/k /usr/local/bin/$kuaijiejian
+				  find /usr/local/bin/ -type l -exec bash -c 'test "$(readlink -f {})" = "/usr/local/bin/H" && rm -f {}' \;
+				  ln -s /usr/local/bin/H /usr/local/bin/$kuaijiejian
 				  echo "کلیدهای میانبر تنظیم شده اند"
 				  send_stats "کلیدهای میانبر اسکریپت تنظیم شده اند"
 				  break_end
@@ -11283,9 +11283,9 @@ EOF
 			root_use
 			while true; do
 			  clear
-			  if grep -q '^ENABLE_STATS="true"' /usr/local/bin/k > /dev/null 2>&1; then
+			  if grep -q '^ENABLE_STATS="true"' /usr/local/bin/H > /dev/null 2>&1; then
 			  	local status_message="${gl_lv}正在采集数据${gl_bai}"
-			  elif grep -q '^ENABLE_STATS="false"' /usr/local/bin/k > /dev/null 2>&1; then
+			  elif grep -q '^ENABLE_STATS="false"' /usr/local/bin/H > /dev/null 2>&1; then
 			  	local status_message="${gl_hui}采集已关闭${gl_bai}"
 			  else
 			  	local status_message="无法确定的状态"
@@ -11306,14 +11306,14 @@ EOF
 			  case $sub_choice in
 				  1)
 					  cd ~
-					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' /usr/local/bin/k
+					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' /usr/local/bin/H
 					  sed -i 's/^ENABLE_STATS="false"/ENABLE_STATS="true"/' ~/harvey.sh
 					  echo "مجموعه فعال شده است"
 					  send_stats "جمع آوری حریم خصوصی و امنیت فعال شده است"
 					  ;;
 				  2)
 					  cd ~
-					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' /usr/local/bin/k
+					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' /usr/local/bin/H
 					  sed -i 's/^ENABLE_STATS="true"/ENABLE_STATS="false"/' ~/harvey.sh
 					  echo "مجموعه بسته"
 					  send_stats "حریم خصوصی و امنیت برای جمع آوری بسته شده است"
@@ -11342,7 +11342,7 @@ EOF
 				[Yy])
 				  clear
 				  (crontab -l | grep -v "harvey.sh") | crontab -
-				  rm -f /usr/local/bin/k
+				  rm -f /usr/local/bin/H
 				  rm ~/harvey.sh
 				  echo "فیلمنامه حذف شده است ، خداحافظ!"
 				  break_end
@@ -11835,7 +11835,7 @@ while true; do
 			canshu_v6
 			CheckFirstRun_true
 			yinsiyuanquan2
-			cp -f ~/harvey.sh /usr/local/bin/k > /dev/null 2>&1
+			cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
 			echo -e "${gl_lv}اسکریپت به آخرین نسخه به روز شده است!${gl_huang}v$sh_v_new${gl_bai}"
 			send_stats "فیلمنامه به روز است$sh_v_new"
 			break_end
@@ -11884,11 +11884,8 @@ harvey_sh() {
 while true; do
 clear
 echo -e "${gl_kjlan}"
-echo "╦╔═╔═╗ ╦╦╦  ╦╔═╗╔╗╔ ╔═╗╦ ╦"
-echo "╠╩╗║╣  ║║║  ║║ ║║║║ ╚═╗╠═╣"
-echo "╩ ╩╚═╝╚╝╩╩═╝╩╚═╝╝╚╝o╚═╝╩ ╩"
 echo -e "جعبه ابزار Script Lion Technology V$sh_v"
-echo -e "ورودی خط فرمان${gl_huang}k${gl_kjlan}سریع اسکریپت ها را شروع کنید${gl_bai}"
+echo -e "ورودی خط فرمان${gl_huang}H${gl_kjlan}سریع اسکریپت ها را شروع کنید${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}1.   ${gl_bai}پرس و جو اطلاعاتی سیستم"
 echo -e "${gl_kjlan}2.   ${gl_bai}بروزرسانی سیستم"
