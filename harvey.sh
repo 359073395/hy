@@ -13033,6 +13033,7 @@ while true; do
 	  echo -e "${gl_kjlan}111. ${color111}多格式文件转换工具                  ${gl_kjlan}112. ${color112}Lucky大内网穿透工具"
 	  echo -e "${gl_kjlan}113. ${color113}Firefox浏览器                       ${gl_kjlan}114. ${color114}OpenClaw机器人管理工具${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}115. ${color115}Hermes机器人管理工具${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}116. ${color116}x-ui Xray管理面板 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方应用列表"
   	  echo -e "${gl_kjlan}想要让你的应用出现在这里？查看开发者指南: ${gl_huang}https://dev.harvey.sh/${gl_bai}"
@@ -15807,6 +15808,22 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		  ;;
 	  115|hermes)
 	  	  bash <(curl -sL ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/hermes_manager.sh)
+		  ;;
+	  116|x-ui|xui)
+		local app_id="116"
+		local lujing="[ -f /usr/local/x-ui/x-ui ]"
+		local panelname="x-ui"
+		local panelurl="https://github.com/vaxilu/x-ui"
+		panel_app_install() {
+			bash <(curl -Ls ${gh_proxy}raw.githubusercontent.com/vaxilu/x-ui/master/install.sh)
+		}
+		panel_app_manage() {
+			x-ui
+		}
+		panel_app_uninstall() {
+			x-ui uninstall
+		}
+		install_panel
 		  ;;
 	  b)
 	  	clear
