@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# 设置变量
-EMAIL="AAAA"
-API_KEY="BBBB"
-ZONE_ID="CCCC"
+# 设置变量 — 请通过环境变量传入，不要在脚本中硬编码真实凭据
+EMAIL="${CF_EMAIL:?请设置环境变量 CF_EMAIL}"
+API_KEY="${CF_API_KEY:?请设置环境变量 CF_API_KEY}"
+ZONE_ID="${CF_ZONE_ID:?请设置环境变量 CF_ZONE_ID}"
 LOAD_THRESHOLD=5.0  # 设置高负载阈值
 
-TELEGRAM_BOT_TOKEN="输入TG机器人API"
-CHAT_ID="输入TG用户ID"
+TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:?请设置环境变量 TELEGRAM_BOT_TOKEN}"
+CHAT_ID="${TELEGRAM_CHAT_ID:?请设置环境变量 TELEGRAM_CHAT_ID}"
 
 
 # 获取当前系统负载

@@ -1380,6 +1380,7 @@ cf_purge_cache() {
 	  read -e -p "Please enter zone_id (separate multiple with spaces):" -a ZONE_IDS
 	  mkdir -p /home/web/config/
 	  echo "$API_TOKEN $EMAIL ${ZONE_IDS[*]}" > "$CONFIG_FILE"
+	  chmod 600 "$CONFIG_FILE"
 	fi
   fi
   # Loop through each zone_id and execute the clear cache command
@@ -13416,8 +13417,10 @@ while true; do
 		local docker_img="idoop/zentao:latest"
 		local docker_port=82
 		docker_rum() {
+			read -e -p "Set Zentao admin password: " zentao_passwd
+			zentao_passwd="${zentao_passwd:-$(openssl rand -base64 12)}"
 			docker run -d -p ${docker_port}:80 \
-			  -e ADMINER_USER="root" -e ADMINER_PASSWD="password" \
+			  -e ADMINER_USER="root" -e ADMINER_PASSWD="${zentao_passwd}" \
 			  -e BIND_ADDRESS="false" \
 			  -v /home/docker/zentao-server/:/opt/zbox/ \
 			  --add-host smtp.exmail.qq.com:163.177.90.125 \
@@ -13428,7 +13431,7 @@ while true; do
 		local docker_describe="ZenTao is a universal project management software"
 		local docker_url="Official website introduction: https://www.zentao.net/"
 		local docker_use="echo \"Initial username: admin\""
-		local docker_passwd="echo \"Initial password: 123456\""
+		local docker_passwd="echo \"Admin password was set during deployment\""
 		local app_size="2"
 		docker_app
 		  ;;
