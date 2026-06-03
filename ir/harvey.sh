@@ -20,10 +20,10 @@ ENABLE_STATS="true"
 quanju_canshu() {
 if [ "$canshu" = "CN" ]; then
 	zhushi=0
-	gh_proxy="https://gh.harvey.pro/"
+	gh_proxy="https://gh.kejilion.pro/"
 elif [ "$canshu" = "V6" ]; then
 	zhushi=1
-	gh_proxy="https://gh.harvey.pro/"
+	gh_proxy="https://gh.kejilion.pro/"
 else
 	zhushi=1  # 0 表示执行，1 表示不执行
 	gh_proxy="https://"
@@ -73,7 +73,7 @@ send_stats() {
 	local cpu_arch=$(uname -m)
 
 	(
-		curl -s -X POST "https://api.harvey.pro/api/log" \
+		curl -s -X POST "https://api.kejilion.pro/api/log" \
 			-H "Content-Type: application/json" \
 			-d "{\"action\":\"$1\",\"timestamp\":\"$(date -u '+%Y-%m-%d %H:%M:%S')\",\"country\":\"$country\",\"os_info\":\"$os_info\",\"cpu_arch\":\"$cpu_arch\",\"version\":\"$sh_v\"}" \
 		&>/dev/null
@@ -116,7 +116,7 @@ UserLicenseAgreement() {
 	clear
 	echo -e "${gl_kjlan}به جعبه ابزار Tech Lion Script خوش آمدید${gl_bai}"
 	echo "برای اولین بار با استفاده از اسکریپت ، لطفاً توافق نامه مجوز کاربر را بخوانید و موافقت کنید."
-	echo "توافق نامه مجوز کاربر: https://blog.harvey.pro/user-license-agreement/"
+	echo "توافق نامه مجوز کاربر: https://blog.kejilion.pro/user-license-agreement/"
 	echo -e "----------------------"
 	read -r -p "آیا با اصطلاحات فوق موافق هستید؟ (y/n):" user_input
 
@@ -372,7 +372,7 @@ if [ "$country" = "CN" ]; then
 	"https://dockerpull.cn",
 	"https://cr.laoyou.ip-ddns.com",
 	"https://docker.melikeme.cn",
-	"https://docker.harvey.pro"
+	"https://docker.kejilion.pro"
   ]
 }
 EOF
@@ -390,7 +390,7 @@ install_add_docker_guanfang() {
 local country=$(curl -s ipinfo.io/country)
 if [ "$country" = "CN" ]; then
 	cd ~
-	curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/docker/main/install && chmod +x install
+	curl -sS -O ${gh_proxy}raw.githubusercontent.com/kejilion/docker/main/install && chmod +x install
 	sh install --mirror Aliyun
 	rm -f install
 else
@@ -1291,15 +1291,15 @@ install_ldnmp_conf() {
 
   # دایرکتوری ها و پرونده های لازم را ایجاد کنید
   cd /home && mkdir -p web/html web/mysql web/certs web/conf.d web/redis web/log/nginx && touch web/docker-compose.yml
-  wget -O /home/web/nginx.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/nginx10.conf
-  wget -O /home/web/conf.d/default.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/default10.conf
-  wget -O /home/web/redis/valkey.conf ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/valkey.conf
+  wget -O /home/web/nginx.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/nginx10.conf
+  wget -O /home/web/conf.d/default.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/default10.conf
+  wget -O /home/web/redis/valkey.conf ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/valkey.conf
 
 
   default_server_ssl
 
   # پرونده docker-compose.yml را بارگیری کنید و آن را جایگزین کنید
-  wget -O /home/web/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/harvey/docker/main/LNMP-docker-compose-10.yml
+  wget -O /home/web/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/kejilion/docker/main/LNMP-docker-compose-10.yml
   dbrootpasswd=$(openssl rand -base64 16) ; dbuse=$(openssl rand -hex 4) ; dbusepasswd=$(openssl rand -base64 8)
 
   # در پرونده docker-compose.yml جایگزین کنید
@@ -1320,7 +1320,7 @@ install_ldnmp() {
 	  cp /home/web/docker-compose.yml /home/web/docker-compose1.yml
 
 	  if ! grep -q "php-socket" /home/web/docker-compose.yml; then
-		wget -O /home/web/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/harvey/docker/main/LNMP-docker-compose-10.yml
+		wget -O /home/web/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/kejilion/docker/main/LNMP-docker-compose-10.yml
 	  	dbrootpasswd=$(grep -oP 'MYSQL_ROOT_PASSWORD:\s*\K.*' /home/web/docker-compose1.yml | tr -d '[:space:]')
 	  	dbuse=$(grep -oP 'MYSQL_USER:\s*\K.*' /home/web/docker-compose1.yml | tr -d '[:space:]')
 	  	dbusepasswd=$(grep -oP 'MYSQL_PASSWORD:\s*\K.*' /home/web/docker-compose1.yml | tr -d '[:space:]')
@@ -1359,7 +1359,7 @@ install_ldnmp() {
 install_certbot() {
 
 	cd ~
-	curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/auto_cert_renewal.sh
+	curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/auto_cert_renewal.sh
 	chmod +x auto_cert_renewal.sh
 
 	check_crontab_installed
@@ -1522,7 +1522,7 @@ add_db() {
 
 reverse_proxy() {
 	  ip_address
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/reverse-proxy.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/reverse-proxy.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  sed -i "s/0.0.0.0/$ipv4_address/g" /home/web/conf.d/$yuming.conf
 	  sed -i "s|0000|$duankou|g" /home/web/conf.d/$yuming.conf
@@ -1586,7 +1586,7 @@ phpmyadmin_upgrade() {
   cd /home/web/
   docker rm -f $ldnmp_pods > /dev/null 2>&1
   docker images --filter=reference="$ldnmp_pods*" -q | xargs docker rmi > /dev/null 2>&1
-  curl -sS -O https://raw.githubusercontent.com/harvey/docker/refs/heads/main/docker-compose.phpmyadmin.yml
+  curl -sS -O https://raw.githubusercontent.com/kejilion/docker/refs/heads/main/docker-compose.phpmyadmin.yml
   docker compose -f docker-compose.phpmyadmin.yml up -d
   clear
   ip_address
@@ -1691,7 +1691,7 @@ nginx_waf() {
 	local mode=$1
 
 	if ! grep -q "kjlion/nginx:alpine" /home/web/docker-compose.yml; then
-		wget -O /home/web/nginx.conf "${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/nginx10.conf"
+		wget -O /home/web/nginx.conf "${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/nginx10.conf"
 	fi
 
 	# تصمیم بگیرید WAF را با توجه به پارامتر حالت روشن یا خاموش کنید
@@ -2275,7 +2275,7 @@ mkdir -p $GRAFANA_DIR
 chown -R 472:472 $GRAFANA_DIR
 
 if [ ! -f "$PROMETHEUS_DIR/prometheus.yml" ]; then
-	curl -o "$PROMETHEUS_DIR/prometheus.yml" ${gh_proxy}raw.githubusercontent.com/harvey/config/refs/heads/main/prometheus/prometheus.yml
+	curl -o "$PROMETHEUS_DIR/prometheus.yml" ${gh_proxy}raw.githubusercontent.com/kejilion/config/refs/heads/main/prometheus/prometheus.yml
 fi
 
 # Create Docker network for monitoring
@@ -2379,19 +2379,19 @@ f2b_install_sshd() {
 	sleep 3
 	if grep -q 'Alpine' /etc/issue; then
 		cd /path/to/fail2ban/config/fail2ban/filter.d
-		curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/alpine-sshd.conf
-		curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/alpine-sshd-ddos.conf
+		curl -sS -O ${gh_proxy}raw.githubusercontent.com/kejilion/config/main/fail2ban/alpine-sshd.conf
+		curl -sS -O ${gh_proxy}raw.githubusercontent.com/kejilion/config/main/fail2ban/alpine-sshd-ddos.conf
 		cd /path/to/fail2ban/config/fail2ban/jail.d/
-		curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/alpine-ssh.conf
+		curl -sS -O ${gh_proxy}raw.githubusercontent.com/kejilion/config/main/fail2ban/alpine-ssh.conf
 	elif command -v dnf &>/dev/null; then
 		cd /path/to/fail2ban/config/fail2ban/jail.d/
-		curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/centos-ssh.conf
+		curl -sS -O ${gh_proxy}raw.githubusercontent.com/kejilion/config/main/fail2ban/centos-ssh.conf
 	else
 		install rsyslog
 		systemctl start rsyslog
 		systemctl enable rsyslog
 		cd /path/to/fail2ban/config/fail2ban/jail.d/
-		curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/linux-ssh.conf
+		curl -sS -O ${gh_proxy}raw.githubusercontent.com/kejilion/config/main/fail2ban/linux-ssh.conf
 		systemctl restart rsyslog
 	fi
 }
@@ -2565,7 +2565,7 @@ ldnmp_wp() {
   install_ssltls
   certs_status
   add_db
-  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/wordpress.com.conf
+  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/wordpress.com.conf
   sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
   nginx_http_on
 
@@ -2617,7 +2617,7 @@ ldnmp_Proxy() {
 	nginx_install_status
 	install_ssltls
 	certs_status
-	wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/reverse-proxy.conf
+	wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/reverse-proxy.conf
 	sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	sed -i "s/0.0.0.0/$reverseproxy/g" /home/web/conf.d/$yuming.conf
 	sed -i "s|0000|$port|g" /home/web/conf.d/$yuming.conf
@@ -2648,7 +2648,7 @@ ldnmp_Proxy_backend() {
 	nginx_install_status
 	install_ssltls
 	certs_status
-	wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/reverse-proxy-backend.conf
+	wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/reverse-proxy-backend.conf
 
 	backend=$(tr -dc 'A-Za-z' < /dev/urandom | head -c 8)
 	sed -i "s/backend_yuming_com/backend_$backend/g" /home/web/conf.d/"$yuming".conf
@@ -4204,13 +4204,13 @@ bbrv3() {
 						update-grub
 
 						# wget -qO - https://dl.xanmod.org/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
-						wget -qO - ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
+						wget -qO - ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
 
 						# مرحله 3: یک مخزن اضافه کنید
 						echo 'deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main' | tee /etc/apt/sources.list.d/xanmod-release.list
 
 						# version=$(wget -q https://dl.xanmod.org/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
-						local version=$(wget -q ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
+						local version=$(wget -q ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
 
 						apt update -y
 						apt install -y linux-xanmod-x64v$version
@@ -4266,13 +4266,13 @@ bbrv3() {
 			install wget gnupg
 
 			# wget -qO - https://dl.xanmod.org/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
-			wget -qO - ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
+			wget -qO - ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
 
 			# مرحله 3: یک مخزن اضافه کنید
 			echo 'deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main' | tee /etc/apt/sources.list.d/xanmod-release.list
 
 			# version=$(wget -q https://dl.xanmod.org/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
-			local version=$(wget -q ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
+			local version=$(wget -q ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
 
 			apt update -y
 			apt install -y linux-xanmod-x64v$version
@@ -6869,7 +6869,7 @@ linux_ldnmp() {
 	  certs_status
 	  add_db
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/discuz.com.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/discuz.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
 
@@ -6906,7 +6906,7 @@ linux_ldnmp() {
 	  certs_status
 	  add_db
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/kdy.com.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/kdy.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
 
@@ -6941,7 +6941,7 @@ linux_ldnmp() {
 	  certs_status
 	  add_db
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/maccms.com.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/maccms.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
 
@@ -6953,7 +6953,7 @@ linux_ldnmp() {
 	  cd /home/web/html/$yuming/template/ && wget ${gh_proxy}github.com/kejilion/Website_source_code/raw/main/DYXS2.zip && unzip DYXS2.zip && rm /home/web/html/$yuming/template/DYXS2.zip
 	  cp /home/web/html/$yuming/template/DYXS2/asset/admin/Dyxs2.php /home/web/html/$yuming/application/admin/controller
 	  cp /home/web/html/$yuming/template/DYXS2/asset/admin/dycms.html /home/web/html/$yuming/application/admin/view/system
-	  mv /home/web/html/$yuming/admin.php /home/web/html/$yuming/vip.php && wget -O /home/web/html/$yuming/application/extra/maccms.php ${gh_proxy}raw.githubusercontent.com/harvey/Website_source_code/main/maccms.php
+	  mv /home/web/html/$yuming/admin.php /home/web/html/$yuming/vip.php && wget -O /home/web/html/$yuming/application/extra/maccms.php ${gh_proxy}raw.githubusercontent.com/kejilion/Website_source_code/main/maccms.php
 
 	  restart_ldnmp
 
@@ -6984,7 +6984,7 @@ linux_ldnmp() {
 	  certs_status
 	  add_db
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/dujiaoka.com.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/dujiaoka.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
 
@@ -7032,7 +7032,7 @@ linux_ldnmp() {
 	  certs_status
 	  add_db
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/flarum.com.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/flarum.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
 
@@ -7083,7 +7083,7 @@ linux_ldnmp() {
 	  certs_status
 	  add_db
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/typecho.com.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/typecho.com.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
 
@@ -7121,7 +7121,7 @@ linux_ldnmp() {
 	  certs_status
 	  add_db
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/refs/heads/main/index_php.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/refs/heads/main/index_php.conf
 	  sed -i "s|/var/www/html/yuming.com/|/var/www/html/yuming.com/linkstack|g" /home/web/conf.d/$yuming.conf
 	  sed -i "s|yuming.com|$yuming|g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
@@ -7157,7 +7157,7 @@ linux_ldnmp() {
 	  certs_status
 	  add_db
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/index_php.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/index_php.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
 
@@ -7290,7 +7290,7 @@ linux_ldnmp() {
 	  install_ssltls
 	  certs_status
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/rewrite.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/rewrite.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  sed -i "s/baidu.com/$reverseproxy/g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
@@ -7318,7 +7318,7 @@ linux_ldnmp() {
 	  install_ssltls
 	  certs_status
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/reverse-proxy-domain.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/reverse-proxy-domain.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  sed -i "s|fandaicom|$fandai_yuming|g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
@@ -7381,7 +7381,7 @@ linux_ldnmp() {
 	  install_ssltls
 	  certs_status
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/html.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/html.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
 
@@ -7416,7 +7416,7 @@ linux_ldnmp() {
 	  install_ssltls
 	  certs_status
 
-	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/html.conf
+	  wget -O /home/web/conf.d/$yuming.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/html.conf
 	  sed -i "s/yuming.com/$yuming/g" /home/web/conf.d/$yuming.conf
 	  nginx_http_on
 
@@ -7514,7 +7514,7 @@ linux_ldnmp() {
 	  read -e -p "رمز ورود سرور از راه دور را وارد کنید:" usepasswd
 
 	  cd ~
-	  wget -O ${useip}_beifen.sh ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/beifen.sh > /dev/null 2>&1
+	  wget -O ${useip}_beifen.sh ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/beifen.sh > /dev/null 2>&1
 	  chmod +x ${useip}_beifen.sh
 
 	  sed -i "s/0.0.0.0/$useip/g" ${useip}_beifen.sh
@@ -7618,9 +7618,9 @@ linux_ldnmp() {
 				  1)
 					  f2b_install_sshd
 					  cd /path/to/fail2ban/config/fail2ban/filter.d
-					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/fail2ban-nginx-cc.conf
+					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/fail2ban-nginx-cc.conf
 					  cd /path/to/fail2ban/config/fail2ban/jail.d/
-					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/nginx-docker-cc.conf
+					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/kejilion/config/main/fail2ban/nginx-docker-cc.conf
 					  sed -i "/cloudflare/d" /path/to/fail2ban/config/fail2ban/jail.d/nginx-docker-cc.conf
 					  f2b_status
 					  ;;
@@ -7694,14 +7694,14 @@ linux_ldnmp() {
 					  read -e -p "شماره حساب CF را وارد کنید:" cfuser
 					  read -e -p "کلید جهانی API را برای CF وارد کنید:" cftoken
 
-					  wget -O /home/web/conf.d/default.conf ${gh_proxy}raw.githubusercontent.com/harvey/nginx/main/default11.conf
+					  wget -O /home/web/conf.d/default.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/default11.conf
 					  docker exec nginx nginx -s reload
 
 					  cd /path/to/fail2ban/config/fail2ban/jail.d/
-					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/nginx-docker-cc.conf
+					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/kejilion/config/main/fail2ban/nginx-docker-cc.conf
 
 					  cd /path/to/fail2ban/config/fail2ban/action.d
-					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/config/main/fail2ban/cloudflare-docker.conf
+					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/kejilion/config/main/fail2ban/cloudflare-docker.conf
 
 					  sed -i "s/harvey@outlook.com/$cfuser/g" /path/to/fail2ban/config/fail2ban/action.d/cloudflare-docker.conf
 					  sed -i "s/APIKEY00000/$cftoken/g" /path/to/fail2ban/config/fail2ban/action.d/cloudflare-docker.conf
@@ -7726,7 +7726,7 @@ linux_ldnmp() {
 					  cd ~
 					  install jq bc
 					  check_crontab_installed
-					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/CF-Under-Attack.sh
+					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/CF-Under-Attack.sh
 					  chmod +x CF-Under-Attack.sh
 					  sed -i "s/AAAA/$cfuser/g" ~/CF-Under-Attack.sh
 					  sed -i "s/BBBB/$cftoken/g" ~/CF-Under-Attack.sh
@@ -7794,13 +7794,13 @@ linux_ldnmp() {
 				  sed -i 's/worker_processes.*/worker_processes 4;/' /home/web/nginx.conf
 
 				  # تنظیم PHP
-				  wget -O /home/optimized_php.ini ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/optimized_php.ini
+				  wget -O /home/optimized_php.ini ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/optimized_php.ini
 				  docker cp /home/optimized_php.ini php:/usr/local/etc/php/conf.d/optimized_php.ini
 				  docker cp /home/optimized_php.ini php74:/usr/local/etc/php/conf.d/optimized_php.ini
 				  rm -rf /home/optimized_php.ini
 
 				  # تنظیم PHP
-				  wget -O /home/www.conf ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/www-1.conf
+				  wget -O /home/www.conf ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/www-1.conf
 				  docker cp /home/www.conf php:/usr/local/etc/php-fpm.d/www.conf
 				  docker cp /home/www.conf php74:/usr/local/etc/php-fpm.d/www.conf
 				  rm -rf /home/www.conf
@@ -7809,7 +7809,7 @@ linux_ldnmp() {
 				  fix_phpfpm_conf php74
 
 				  # تنظیم mysql
-				  wget -O /home/custom_mysql_config.cnf ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/custom_mysql_config-1.cnf
+				  wget -O /home/custom_mysql_config.cnf ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/custom_mysql_config-1.cnf
 				  docker cp /home/custom_mysql_config.cnf mysql:/etc/mysql/conf.d/
 				  rm -rf /home/custom_mysql_config.cnf
 
@@ -7831,13 +7831,13 @@ linux_ldnmp() {
 				  sed -i 's/worker_processes.*/worker_processes 8;/' /home/web/nginx.conf
 
 				  # تنظیم PHP
-				  wget -O /home/optimized_php.ini ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/optimized_php.ini
+				  wget -O /home/optimized_php.ini ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/optimized_php.ini
 				  docker cp /home/optimized_php.ini php:/usr/local/etc/php/conf.d/optimized_php.ini
 				  docker cp /home/optimized_php.ini php74:/usr/local/etc/php/conf.d/optimized_php.ini
 				  rm -rf /home/optimized_php.ini
 
 				  # تنظیم PHP
-				  wget -O /home/www.conf ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/www.conf
+				  wget -O /home/www.conf ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/www.conf
 				  docker cp /home/www.conf php:/usr/local/etc/php-fpm.d/www.conf
 				  docker cp /home/www.conf php74:/usr/local/etc/php-fpm.d/www.conf
 				  rm -rf /home/www.conf
@@ -7846,7 +7846,7 @@ linux_ldnmp() {
 				  fix_phpfpm_conf php74
 
 				  # تنظیم mysql
-				  wget -O /home/custom_mysql_config.cnf ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/custom_mysql_config.cnf
+				  wget -O /home/custom_mysql_config.cnf ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/custom_mysql_config.cnf
 				  docker cp /home/custom_mysql_config.cnf mysql:/etc/mysql/conf.d/
 				  rm -rf /home/custom_mysql_config.cnf
 
@@ -8599,7 +8599,7 @@ linux_panel() {
 
 			docker_app_install() {
 				cd /home/ && mkdir -p docker/cloud && cd docker/cloud && mkdir temp_data && mkdir -vp cloudreve/{uploads,avatar} && touch cloudreve/conf.ini && touch cloudreve/cloudreve.db && mkdir -p aria2/config && mkdir -p data/aria2 && chmod -R 777 data/aria2
-				curl -o /home/docker/cloud/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/harvey/docker/main/cloudreve-docker-compose.yml
+				curl -o /home/docker/cloud/docker-compose.yml ${gh_proxy}raw.githubusercontent.com/kejilion/docker/main/cloudreve-docker-compose.yml
 				sed -i "s/5212:5212/${docker_port}:5212/g" /home/docker/cloud/docker-compose.yml
 				cd /home/docker/cloud/
 				docker compose up -d
@@ -10979,7 +10979,7 @@ EOF
 					cz_day=${cz_day:-1}
 
 					cd ~
-					curl -Ss -o ~/Limiting_Shut_down.sh ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/Limiting_Shut_down1.sh
+					curl -Ss -o ~/Limiting_Shut_down.sh ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/Limiting_Shut_down1.sh
 					chmod +x ~/Limiting_Shut_down.sh
 					sed -i "s/110/$rx_threshold_gb/g" ~/Limiting_Shut_down.sh
 					sed -i "s/120/$tx_threshold_gb/g" ~/Limiting_Shut_down.sh
@@ -11077,7 +11077,7 @@ EOF
 					  chmod +x ~/TG-check-notify.sh
 					  nano ~/TG-check-notify.sh
 				  else
-					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/TG-check-notify.sh
+					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/TG-check-notify.sh
 					  chmod +x ~/TG-check-notify.sh
 					  nano ~/TG-check-notify.sh
 				  fi
@@ -11086,7 +11086,7 @@ EOF
 				  crontab -l | grep -v '~/TG-check-notify.sh' | crontab - > /dev/null 2>&1
 				  (crontab -l ; echo "@reboot tmux new -d -s TG-check-notify '~/TG-check-notify.sh'") | crontab - > /dev/null 2>&1
 
-				  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/TG-SSH-check-notify.sh > /dev/null 2>&1
+				  curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/TG-SSH-check-notify.sh > /dev/null 2>&1
 				  sed -i "3i$(grep '^TELEGRAM_BOT_TOKEN=' ~/TG-check-notify.sh)" TG-SSH-check-notify.sh > /dev/null 2>&1
 				  sed -i "4i$(grep '^CHAT_ID=' ~/TG-check-notify.sh)" TG-SSH-check-notify.sh
 				  chmod +x ~/TG-SSH-check-notify.sh
@@ -11118,7 +11118,7 @@ EOF
 			  root_use
 			  send_stats "آسیب پذیری های پرخطر را در SSH رفع کنید"
 			  cd ~
-			  curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/upgrade_openssh9.8p1.sh
+			  curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/upgrade_openssh9.8p1.sh
 			  chmod +x ~/upgrade_openssh9.8p1.sh
 			  ~/upgrade_openssh9.8p1.sh
 			  rm -f ~/upgrade_openssh9.8p1.sh
@@ -11180,7 +11180,7 @@ EOF
 			clear
 			send_stats "صفحه پیام"
 			echo "صفحه پیام Lion Technology به جامعه رسمی منتقل شده است! لطفاً پیامی را در جامعه رسمی بگذارید!"
-			echo "https://bbs.harvey.pro/"
+			echo "https://bbs.kejilion.pro/"
 			  ;;
 
 		  66)
@@ -11589,7 +11589,7 @@ EOF
 cluster_python3() {
 	install python3 python3-paramiko
 	cd ~/cluster/
-	curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/python-for-vps/main/cluster/$py_task
+	curl -sS -O ${gh_proxy}raw.githubusercontent.com/kejilion/python-for-vps/main/cluster/$py_task
 	python3 ~/cluster/$py_task
 }
 
@@ -11764,7 +11764,7 @@ echo -e "${gl_zi}V.PS 6.9 دلار در هر ماه توکیو SoftBank 2 هست
 echo -e "${gl_bai}وب سایت: https://vps.hosting/cart/tokyo-cloud-kvm-vps/؟id=148&؟affid=1355&؟affid=1355${gl_bai}"
 echo "------------------------"
 echo -e "${gl_kjlan}پیشنهادات VPS محبوب تر${gl_bai}"
-echo -e "${gl_bai}وب سایت: https://harvey.pro/topvps/${gl_bai}"
+echo -e "${gl_bai}وب سایت: https://kejilion.pro/topvps/${gl_bai}"
 echo "------------------------"
 echo ""
 echo -e "تخفیف نام دامنه"
@@ -11776,8 +11776,8 @@ echo ""
 echo -e "شیر فناوری اطراف"
 echo "------------------------"
 echo -e "${gl_kjlan}ایستگاه ب:${gl_bai}https://b23.tv/2mqnQyh              ${gl_kjlan}لوله روغن:${gl_bai}https://www.youtube.com/@harvey${gl_bai}"
-echo -e "${gl_kjlan}وب سایت رسمی:${gl_bai}https://harvey.pro/               ${gl_kjlan}ناوبری:${gl_bai}https://dh.harvey.pro/${gl_bai}"
-echo -e "${gl_kjlan}وبلاگ:${gl_bai}https://blog.harvey.pro/          ${gl_kjlan}مرکز نرم افزار:${gl_bai}https://app.harvey.pro/${gl_bai}"
+echo -e "${gl_kjlan}وب سایت رسمی:${gl_bai}https://kejilion.pro/               ${gl_kjlan}ناوبری:${gl_bai}https://dh.kejilion.pro/${gl_bai}"
+echo -e "${gl_kjlan}وبلاگ:${gl_bai}https://blog.kejilion.pro/          ${gl_kjlan}مرکز نرم افزار:${gl_bai}https://app.kejilion.pro/${gl_bai}"
 echo "------------------------"
 echo ""
 }
@@ -11794,11 +11794,11 @@ while true; do
 	clear
 	echo "گزارش به روزرسانی"
 	echo "------------------------"
-	echo "همه گزارش ها:${gh_proxy}raw.githubusercontent.com/harvey/sh/main/harvey_sh_log.txt"
+	echo "همه گزارش ها:${gh_proxy}raw.githubusercontent.com/359073395/hy/main/harvey_sh_log.txt"
 	echo "------------------------"
 
-	curl -s ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/harvey_sh_log.txt | tail -n 30
-	local sh_v_new=$(curl -s ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/harvey.sh | grep -o 'sh_v="[0-9.]*"' | cut -d '"' -f 2)
+	curl -s ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/harvey_sh_log.txt | tail -n 30
+	local sh_v_new=$(curl -s ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/harvey.sh | grep -o 'sh_v="[0-9.]*"' | cut -d '"' -f 2)
 
 	if [ "$sh_v" = "$sh_v_new" ]; then
 		echo -e "${gl_lv}شما در حال حاضر آخرین نسخه هستید!${gl_huang}v$sh_v${gl_bai}"
@@ -11828,9 +11828,9 @@ while true; do
 			clear
 			local country=$(curl -s ipinfo.io/country)
 			if [ "$country" = "CN" ]; then
-				curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/cn/harvey.sh && chmod +x harvey.sh
+				curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/cn/harvey.sh && chmod +x harvey.sh
 			else
-				curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/harvey.sh && chmod +x harvey.sh
+				curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/harvey.sh && chmod +x harvey.sh
 			fi
 			canshu_v6
 			CheckFirstRun_true
@@ -11847,11 +11847,11 @@ while true; do
 			local country=$(curl -s ipinfo.io/country)
 			local ipv6_address=$(curl -s --max-time 1 ipv6.ip.sb)
 			if [ "$country" = "CN" ]; then
-				SH_Update_task="curl -sS -O https://gh.harvey.pro/raw.githubusercontent.com/harvey/sh/main/harvey.sh && chmod +x harvey.sh && sed -i 's/canshu=\"default\"/canshu=\"CN\"/g' ./harvey.sh"
+				SH_Update_task="curl -sS -O https://gh.kejilion.pro/raw.githubusercontent.com/359073395/hy/main/harvey.sh && chmod +x harvey.sh && sed -i 's/canshu=\"default\"/canshu=\"CN\"/g' ./harvey.sh"
 			elif [ -n "$ipv6_address" ]; then
-				SH_Update_task="curl -sS -O https://gh.harvey.pro/raw.githubusercontent.com/harvey/sh/main/harvey.sh && chmod +x harvey.sh && sed -i 's/canshu=\"default\"/canshu=\"V6\"/g' ./harvey.sh"
+				SH_Update_task="curl -sS -O https://gh.kejilion.pro/raw.githubusercontent.com/359073395/hy/main/harvey.sh && chmod +x harvey.sh && sed -i 's/canshu=\"default\"/canshu=\"V6\"/g' ./harvey.sh"
 			else
-				SH_Update_task="curl -sS -O https://raw.githubusercontent.com/harvey/sh/main/harvey.sh && chmod +x harvey.sh"
+				SH_Update_task="curl -sS -O https://raw.githubusercontent.com/359073395/hy/main/harvey.sh && chmod +x harvey.sh"
 			fi
 			check_crontab_installed
 			(crontab -l | grep -v "harvey.sh") | crontab -
@@ -11930,7 +11930,7 @@ case $choice in
   14) linux_cluster ;;
   15) harvey_Affiliates ;;
   p) send_stats "اسکریپت افتتاح سرور Palu Palu Phantom Beast" ; cd ~
-	 curl -sS -O ${gh_proxy}raw.githubusercontent.com/harvey/sh/main/palworld.sh ; chmod +x palworld.sh ; ./palworld.sh
+	 curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/palworld.sh ; chmod +x palworld.sh ; ./palworld.sh
 	 exit
 	 ;;
   00) harvey_update ;;
