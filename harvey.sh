@@ -13039,6 +13039,8 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}118. ${color118}AimiliVPN代理网关 ${gl_huang}★${gl_bai}"\
 	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}119. ${color119}FluxPanel流量转发面板 ${gl_huang}★${gl_bai}"\
+	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方应用列表"
   	  echo -e "${gl_kjlan}想要让你的应用出现在这里？查看开发者指南: ${gl_huang}https://dev.kejilion.sh/${gl_bai}"
 	  for f in "$HOME"/apps/*.conf; do
@@ -16021,6 +16023,116 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 					;;
 			esac
 			break_end
+	  119|flux|fluxpanel|flux-panel)
+		local app_id="119"
+		send_stats "FluxPanel流量转发"
+		while true; do
+			clear
+			local check_status="${gl_hui}未安装${gl_bai}"
+			if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+				check_status="${gl_lv}已安装${gl_bai}"
+			fi
+			echo -e "FluxPanel流量转发面板 $check_status"
+			echo "官网: https://github.com/bqlpfy/flux-panel"
+			echo "基于GOST的流量转发/中转管理面板"
+			echo "支持TCP/UDP隧道转发、流量配额、定向限速、多端管理"
+			echo ""
+			if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+				ip_address
+				local frontend_port=6366
+				local backend_port=6365
+				if [ -f .env ]; then
+					frontend_port=$(grep FRONTEND_PORT .env 2>/dev/null | cut -d= -f2 | tr -d " ")
+					frontend_port=${frontend_port:-6366}
+					backend_port=$(grep BACKEND_PORT .env 2>/dev/null | cut -d= -f2 | tr -d " ")
+					backend_port=${backend_port:-6365}
+				fi
+				if [ -n "$ipv4_address" ]; then
+					echo "Web管理面板: http://$ipv4_address:$frontend_port"
+					echo "后端API地址: http://$ipv4_address:$backend_port"
+				fi
+				echo "默认账号: admin_user / admin_user"
+				echo "⚠️ 首次登录请立即修改密码"
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$frontend_port" "$file" 2>/dev/null; then
+						echo "域名访问: https://$(basename "$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 安装              2. 更新            3. 卸载"
+			echo "------------------------"
+			echo "5. 添加域名访问      6. 删除域名访问"
+			echo "7. 查看容器状态      8. 节点端管理"
+			echo "------------------------"
+			echo "0. 返回上一级选单"
+			echo "------------------------"
+			read -e -p "请输入你的选择: " sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 2
+					install_docker
+					install curl
+					open_port 6366
+					open_port 6365
+					echo "启用IP转发..."
+					echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+					echo "net.ipv6.conf.all.forwarding = 1" >> /etc/sysctl.conf
+					sysctl -p > /dev/null 2>&1
+					curl -L https://raw.githubusercontent.com/bqlpfy/flux-panel/refs/heads/main/panel_install.sh -o /tmp/panel_install.sh && chmod +x /tmp/panel_install.sh && bash /tmp/panel_install.sh
+					add_app_id
+					send_stats "安装FluxPanel"
+					;;
+				2)
+					if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+						docker compose pull 2>/dev/null || docker-compose pull 2>/dev/null
+						docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null
+						echo "更新完成"
+					else
+						echo "未安装，请先安装"
+					fi
+					add_app_id
+					send_stats "更新FluxPanel"
+					;;
+				3)
+					if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+						docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || docker-compose down --rmi all --volumes --remove-orphans 2>/dev/null
+						echo "卸载完成"
+					else
+						echo "未安装"
+					fi
+					close_port 6366
+					close_port 6365
+					rm -f panel_install.sh install.sh docker-compose-v4.yml docker-compose-v6.yml .env gost.sql temp_migration.sql 2>/dev/null
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					send_stats "卸载FluxPanel"
+					;;
+				5)
+					send_stats "FluxPanel域名访问"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 6366
+					;;
+				6)
+					web_del
+					;;
+				7)
+					docker ps -a --format "table {{.Names}}	{{.Status}}	{{.Ports}}" | head -1
+					docker ps -a --format "table {{.Names}}	{{.Status}}	{{.Ports}}" | grep -E "springboot-backend|gost-mysql|flux"
+					;;
+				8)
+					echo "节点端安装命令（在节点服务器上运行）:"
+					echo "curl -L https://raw.githubusercontent.com/bqlpfy/flux-panel/refs/heads/main/install.sh -o install.sh && chmod +x install.sh && ./install.sh"
+					echo ""
+					echo "安装后在节点端填入面板地址和后端密钥即可接入"
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
 		done
 		  ;;
 	  b)
