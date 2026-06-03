@@ -13035,6 +13035,8 @@ while true; do
 	  echo -e "${gl_kjlan}115. ${color115}Hermes机器人管理工具${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}116. ${color116}x-ui Xray管理面板 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}117. ${color117}IP质量检测平台 ${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方应用列表"
   	  echo -e "${gl_kjlan}想要让你的应用出现在这里？查看开发者指南: ${gl_huang}https://dev.harvey.sh/${gl_bai}"
 	  for f in "$HOME"/apps/*.conf; do
@@ -15822,6 +15824,26 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		}
 		panel_app_uninstall() {
 			x-ui uninstall
+		}
+		install_panel
+		  ;;
+	  117|ip-quality|ipquality)
+		local app_id="117"
+		local lujing="pm2 list 2>/dev/null | grep -q operation-ip-quality-platform"
+		local panelname="IP质量检测平台"
+		local panelurl="https://github.com/359073395/operation-ip-quality-platform"
+		panel_app_install() {
+			curl -fsSL https://raw.githubusercontent.com/359073395/operation-ip-quality-platform/main/scripts/deploy-vps.sh | sudo bash -s -- "https://github.com/359073395/operation-ip-quality-platform.git"
+		}
+		panel_app_manage() {
+			local server_ip=$(curl -s ip.sb)
+			echo "访问地址: http://${server_ip}:4173"
+		}
+		panel_app_uninstall() {
+			pm2 stop operation-ip-quality-platform
+			pm2 delete operation-ip-quality-platform
+			pm2 save
+			rm -rf /opt/operation-ip-quality-platform
 		}
 		install_panel
 		  ;;
