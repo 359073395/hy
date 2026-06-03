@@ -13032,6 +13032,8 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}117. ${color117}IP质量检测平台 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}118. ${color118}AimiliVPN代理网关 ${gl_huang}★${gl_bai}"\
+	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方应用列表"
   	  echo -e "${gl_kjlan}想要让你的应用出现在这里？查看开发者指南: ${gl_huang}https://dev.kejilion.sh/${gl_bai}"
 	  for f in "$HOME"/apps/*.conf; do
@@ -15910,6 +15912,113 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		done
 		  ;;
 	  b)
+	  118|aimili|aimilivpn|vpngate)
+		local app_id="118"
+		send_stats "AimiliVPN代理网关"
+		while true; do
+			clear
+			local check_status="${gl_hui}未安装${gl_bai}"
+			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
+				check_status="${gl_lv}已安装${gl_bai}"
+			fi
+			echo -e "AimiliVPN代理网关 $check_status"
+			echo "官网: https://github.com/baoweise-bot/aimili-vpngate"
+			echo "利用VPNGate公共VPN为VPS提供干净的出口IP"
+			echo "支持HTTP/SOCKS5双协议代理，智能自动故障转移"
+			echo ""
+			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
+				ip_address
+				local web_port=8787
+				local proxy_port=7928
+				if [ -f "/opt/aimilivpn/vpngate_data/ui_auth.json" ]; then
+					web_port=$(python3 -c "import json; d=json.load(open("/opt/aimilivpn/vpngate_data/ui_auth.json")); print(d.get("web_port",8787))" 2>/dev/null || echo 8787)
+				fi
+				if [ -n "$ipv4_address" ]; then
+					echo "Web管理面板: http://$ipv4_address:$web_port"
+				fi
+				echo "本地代理地址: socks5://127.0.0.1:$proxy_port"
+				echo "本地代理地址: http://127.0.0.1:$proxy_port"
+				echo "CLI管理命令: ml"
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$web_port" "$file" 2>/dev/null; then
+						echo "域名访问: https://$(basename "$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 安装              2. 更新            3. 卸载"
+			echo "------------------------"
+			echo "5. 添加域名访问      6. 删除域名访问"
+			echo "7. 管理面板          8. 查看代理状态"
+			echo "------------------------"
+			echo "0. 返回上一级选单"
+			echo "------------------------"
+			read -e -p "请输入你的选择: " sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					open_port 8787
+					open_port 7928
+					install curl
+					bash <(curl -Ls https://raw.githubusercontent.com/baoweise-bot/aimili-vpngate/main/install.sh)
+					add_app_id
+					send_stats "安装AimiliVPN"
+					;;
+				2)
+					if [ -f /usr/bin/ml ]; then
+						ml update
+						echo "更新完成"
+					else
+						echo "未安装，请先安装"
+					fi
+					add_app_id
+					send_stats "更新AimiliVPN"
+					;;
+				3)
+					if [ -f /usr/bin/ml ]; then
+						ml uninstall
+					else
+						systemctl stop aimilivpn 2>/dev/null
+						systemctl disable aimilivpn 2>/dev/null
+						rm -f /usr/bin/ml /lib/systemd/system/aimilivpn.service
+						rm -rf /opt/aimilivpn
+					fi
+					close_port 8787
+					close_port 7928
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "卸载完成"
+					send_stats "卸载AimiliVPN"
+					;;
+				5)
+					send_stats "AimiliVPN域名访问"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 8787
+					;;
+				6)
+					web_del
+					;;
+				7)
+					if [ -f /usr/bin/ml ]; then
+						ml
+					else
+						echo "请先安装"
+					fi
+					;;
+				8)
+					if [ -f /usr/bin/ml ]; then
+						ml status
+					else
+						echo "请先安装"
+					fi
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
 	  	clear
 	  	send_stats "全部应用备份"
 	  	local backup_filename="app_$(date +"%Y%m%d%H%M%S").tar.gz"
