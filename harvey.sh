@@ -2668,7 +2668,7 @@ ldnmp_wp() {
   cd /home/web/html
   mkdir $yuming
   cd $yuming
-  wget -O latest.zip ${gh_proxy}github.com/harvey/Website_source_code/raw/refs/heads/main/wp-latest.zip
+  wget -O latest.zip ${gh_proxy}github.com/kejilion/Website_source_code/raw/refs/heads/main/wp-latest.zip
   unzip latest.zip
   rm latest.zip
   echo "define('FS_METHOD', 'direct'); define('WP_REDIS_HOST', 'redis'); define('WP_REDIS_PORT', '6379'); define('WP_REDIS_MAXTTL', 86400); define('WP_CACHE_KEY_SALT', '${yuming}_');" >> /home/web/html/$yuming/wordpress/wp-config-sample.php
@@ -7325,7 +7325,7 @@ linux_ldnmp() {
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
-	  wget -O latest.zip ${gh_proxy}github.com/harvey/Website_source_code/raw/main/Discuz_X3.5_SC_UTF8_20250901.zip
+	  wget -O latest.zip ${gh_proxy}github.com/kejilion/Website_source_code/raw/main/Discuz_X3.5_SC_UTF8_20250901.zip
 	  unzip latest.zip
 	  rm latest.zip
 	  restart_ldnmp
@@ -7388,7 +7388,7 @@ linux_ldnmp() {
 	  cd $yuming
 	  # wget ${gh_proxy}github.com/magicblack/maccms_down/raw/master/maccms10.zip && unzip maccms10.zip && rm maccms10.zip
 	  wget ${gh_proxy}github.com/magicblack/maccms_down/raw/master/maccms10.zip && unzip maccms10.zip && mv maccms10-*/* . && rm -r maccms10-* && rm maccms10.zip
-	  cd /home/web/html/$yuming/template/ && wget ${gh_proxy}github.com/harvey/Website_source_code/raw/main/DYXS2.zip && unzip DYXS2.zip && rm /home/web/html/$yuming/template/DYXS2.zip
+	  cd /home/web/html/$yuming/template/ && wget ${gh_proxy}github.com/kejilion/Website_source_code/raw/main/DYXS2.zip && unzip DYXS2.zip && rm /home/web/html/$yuming/template/DYXS2.zip
 	  cp /home/web/html/$yuming/template/DYXS2/asset/admin/Dyxs2.php /home/web/html/$yuming/application/admin/controller
 	  cp /home/web/html/$yuming/template/DYXS2/asset/admin/dycms.html /home/web/html/$yuming/application/admin/view/system
 	  mv /home/web/html/$yuming/admin.php /home/web/html/$yuming/vip.php && wget -O /home/web/html/$yuming/application/extra/maccms.php ${gh_proxy}raw.githubusercontent.com/harvey/Website_source_code/main/maccms.php
@@ -7753,7 +7753,7 @@ linux_ldnmp() {
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
-	  wget ${gh_proxy}github.com/harvey/Website_source_code/raw/refs/heads/main/ai_prompt_generator.zip
+	  wget ${gh_proxy}github.com/kejilion/Website_source_code/raw/refs/heads/main/ai_prompt_generator.zip
 	  unzip $(ls -t *.zip | head -n 1)
 	  rm -f $(ls -t *.zip | head -n 1)
 	  docker exec nginx chmod -R nginx:nginx /var/www/html
@@ -12944,11 +12944,11 @@ cd ~
 install git
 echo -e "${gl_kjlan}正在更新应用列表请稍等……${gl_bai}"
 if [ ! -d apps/.git ]; then
-	timeout 10s git clone ${gh_proxy}github.com/harvey/apps.git
+	timeout 10s git clone ${gh_proxy}github.com/359073395/apps.git
 else
 	cd apps
 	# git pull origin main > /dev/null 2>&1
-	timeout 10s git pull ${gh_proxy}github.com/harvey/apps.git main > /dev/null 2>&1
+	timeout 10s git pull ${gh_proxy}github.com/359073395/apps.git main > /dev/null 2>&1
 fi
 while true; do
 	if [ -z "$sub_choice" ]; then
@@ -15978,11 +15978,11 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		cd ~
 		install git
 		if [ ! -d apps/.git ]; then
-			timeout 10s git clone ${gh_proxy}github.com/harvey/apps.git
+			timeout 10s git clone ${gh_proxy}github.com/359073395/apps.git
 		else
 			cd apps
 			# git pull origin main > /dev/null 2>&1
-			timeout 10s git pull ${gh_proxy}github.com/harvey/apps.git main > /dev/null 2>&1
+			timeout 10s git pull ${gh_proxy}github.com/359073395/apps.git main > /dev/null 2>&1
 		fi
 		local custom_app="$HOME/apps/${sub_choice}.conf"
 		if [ -f "$custom_app" ]; then
@@ -17911,7 +17911,7 @@ echo -e "${gl_kjlan}B站: ${gl_bai}https://b23.tv/2mqnQyh              ${gl_kjla
 echo -e "${gl_kjlan}官网: ${gl_bai}https://harvey.pro/              ${gl_kjlan}导航: ${gl_bai}https://dh.harvey.pro/${gl_bai}"
 echo -e "${gl_kjlan}博客: ${gl_bai}https://blog.harvey.pro/         ${gl_kjlan}软件中心: ${gl_bai}https://app.harvey.pro/${gl_bai}"
 echo "------------------------"
-echo -e "${gl_kjlan}脚本官网: ${gl_bai}https://harvey.sh            ${gl_kjlan}GitHub地址: ${gl_bai}${gh_https_url}github.com/harvey/sh${gl_bai}"
+echo -e "${gl_kjlan}脚本官网: ${gl_bai}https://harvey.sh            ${gl_kjlan}GitHub地址: ${gl_bai}${gh_https_url}github.com/359073395/hy${gl_bai}"
 echo "------------------------"
 echo ""
 }

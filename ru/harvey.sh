@@ -2599,7 +2599,7 @@ ldnmp_wp() {
   cd /home/web/html
   mkdir $yuming
   cd $yuming
-  wget -O latest.zip ${gh_proxy}github.com/harvey/Website_source_code/raw/refs/heads/main/wp-latest.zip
+  wget -O latest.zip ${gh_proxy}github.com/kejilion/Website_source_code/raw/refs/heads/main/wp-latest.zip
   # wget -O latest.zip https://cn.wordpress.org/latest-zh_CN.zip
   # wget -O latest.zip https://wordpress.org/latest.zip
   unzip latest.zip
@@ -6904,7 +6904,7 @@ linux_ldnmp() {
 	  cd /home/web/html
 	  mkdir $yuming
 	  cd $yuming
-	  wget -O latest.zip ${gh_proxy}github.com/harvey/Website_source_code/raw/main/Discuz_X3.5_SC_UTF8_20240520.zip
+	  wget -O latest.zip ${gh_proxy}github.com/kejilion/Website_source_code/raw/main/Discuz_X3.5_SC_UTF8_20240520.zip
 	  unzip latest.zip
 	  rm latest.zip
 
@@ -6978,7 +6978,7 @@ linux_ldnmp() {
 	  cd $yuming
 	  # wget ${gh_proxy}github.com/magicblack/maccms_down/raw/master/maccms10.zip && unzip maccms10.zip && rm maccms10.zip
 	  wget ${gh_proxy}github.com/magicblack/maccms_down/raw/master/maccms10.zip && unzip maccms10.zip && mv maccms10-*/* . && rm -r maccms10-* && rm maccms10.zip
-	  cd /home/web/html/$yuming/template/ && wget ${gh_proxy}github.com/harvey/Website_source_code/raw/main/DYXS2.zip && unzip DYXS2.zip && rm /home/web/html/$yuming/template/DYXS2.zip
+	  cd /home/web/html/$yuming/template/ && wget ${gh_proxy}github.com/kejilion/Website_source_code/raw/main/DYXS2.zip && unzip DYXS2.zip && rm /home/web/html/$yuming/template/DYXS2.zip
 	  cp /home/web/html/$yuming/template/DYXS2/asset/admin/Dyxs2.php /home/web/html/$yuming/application/admin/controller
 	  cp /home/web/html/$yuming/template/DYXS2/asset/admin/dycms.html /home/web/html/$yuming/application/admin/view/system
 	  mv /home/web/html/$yuming/admin.php /home/web/html/$yuming/vip.php && wget -O /home/web/html/$yuming/application/extra/maccms.php ${gh_proxy}raw.githubusercontent.com/harvey/Website_source_code/main/maccms.php
@@ -7417,7 +7417,7 @@ linux_ldnmp() {
 	  mkdir $yuming
 	  cd $yuming
 
-	  wget ${gh_proxy}github.com/harvey/Website_source_code/raw/refs/heads/main/ai_prompt_generator.zip
+	  wget ${gh_proxy}github.com/kejilion/Website_source_code/raw/refs/heads/main/ai_prompt_generator.zip
 	  unzip $(ls -t *.zip | head -n 1)
 	  rm -f $(ls -t *.zip | head -n 1)
 
