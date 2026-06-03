@@ -13057,9 +13057,9 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}117. ${color117}IP质量检测平台 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
-	  echo -e "${gl_kjlan}118. ${color118}AimiliVPN代理网关 ${gl_huang}★${gl_bai}"\
+	  echo -e "{gl_kjlan}118. ${color118}AimiliVPN代理网关 ${gl_huang}★${gl_bai}"\
 	  echo -e "${gl_kjlan}-------------------------"
-	  echo -e "${gl_kjlan}119. ${color119}FluxPanel流量转发面板 ${gl_huang}★${gl_bai}"\
+	  echo -e "{gl_kjlan}119. ${color119}FluxPanel流量转发面板 ${gl_huang}★${gl_bai}"\
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方应用列表"
   	  echo -e "${gl_kjlan}想要让你的应用出现在这里？查看开发者指南: ${gl_huang}https://dev.kejilion.sh/${gl_bai}"
@@ -16041,6 +16041,8 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 					;;
 			esac
 			break_end
+		done
+		  ;;
 	  119|flux|fluxpanel|flux-panel)
 		local app_id="119"
 		send_stats "FluxPanel流量转发"
@@ -16147,8 +16149,6 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					;;
 			esac
 			break_end
-		done
-		  ;;
 		done
 		  ;;
 	  b)

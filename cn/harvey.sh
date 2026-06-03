@@ -13052,9 +13052,9 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}117. ${color117}IP质量检测平台 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
-	  echo -e "${gl_kjlan}118. ${color118}AimiliVPN代理网关 ${gl_huang}★${gl_bai}"\
+	  echo -e "{gl_kjlan}118. ${color118}AimiliVPN代理网关 ${gl_huang}★${gl_bai}"\
 	  echo -e "${gl_kjlan}-------------------------"
-	  echo -e "${gl_kjlan}119. ${color119}FluxPanel流量转发面板 ${gl_huang}★${gl_bai}"\
+	  echo -e "{gl_kjlan}119. ${color119}FluxPanel流量转发面板 ${gl_huang}★${gl_bai}"\
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方应用列表"
   	  echo -e "${gl_kjlan}想要让你的应用出现在这里？查看开发者指南: ${gl_huang}https://dev.kejilion.sh/${gl_bai}"
@@ -15933,7 +15933,6 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			break_end
 		done
 		  ;;
-	  b)
 	  118|aimili|aimilivpn|vpngate)
 		local app_id="118"
 		send_stats "AimiliVPN代理网关"
@@ -15943,7 +15942,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
 				check_status="${gl_lv}已安装${gl_bai}"
 			fi
-			echo -e "AimiliVPN代理网关 $check_status"
+			echo -e "AimiliVPN代理网关 check_status"
 			echo "官网: https://github.com/baoweise-bot/aimili-vpngate"
 			echo "利用VPNGate公共VPN为VPS提供干净的出口IP"
 			echo "支持HTTP/SOCKS5双协议代理，智能自动故障转移"
@@ -16049,7 +16048,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
 				check_status="${gl_lv}已安装${gl_bai}"
 			fi
-			echo -e "FluxPanel流量转发面板 $check_status"
+			echo -e "FluxPanel流量转发面板 check_status"
 			echo "官网: https://github.com/bqlpfy/flux-panel"
 			echo "基于GOST的流量转发/中转管理面板"
 			echo "支持TCP/UDP隧道转发、流量配额、定向限速、多端管理"
@@ -16148,6 +16147,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			break_end
 		done
 		  ;;
+	  b)
 	  	clear
 	  	send_stats "全部应用备份"
 	  	local backup_filename="app_$(date +"%Y%m%d%H%M%S").tar.gz"
