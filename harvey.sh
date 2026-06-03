@@ -297,6 +297,26 @@ check_port() {
 	stop_containers_or_kill_process 80
 	stop_containers_or_kill_process 443
 }
+
+	# 端口占用检测 - 安装前检查指定端口是否被占用
+	check_port_conflict() {
+		local ports=($@)
+		local conflict_found=false
+		for port in "${ports[@]}"; do
+			if ss -tuln 2>/dev/null | grep -q ":$port "; then
+				conflict_found=true
+				echo -e "  ${gl_hong}端口 $port 已被占用${gl_bai}"
+			else
+				echo -e "  ${gl_lv}端口 $port 空闲${gl_bai}"
+			fi
+		done
+		if [ "$conflict_found" = true ]; then
+			echo ""
+			echo -e "${gl_hong}⚠ 存在端口冲突，请先释放端口或更换端口后重试${gl_bai}"
+			return 1
+		fi
+		return 0
+	}
 install_add_docker_cn() {
 local country=$(curl -s ipinfo.io/country)
 if [ "$country" = "CN" ]; then
@@ -15870,7 +15890,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			case $sub_choice in
 				1)
 					check_disk_space 1
-					open_port 4173
+					check_port_conflict 4173 && { open_port 4173; } || { echo "安装取消"; break; }
 					bash -c "$(curl -fsSL https://raw.githubusercontent.com/359073395/operation-ip-quality-platform/main/scripts/deploy-vps.sh)" -- "https://github.com/359073395/operation-ip-quality-platform.git"
 					add_app_id
 					send_stats "安装IP质量检测平台"
@@ -15964,9 +15984,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			case $sub_choice in
 				1)
 					check_disk_space 1
-					open_port 8787
-					open_port 7928
-					install curl
+					check_port_conflict 8787 7928 && { open_port 8787; open_port 7928; } || { echo "安装取消"; break; }
 					bash <(curl -Ls https://raw.githubusercontent.com/baoweise-bot/aimili-vpngate/main/install.sh)
 					add_app_id
 					send_stats "安装AimiliVPN"
@@ -16074,9 +16092,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 					check_disk_space 2
 					install_docker
 					install curl
-					open_port 6366
-					open_port 6365
-					echo "启用IP转发..."
+check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "安装取消"; break; }
 					echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
 					echo "net.ipv6.conf.all.forwarding = 1" >> /etc/sysctl.conf
 					sysctl -p > /dev/null 2>&1
