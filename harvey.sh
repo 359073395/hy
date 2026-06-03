@@ -15829,23 +15829,90 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		  ;;
 	  117|ip-quality|ipquality)
 		local app_id="117"
-		local lujing="pm2 list 2>/dev/null | grep -q operation-ip-quality-platform"
-		local panelname="IP质量检测平台"
-		local panelurl="https://github.com/359073395/operation-ip-quality-platform"
-		panel_app_install() {
-			curl -fsSL https://raw.githubusercontent.com/359073395/operation-ip-quality-platform/main/scripts/deploy-vps.sh | sudo bash -s -- "https://github.com/359073395/operation-ip-quality-platform.git"
-		}
-		panel_app_manage() {
-			local server_ip=$(curl -s ip.sb)
-			echo "访问地址: http://${server_ip}:4173"
-		}
-		panel_app_uninstall() {
-			pm2 stop operation-ip-quality-platform
-			pm2 delete operation-ip-quality-platform
-			pm2 save
-			rm -rf /opt/operation-ip-quality-platform
-		}
-		install_panel
+		send_stats "IP质量检测平台"
+		while true; do
+			clear
+			local check_status="${gl_hui}未安装${gl_bai}"
+			if pm2 list 2>/dev/null | grep -q "operation-ip-quality-platform"; then
+				check_status="${gl_lv}已安装${gl_bai}"
+			fi
+			echo -e "IP质量检测平台 $check_status"
+			echo "官网: https://github.com/359073395/operation-ip-quality-platform"
+			echo ""
+			if pm2 list 2>/dev/null | grep -q "operation-ip-quality-platform"; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "访问地址: http://$ipv4_address:4173"
+				fi
+				if [ -n "$ipv6_address" ]; then
+					echo "访问地址: http://[$ipv6_address]:4173"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:4173" "$file" 2>/dev/null; then
+						echo "域名访问: https://$(basename "$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 安装              2. 更新            3. 卸载"
+			echo "------------------------"
+			echo "5. 添加域名访问      6. 删除域名访问"
+			echo "7. 允许IP+端口访问   8. 阻止IP+端口访问"
+			echo "------------------------"
+			echo "0. 返回上一级选单"
+			echo "------------------------"
+			read -e -p "请输入你的选择: " sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					open_port 4173
+					bash -c "$(curl -fsSL https://raw.githubusercontent.com/359073395/operation-ip-quality-platform/main/scripts/deploy-vps.sh)" -- "https://github.com/359073395/operation-ip-quality-platform.git"
+					add_app_id
+					send_stats "安装IP质量检测平台"
+					;;
+				2)
+					if [ -f /opt/operation-ip-quality-platform/scripts/update-vps.sh ]; then
+						cd /opt/operation-ip-quality-platform && bash scripts/update-vps.sh
+						echo "更新完成"
+					else
+						echo "未找到更新脚本，请确认已安装"
+					fi
+					add_app_id
+					send_stats "更新IP质量检测平台"
+					;;
+				3)
+					pm2 stop operation-ip-quality-platform 2>/dev/null
+					pm2 delete operation-ip-quality-platform 2>/dev/null
+					pm2 save 2>/dev/null
+					rm -rf /opt/operation-ip-quality-platform
+					close_port 4173
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "卸载完成"
+					send_stats "卸载IP质量检测平台"
+					;;
+				5)
+					send_stats "IP质量检测平台域名访问"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 4173
+					;;
+				6)
+					web_del
+					;;
+				7)
+					send_stats "允许IP访问IP质量检测平台"
+					open_port 4173
+					;;
+				8)
+					send_stats "阻止IP访问IP质量检测平台"
+					close_port 4173
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
 		  ;;
 	  b)
 	  	clear
