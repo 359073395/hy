@@ -1,6 +1,6 @@
 <br><br><br>
 <div align="center">
-  <img src="https://harvey.sh/harveysh_logo.webp?v=2" alt="logo" width="650">
+  <img src="https://sh.hyjiexi.eu.org/harveysh_logo.webp?v=2" alt="logo" width="650">
 </div>
 
 <div align="center" style="margin-top:-200px;">
@@ -86,20 +86,20 @@ Harvey's Shell script tool is an all-in-one script toolbox designed for Linux mo
 
 ## 🚀 一键安装 (One-Click Installation) CN
 ```bash
-bash <(curl -sL harvey.sh)
+bash <(curl -sL https://sh.hyjiexi.eu.org/harvey.sh)
 ```
 
 ## 🚀 一键安装 (One-Click Installation) EN
 ```bash
-bash <(curl -sL harvey.sh) en
+bash <(curl -sL https://sh.hyjiexi.eu.org/harvey.sh) en
 ```
 
 <br><br>
 
 ## 🖼️ 效果图预览 (Preview)
 <p>
-  <img src="https://harvey.sh/img/screenshots/harveysh.webp" alt="中文版" width="48%" style="display:inline-block; margin-right:10px;"/>
-  <img src="https://harvey.sh/img/screenshots/harveysh_en.webp" alt="English Version" width="48%" style="display:inline-block;"/>
+  <img src="https://sh.hyjiexi.eu.org/img/screenshots/harveysh.webp" alt="中文版" width="48%" style="display:inline-block; margin-right:10px;"/>
+  <img src="https://sh.hyjiexi.eu.org/img/screenshots/harveysh_en.webp" alt="English Version" width="48%" style="display:inline-block;"/>
 </p>
 
 

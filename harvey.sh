@@ -13057,9 +13057,11 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}117. ${color117}IP质量检测平台 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
-	  echo -e "{gl_kjlan}118. ${color118}AimiliVPN代理网关 ${gl_huang}★${gl_bai}"\
+	  echo -e "${gl_kjlan}118. ${color118}AimiliVPN代理网关 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
-	  echo -e "{gl_kjlan}119. ${color119}FluxPanel流量转发面板 ${gl_huang}★${gl_bai}"\
+	  echo -e "${gl_kjlan}119. ${color119}FluxPanel流量转发面板 ${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}120. ${color120}LittlePrinceAgent云端助手 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方应用列表"
   	  echo -e "${gl_kjlan}想要让你的应用出现在这里？查看开发者指南: ${gl_huang}https://dev.kejilion.sh/${gl_bai}"
@@ -16143,6 +16145,108 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					echo "curl -L https://raw.githubusercontent.com/bqlpfy/flux-panel/refs/heads/main/install.sh -o install.sh && chmod +x install.sh && ./install.sh"
 					echo ""
 					echo "安装后在节点端填入面板地址和后端密钥即可接入"
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  120|littleprince|littleprince-agent|lpagent)
+		local app_id="120"
+		send_stats "LittlePrinceAgent"
+		while true; do
+			clear
+			local check_status="${gl_hui}未安装${gl_bai}"
+			if [ -x /bin/systemctl ] && /bin/systemctl is-active --quiet littleprince-agent 2>/dev/null; then
+				check_status="${gl_lv}运行中${gl_bai}"
+			elif [ -f /etc/systemd/system/littleprince-agent.service ]; then
+				check_status="${gl_huang}已安装未运行${gl_bai}"
+			fi
+			local agent_port=3721
+			if [ -f /etc/littleprince-agent.env ]; then
+				agent_port=$(grep "^LITTLE_PRINCE_AGENT_PORT=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+				agent_port=${agent_port:-3721}
+			fi
+			echo -e "LittlePrinceAgent云端助手 $check_status"
+			echo "官网: https://github.com/359073395/LittlePrinceAgent"
+			echo "Debian/Ubuntu 云端网页版 Agent，默认端口: $agent_port"
+			echo ""
+			if [ -f /etc/systemd/system/littleprince-agent.service ]; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "Web管理面板: http://$ipv4_address:$agent_port"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$agent_port" "$file" 2>/dev/null; then
+						echo "域名访问: https://$(basename "$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 安装              2. 更新            3. 卸载"
+			echo "------------------------"
+			echo "5. 添加域名访问      6. 删除域名访问"
+			echo "7. 查看服务状态      8. 查看运行日志"
+			echo "9. 显示激活链接"
+			echo "------------------------"
+			echo "0. 返回上一级选单"
+			echo "------------------------"
+			read -e -p "请输入你的选择: " sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					install curl
+					check_port_conflict 3721 && { open_port 3721; } || { echo "安装取消"; break; }
+					curl -fsSL https://raw.githubusercontent.com/359073395/LittlePrinceAgent/main/scripts/install-debian-ubuntu.sh | bash
+					add_app_id
+					send_stats "安装LittlePrinceAgent"
+					;;
+				2)
+					install curl
+					curl -fsSL https://raw.githubusercontent.com/359073395/LittlePrinceAgent/main/scripts/install-debian-ubuntu.sh | bash
+					add_app_id
+					send_stats "更新LittlePrinceAgent"
+					;;
+				3)
+					if [ -f /etc/littleprince-agent.env ]; then
+						agent_port=$(grep "^LITTLE_PRINCE_AGENT_PORT=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+						agent_port=${agent_port:-3721}
+					fi
+					[ -x /bin/systemctl ] && /bin/systemctl disable --now littleprince-agent 2>/dev/null
+					rm -f /etc/systemd/system/littleprince-agent.service /etc/littleprince-agent.env
+					[ -x /bin/systemctl ] && /bin/systemctl daemon-reload 2>/dev/null
+					rm -rf /opt/littleprince-agent /var/lib/littleprince-agent
+					id littleprince >/dev/null 2>&1 && userdel littleprince 2>/dev/null
+					close_port "$agent_port"
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "卸载完成"
+					send_stats "卸载LittlePrinceAgent"
+					;;
+				5)
+					send_stats "LittlePrinceAgent域名访问"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 ${agent_port}
+					;;
+				6)
+					web_del
+					;;
+				7)
+					/bin/systemctl status littleprince-agent --no-pager
+					;;
+				8)
+					journalctl -u littleprince-agent -f
+					;;
+				9)
+					if [ -f /etc/littleprince-agent.env ]; then
+						ip_address
+						local agent_token=$(grep "^LITTLE_PRINCE_AGENT_API_TOKEN=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+						echo "首次打开: http://${ipv4_address:-SERVER_IP}:$agent_port/activation?token=$agent_token"
+					else
+						echo "未安装，请先安装"
+					fi
 					;;
 				*)
 					break
