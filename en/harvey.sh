@@ -297,6 +297,26 @@ check_port() {
 	stop_containers_or_kill_process 80
 	stop_containers_or_kill_process 443
 }
+
+	# Port occupancy detection - Check whether the specified port is occupied before installation
+	check_port_conflict() {
+		local ports=($@)
+		local conflict_found=false
+		for port in "${ports[@]}"; do
+			if ss -tuln 2>/dev/null | grep -q ":$port "; then
+				conflict_found=true
+				echo -e "  ${gl_hong}port$portAlready occupied${gl_bai}"
+			else
+				echo -e "  ${gl_lv}port$portidle${gl_bai}"
+			fi
+		done
+		if [ "$conflict_found" = true ]; then
+			echo ""
+			echo -e "${gl_hong}⚠ There is a port conflict, please release the port or change the port and try again${gl_bai}"
+			return 1
+		fi
+		return 0
+	}
 install_add_docker_cn() {
 local country=$(curl -s ipinfo.io/country)
 if [ "$country" = "CN" ]; then
@@ -724,7 +744,7 @@ close_port() {
 		# Delete existing open rules
 		iptables -D INPUT -p tcp --dport $port -j ACCEPT 2>/dev/null
 		iptables -D INPUT -p udp --dport $port -j ACCEPT 2>/dev/null
-		# Add a shutdown rule
+		# Add shutdown rule
 		if ! iptables -C INPUT -p tcp --dport $port -j DROP 2>/dev/null; then
 			iptables -I INPUT 1 -p tcp --dport $port -j DROP
 		fi
@@ -2480,7 +2500,7 @@ f2b_sshd() {
 }
 # Basic parameter configuration: ban duration (bantime), time window (findtime), number of retries (maxretry)
 # illustrate:
-# - Prioritize writing to /etc/fail2ban/jail.d/sshd.local (overwrites the default jail configuration and is not easy to lose when upgrading)
+# - Prioritize writing to /etc/fail2ban/jail.d/sshd.local (overrides the default jail configuration and is not easy to lose when upgrading)
 # - If it is Alpine and the jail names are different, still write sshd.local; Fail2Ban will match according to the jail name.
 f2b_basic_config() {
 	root_use
@@ -4062,7 +4082,7 @@ add_sshpasswd() {
 }
 root_use() {
 clear
-[ "$EUID" -ne 0 ] && echo -e "${gl_huang}hint:${gl_bai}This feature requires root user to run!" && break_end && harvey
+[ "$EUID" -ne 0 ] && echo -e "${gl_huang}hint:${gl_bai}This function requires root user to run!" && break_end && harvey
 }
 dd_xitong() {
 		send_stats "Reinstall the system"
@@ -5311,9 +5331,9 @@ linux_fav() {
 send_stats "Command Favorites"
 bash <(curl -l -s ${gh_proxy}raw.githubusercontent.com/byJoey/cmdbox/refs/heads/main/install.sh)
 }
-# Create a backup
+# Create backup
 create_backup() {
-	send_stats "Create a backup"
+	send_stats "Create backup"
 	local TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 	# Prompt user for backup directory
 	echo "Example of creating a backup:"
@@ -5348,7 +5368,7 @@ create_backup() {
 	for path in "${BACKUP_PATHS[@]}"; do
 		echo "- $path"
 	done
-	# Create a backup
+	# Create backup
 	echo "Creating backup$BACKUP_NAME..."
 	install tar
 	tar -czvf "$BACKUP_DIR/$BACKUP_NAME" "${BACKUP_PATHS[@]}"
@@ -6535,7 +6555,7 @@ docker_ssh_migration() {
 				# volume mapping
 				local VOL_ARGS=""
 				for path in $VOL_PATHS; do VOL_ARGS+="-v $path:$path "; done
-				# Mirror
+				# mirror
 				local IMAGE
 				IMAGE=$(jq -r '.[0].Config.Image' "$inspect_file")
 				echo -e "\n# Restore container:$c" >> "$RESTORE_SCRIPT"
@@ -12180,7 +12200,7 @@ except Exception:
 		echo "======================================="
 		openclaw security audit
 		echo "---------------------------------------"
-		read -e -p "Do you want to automatically remediate discovered security vulnerabilities? (y/n):" fix_choice
+		read -e -p "Attempt to automatically remediate discovered security vulnerabilities? (y/n):" fix_choice
 		if [[ "$fix_choice" == "y" || "$fix_choice" == "Y" || "$fix_choice" == "yes" ]]; then
 			openclaw security audit --fix
 			echo -e "${gl_lv}✅ Automatic repair completed.${gl_bai}"
@@ -13035,6 +13055,14 @@ while true; do
 	  echo -e "${gl_kjlan}115. ${color115}Hermes robot management tool${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}116. ${color116}x-ui Xray admin panel${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}117. ${color117}IP quality inspection platform${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}118. ${color118}AimiliVPN proxy gateway${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}119. ${color119}FluxPanel traffic forwarding panel${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}120. ${color120}LittlePrinceAgent Cloud Assistant${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}Third-party application list"
   	  echo -e "${gl_kjlan}Want your app to appear here? Check out the developer guide:${gl_huang}https://dev.kejilion.sh/${gl_bai}"
 	  for f in "$HOME"/apps/*.conf; do
@@ -13272,7 +13300,7 @@ while true; do
 			check_docker_app
 			check_docker_image_update $docker_name
 			clear
-			echo -e "postal services$check_docker $update_status"
+			echo -e "postal service$check_docker $update_status"
 			echo "poste.io is an open source mail server solution,"
 			echo "Video introduction: https://www.bilibili.com/video/BV1wv421C71t?t=0.1"
 			echo ""
@@ -14627,7 +14655,7 @@ while true; do
 			  -e ND_LOGLEVEL=info \
 			  deluan/navidrome:latest
 		}
-		local docker_describe="Is a lightweight, high-performance music streaming server"
+		local docker_describe="It is a lightweight, high-performance music streaming server"
 		local docker_url="Official website introduction: https://www.navidrome.org/"
 		local docker_use=""
 		local docker_passwd=""
@@ -15825,6 +15853,408 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		}
 		install_panel
 		  ;;
+	  117|ip-quality|ipquality)
+		local app_id="117"
+		send_stats "IP quality inspection platform"
+		while true; do
+			clear
+			local check_status="${gl_hui}Not installed${gl_bai}"
+			if pm2 list 2>/dev/null | grep -q "operation-ip-quality-platform"; then
+				check_status="${gl_lv}Installed${gl_bai}"
+			fi
+			echo -e "IP quality inspection platform$check_status"
+			echo "Official website: https://github.com/359073395/operation-ip-quality-platform"
+			echo ""
+			if pm2 list 2>/dev/null | grep -q "operation-ip-quality-platform"; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "Access address: http://$ipv4_address:4173"
+				fi
+				if [ -n "$ipv6_address" ]; then
+					echo "Access address: http://[$ipv6_address]:4173"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:4173" "$file" 2>/dev/null; then
+						echo "Domain name access: https://$(basename"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. Install 2. Update 3. Uninstall"
+			echo "------------------------"
+			echo "5. Add domain name access 6. Delete domain name access"
+			echo "7. Allow IP+port access 8. Block IP+port access"
+			echo "------------------------"
+			echo "0. Return to the previous menu"
+			echo "------------------------"
+			read -e -p "Please enter your choice:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					check_port_conflict 4173 && { open_port 4173; } || { echo "Installation canceled"; break; }
+					bash -c "$(curl -fsSL https://raw.githubusercontent.com/359073395/operation-ip-quality-platform/main/scripts/deploy-vps.sh)" -- "https://github.com/359073395/operation-ip-quality-platform.git"
+					add_app_id
+					send_stats "Install IP quality inspection platform"
+					;;
+				2)
+					if [ -f /opt/operation-ip-quality-platform/scripts/update-vps.sh ]; then
+						cd /opt/operation-ip-quality-platform && bash scripts/update-vps.sh
+						echo "Update completed"
+					else
+						echo "Update script not found, please confirm it is installed"
+					fi
+					add_app_id
+					send_stats "Update IP quality inspection platform"
+					;;
+				3)
+					pm2 stop operation-ip-quality-platform 2>/dev/null
+					pm2 delete operation-ip-quality-platform 2>/dev/null
+					pm2 save 2>/dev/null
+					rm -rf /opt/operation-ip-quality-platform
+					close_port 4173
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "Uninstall completed"
+					send_stats "Uninstall the IP quality detection platform"
+					;;
+				5)
+					send_stats "IP quality inspection platform domain name access"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 4173
+					;;
+				6)
+					web_del
+					;;
+				7)
+					send_stats "Allow IP to access IP quality detection platform"
+					open_port 4173
+					;;
+				8)
+					send_stats "Block IP access to IP quality detection platform"
+					close_port 4173
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  118|aimili|aimilivpn|vpngate)
+		local app_id="118"
+		send_stats "AimiliVPN proxy gateway"
+		while true; do
+			clear
+			local check_status="${gl_hui}Not installed${gl_bai}"
+			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
+				check_status="${gl_lv}Installed${gl_bai}"
+			fi
+			echo -e "AimiliVPN proxy gateway$check_status"
+			echo "Official website: https://github.com/baoweise-bot/aimili-vpngate"
+			echo "Provide a clean exit IP to your VPS with VPNGate Public VPN"
+			echo "Supports HTTP/SOCKS5 dual-protocol proxy, intelligent automatic failover"
+			echo ""
+			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
+				ip_address
+				local web_port=8787
+				local proxy_port=7928
+				if [ -f "/opt/aimilivpn/vpngate_data/ui_auth.json" ]; then
+					web_port=$(python3 -c "import json; d=json.load(open("/opt/aimilivpn/vpngate_data/ui_auth.json")); print(d.get("web_port",8787))" 2>/dev/null || echo 8787)
+				fi
+				if [ -n "$ipv4_address" ]; then
+					echo "Web management panel: http://$ipv4_address:$web_port"
+				fi
+				echo "Local proxy address: socks5://127.0.0.1:$proxy_port"
+				echo "Local proxy address: http://127.0.0.1:$proxy_port"
+				echo "CLI management command: ml"
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$web_port" "$file" 2>/dev/null; then
+						echo "Domain name access: https://$(basename"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. Install 2. Update 3. Uninstall"
+			echo "------------------------"
+			echo "5. Add domain name access 6. Delete domain name access"
+			echo "7. Management panel 8. View agent status"
+			echo "------------------------"
+			echo "0. Return to the previous menu"
+			echo "------------------------"
+			read -e -p "Please enter your choice:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					check_port_conflict 8787 7928 && { open_port 8787; open_port 7928; } || { echo "Installation canceled"; break; }
+					bash <(curl -Ls https://raw.githubusercontent.com/baoweise-bot/aimili-vpngate/main/install.sh)
+					add_app_id
+					send_stats "Install AimiliVPN"
+					;;
+				2)
+					if [ -f /usr/bin/ml ]; then
+						ml update
+						echo "Update completed"
+					else
+						echo "Not installed, please install it first"
+					fi
+					add_app_id
+					send_stats "Update AimiliVPN"
+					;;
+				3)
+					if [ -f /usr/bin/ml ]; then
+						ml uninstall
+					else
+						systemctl stop aimilivpn 2>/dev/null
+						systemctl disable aimilivpn 2>/dev/null
+						rm -f /usr/bin/ml /lib/systemd/system/aimilivpn.service
+						rm -rf /opt/aimilivpn
+					fi
+					close_port 8787
+					close_port 7928
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "Uninstall completed"
+					send_stats "Uninstall AimiliVPN"
+					;;
+				5)
+					send_stats "AimiliVPN domain name access"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 8787
+					;;
+				6)
+					web_del
+					;;
+				7)
+					if [ -f /usr/bin/ml ]; then
+						ml
+					else
+						echo "Please install first"
+					fi
+					;;
+				8)
+					if [ -f /usr/bin/ml ]; then
+						ml status
+					else
+						echo "Please install first"
+					fi
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  119|flux|fluxpanel|flux-panel)
+		local app_id="119"
+		send_stats "FluxPanel traffic forwarding"
+		while true; do
+			clear
+			local check_status="${gl_hui}Not installed${gl_bai}"
+			if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+				check_status="${gl_lv}Installed${gl_bai}"
+			fi
+			echo -e "FluxPanel traffic forwarding panel$check_status"
+			echo "Official website: https://github.com/bqlpfy/flux-panel"
+			echo "GOST-based traffic forwarding/transit management panel"
+			echo "Supports TCP/UDP tunnel forwarding, traffic quota, directional speed limit, and multi-end management"
+			echo ""
+			if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+				ip_address
+				local frontend_port=6366
+				local backend_port=6365
+				if [ -f .env ]; then
+					frontend_port=$(grep FRONTEND_PORT .env 2>/dev/null | cut -d= -f2 | tr -d " ")
+					frontend_port=${frontend_port:-6366}
+					backend_port=$(grep BACKEND_PORT .env 2>/dev/null | cut -d= -f2 | tr -d " ")
+					backend_port=${backend_port:-6365}
+				fi
+				if [ -n "$ipv4_address" ]; then
+					echo "Web management panel: http://$ipv4_address:$frontend_port"
+					echo "Backend API address: http://$ipv4_address:$backend_port"
+				fi
+				echo "Default account: admin_user / admin_user"
+				echo "⚠️ Please change your password immediately when logging in for the first time"
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$frontend_port" "$file" 2>/dev/null; then
+						echo "Domain name access: https://$(basename"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. Install 2. Update 3. Uninstall"
+			echo "------------------------"
+			echo "5. Add domain name access 6. Delete domain name access"
+			echo "7. View container status 8. Node-side management"
+			echo "------------------------"
+			echo "0. Return to the previous menu"
+			echo "------------------------"
+			read -e -p "Please enter your choice:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 2
+					install_docker
+					install curl
+check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "Installation canceled"; break; }
+					echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+					echo "net.ipv6.conf.all.forwarding = 1" >> /etc/sysctl.conf
+					sysctl -p > /dev/null 2>&1
+					curl -L https://raw.githubusercontent.com/bqlpfy/flux-panel/refs/heads/main/panel_install.sh -o /tmp/panel_install.sh && chmod +x /tmp/panel_install.sh && bash /tmp/panel_install.sh
+					add_app_id
+					send_stats "Install FluxPanel"
+					;;
+				2)
+					if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+						docker compose pull 2>/dev/null || docker-compose pull 2>/dev/null
+						docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null
+						echo "Update completed"
+					else
+						echo "Not installed, please install it first"
+					fi
+					add_app_id
+					send_stats "Update FluxPanel"
+					;;
+				3)
+					if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+						docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || docker-compose down --rmi all --volumes --remove-orphans 2>/dev/null
+						echo "Uninstall completed"
+					else
+						echo "Not installed"
+					fi
+					close_port 6366
+					close_port 6365
+					rm -f panel_install.sh install.sh docker-compose-v4.yml docker-compose-v6.yml .env gost.sql temp_migration.sql 2>/dev/null
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					send_stats "Uninstall FluxPanel"
+					;;
+				5)
+					send_stats "FluxPanel domain name access"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 6366
+					;;
+				6)
+					web_del
+					;;
+				7)
+					docker ps -a --format "table {{.Names}}	{{.Status}}	{{.Ports}}" | head -1
+					docker ps -a --format "table {{.Names}}	{{.Status}}	{{.Ports}}" | grep -E "springboot-backend|gost-mysql|flux"
+					;;
+				8)
+					echo "Node side installation command (run on the node server):"
+					echo "curl -L https://raw.githubusercontent.com/bqlpfy/flux-panel/refs/heads/main/install.sh -o install.sh && chmod +x install.sh && ./install.sh"
+					echo ""
+					echo "After installation, fill in the panel address and backend key on the node side to access."
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  120|littleprince|littleprince-agent|lpagent)
+		local app_id="120"
+		send_stats "LittlePrinceAgent"
+		while true; do
+			clear
+			local check_status="${gl_hui}Not installed${gl_bai}"
+			if [ -x /bin/systemctl ] && /bin/systemctl is-active --quiet littleprince-agent 2>/dev/null; then
+				check_status="${gl_lv}Running${gl_bai}"
+			elif [ -f /etc/systemd/system/littleprince-agent.service ]; then
+				check_status="${gl_huang}Installed but not running${gl_bai}"
+			fi
+			local agent_port=3721
+			if [ -f /etc/littleprince-agent.env ]; then
+				agent_port=$(grep "^LITTLE_PRINCE_AGENT_PORT=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+				agent_port=${agent_port:-3721}
+			fi
+			echo -e "LittlePrinceAgent Cloud Assistant$check_status"
+			echo "Official website: https://github.com/359073395/LittlePrinceAgent"
+			echo "Debian/Ubuntu cloud web version Agent, default port:$agent_port"
+			echo ""
+			if [ -f /etc/systemd/system/littleprince-agent.service ]; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "Web management panel: http://$ipv4_address:$agent_port"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$agent_port" "$file" 2>/dev/null; then
+						echo "Domain name access: https://$(basename"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. Install 2. Update 3. Uninstall"
+			echo "------------------------"
+			echo "5. Add domain name access 6. Delete domain name access"
+			echo "7. Check the service status 8. Check the operation log"
+			echo "9. Show activation link"
+			echo "------------------------"
+			echo "0. Return to the previous menu"
+			echo "------------------------"
+			read -e -p "Please enter your choice:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					install curl
+					check_port_conflict 3721 && { open_port 3721; } || { echo "Installation canceled"; break; }
+					curl -fsSL https://raw.githubusercontent.com/359073395/LittlePrinceAgent/main/scripts/install-debian-ubuntu.sh | bash
+					add_app_id
+					send_stats "InstallLittlePrinceAgent"
+					;;
+				2)
+					install curl
+					curl -fsSL https://raw.githubusercontent.com/359073395/LittlePrinceAgent/main/scripts/install-debian-ubuntu.sh | bash
+					add_app_id
+					send_stats "UpdateLittlePrinceAgent"
+					;;
+				3)
+					if [ -f /etc/littleprince-agent.env ]; then
+						agent_port=$(grep "^LITTLE_PRINCE_AGENT_PORT=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+						agent_port=${agent_port:-3721}
+					fi
+					[ -x /bin/systemctl ] && /bin/systemctl disable --now littleprince-agent 2>/dev/null
+					rm -f /etc/systemd/system/littleprince-agent.service /etc/littleprince-agent.env
+					[ -x /bin/systemctl ] && /bin/systemctl daemon-reload 2>/dev/null
+					rm -rf /opt/littleprince-agent /var/lib/littleprince-agent
+					id littleprince >/dev/null 2>&1 && userdel littleprince 2>/dev/null
+					close_port "$agent_port"
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "Uninstall completed"
+					send_stats "UninstallLittlePrinceAgent"
+					;;
+				5)
+					send_stats "LittlePrinceAgent domain name access"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 ${agent_port}
+					;;
+				6)
+					web_del
+					;;
+				7)
+					/bin/systemctl status littleprince-agent --no-pager
+					;;
+				8)
+					journalctl -u littleprince-agent -f
+					;;
+				9)
+					if [ -f /etc/littleprince-agent.env ]; then
+						ip_address
+						local agent_token=$(grep "^LITTLE_PRINCE_AGENT_API_TOKEN=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+						echo "Open for the first time: http://${ipv4_address:-SERVER_IP}:$agent_port/activation?token=$agent_token"
+					else
+						echo "Not installed, please install it first"
+					fi
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
 	  b)
 	  	clear
 	  	send_stats "All application backup"
@@ -15924,7 +16354,7 @@ linux_work() {
 	  echo -e "${gl_kjlan}2.   ${gl_bai}Work Area 2"
 	  echo -e "${gl_kjlan}3.   ${gl_bai}Work Area 3"
 	  echo -e "${gl_kjlan}4.   ${gl_bai}Work Area 4"
-	  echo -e "${gl_kjlan}5.   ${gl_bai}Workspace No. 5"
+	  echo -e "${gl_kjlan}5.   ${gl_bai}Work Area 5"
 	  echo -e "${gl_kjlan}6.   ${gl_bai}Work Area 6"
 	  echo -e "${gl_kjlan}7.   ${gl_bai}Work Area 7"
 	  echo -e "${gl_kjlan}8.   ${gl_bai}Work Area 8"

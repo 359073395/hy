@@ -47,7 +47,7 @@ CheckFirstRun_true() {
 }
 # この機能は、機能の埋め込み情報を収集し、現在のスクリプトのバージョン番号、使用時間、システム バージョン、CPU アーキテクチャ、マシンの国、およびユーザーが使用した機能名を記録します。機密情報は含まれませんので、ご安心ください。信じてください！
 # なぜこの機能が設計されたのでしょうか?その目的は、ユーザーが使いたい機能をより深く理解し、機能をさらに最適化し、ユーザーのニーズを満たす機能をさらに投入することです。
-# send_stats 関数の呼び出し位置を全文検索できます。これは透明性があり、オープンソースです。ご不安がある場合はご利用をお断りすることも可能です。
+# send_stats 関数の呼び出し位置を全文検索できます。これは透明性があり、オープンソースです。ご心配な場合はご利用をお断りすることも可能です。
 send_stats() {
 	if [ "$ENABLE_STATS" == "false" ]; then
 		return
@@ -88,7 +88,7 @@ UserLicenseAgreement() {
 	clear
 	echo -e "${gl_kjlan}Harvey スクリプト ツールボックスへようこそ${gl_bai}"
 	echo "初めてスクリプトを使用する場合は、ユーザー使用許諾契約を読み、同意してください。"
-	echo "ユーザー使用許諾契約: https://blog.kejilion.pro/user-license-agreement/"
+	echo "ユーザー使用許諾契約書: https://blog.kejilion.pro/user-license-agreement/"
 	echo -e "----------------------"
 	read -e -p "上記の条件に同意しますか? (y/n):" user_input
 	if [ "$user_input" = "y" ] || [ "$user_input" = "Y" ]; then
@@ -192,7 +192,7 @@ remove() {
 		return 1
 	fi
 	for package in "$@"; do
-		echo -e "${gl_kjlan}アンインストールする$package...${gl_bai}"
+		echo -e "${gl_kjlan}アンインストール中$package...${gl_bai}"
 		if command -v dnf &>/dev/null; then
 			dnf remove -y "$package"
 		elif command -v yum &>/dev/null; then
@@ -297,6 +297,26 @@ check_port() {
 	stop_containers_or_kill_process 80
 	stop_containers_or_kill_process 443
 }
+
+	# ポート占有検出 - インストール前に指定したポートが占有されているかどうかを確認します
+	check_port_conflict() {
+		local ports=($@)
+		local conflict_found=false
+		for port in "${ports[@]}"; do
+			if ss -tuln 2>/dev/null | grep -q ":$port "; then
+				conflict_found=true
+				echo -e "  ${gl_hong}ポート$portすでに占有されています${gl_bai}"
+			else
+				echo -e "  ${gl_lv}ポート$portアイドル状態${gl_bai}"
+			fi
+		done
+		if [ "$conflict_found" = true ]; then
+			echo ""
+			echo -e "${gl_hong}⚠ ポートが競合しています。ポートを解放するか、ポートを変更して再試行してください。${gl_bai}"
+			return 1
+		fi
+		return 0
+	}
 install_add_docker_cn() {
 local country=$(curl -s ipinfo.io/country)
 if [ "$country" = "CN" ]; then
@@ -707,11 +727,11 @@ open_port() {
 		fi
 		if ! iptables -C INPUT -p udp --dport $port -j ACCEPT 2>/dev/null; then
 			iptables -I INPUT 1 -p udp --dport $port -j ACCEPT
-			echo "ポートがオープンされました$port"
+			echo "ポートがオープンしました$port"
 		fi
 	done
 	save_iptables_rules
-	send_stats "ポートがオープンされました"
+	send_stats "ポートがオープンしました"
 }
 close_port() {
 	local ports=($@)  # 将传入的参数转换为数组
@@ -916,7 +936,7 @@ iptables_panel() {
 				  send_stats "すべてのポートを開く"
 				  ;;
 			  4)
-				  # すべてのポートを閉じます
+				  # 关闭所有端口
 				  current_port=$(grep -E '^ *Port [0-9]+' /etc/ssh/sshd_config | awk '{print $2}')
 				  iptables -F
 				  iptables -X
@@ -932,7 +952,7 @@ iptables_panel() {
 				  send_stats "すべてのポートを閉じます"
 				  ;;
 			  5)
-				  # IPホワイトリスト
+				  # IP 白名单
 				  read -e -p "許可された IP または IP セグメントを入力してください:" o_ip
 				  allow_ip $o_ip
 				  ;;
@@ -970,7 +990,7 @@ iptables_panel() {
 				  disable_ddos_defense
 				  ;;
 			  15)
-				  read -e -p "ブロックされている国コードを入力してください (CN US JP のように、複数の国コードをスペースで区切ることができます)。" country_code
+				  read -e -p "ブロックされている国コードを入力してください (CN US JP のように、複数の国コードをスペースで区切ることができます):" country_code
 				  manage_country_rules block $country_code
 				  send_stats "国を許可する$country_codeIP"
 				  ;;
@@ -1837,7 +1857,7 @@ web_optimization() {
 			  send_stats "LDNMP環境の最適化"
 			  echo -e "LDNMP環境の最適化${gl_lv}${mode_info}${gzip_status}${br_status}${zstd_status}${gl_bai}"
 			  echo "------------------------"
-			  echo "1.スタンダードモード 2.ハイパフォーマンスモード(2H4G以上推奨)"
+			  echo "1.スタンダードモード 2.ハイパフォーマンスモード（2H4G以上推奨）"
 			  echo "------------------------"
 			  echo "3. gzip 圧縮をオンにする 4. gzip 圧縮をオフにする"
 			  echo "5. br 圧縮をオンにする 6. br 圧縮をオフにする"
@@ -2480,7 +2500,7 @@ f2b_sshd() {
 }
 # 基本パラメータ設定: 禁止期間 (bantime)、時間枠 (findtime)、再試行回数 (maxretry)
 # 例証します:
-# - /etc/fail2ban/jail.d/sshd.local への書き込みを優先します (デフォルトのjail設定を上書きし、アップグレード時に失われにくくなります)
+# - /etc/fail2ban/jail.d/sshd.local への書き込みを優先します (デフォルトのjail設定をオーバーライドし、アップグレード時に失われにくくなります)
 # - Alpine で、jail 名が異なる場合でも、sshd.local と書き込みます。 Fail2Ban は、jail 名に従って一致します。
 f2b_basic_config() {
 	root_use
@@ -2873,7 +2893,7 @@ ldnmp_Proxy_backend_stream() {
 		2) proto="udp"; listen_suffix=" udp" ;;
 		*) echo "無効な選択"; return 1 ;;
 	esac
-	read -e -p "1 つ以上のバックエンド IP + ポートをスペースで区切って入力してください (例: 10.13.0.2:3306 10.13.0.3:3306):" reverseproxy_port
+	read -e -p "1 つ以上のバックエンド IP + ポートをスペースで区切って入力してください (例: 10.13.0.2:3306 10.13.0.3:3306)。" reverseproxy_port
 	nginx_install_status
 	cd /home && mkdir -p web/stream.d
 	grep -q '^[[:space:]]*stream[[:space:]]*{' /home/web/nginx.conf || echo -e '\nstream {\n    include /etc/nginx/stream.d/*.conf;\n}' | tee -a /home/web/nginx.conf
@@ -3592,7 +3612,7 @@ yt_menu_pro() {
 					--no-overwrites --no-post-overwrites "$url"
 				read -e -p "音声のダウンロードが完了しました。続行するには任意のキーを押してください..." ;;
 			9)
-				send_stats "删除视频"
+				send_stats "ビデオを削除する"
 				read -e -p "削除されたビデオの名前を入力してください:" rmdir
 				rm -rf "$VIDEO_DIR/$rmdir"
 				;;
@@ -3761,7 +3781,7 @@ while true; do
 	echo "2.国内DNSの最適化:"
 	echo " v4: 223.5.5.5 183.60.83.19"
 	echo " v6: 2400:3200::1 2400:da00::6666"
-	echo "3. DNS 設定を手動で編集する"
+	echo "3. DNS 構成を手動で編集する"
 	echo "------------------------"
 	echo "0. 前のメニューに戻る"
 	echo "------------------------"
@@ -4062,7 +4082,7 @@ add_sshpasswd() {
 }
 root_use() {
 clear
-[ "$EUID" -ne 0 ] && echo -e "${gl_huang}ヒント：${gl_bai}この機能を実行するには、root ユーザーが必要です。" && break_end && harvey
+[ "$EUID" -ne 0 ] && echo -e "${gl_huang}ヒント：${gl_bai}この機能を実行するには root ユーザーが必要です。" && break_end && harvey
 }
 dd_xitong() {
 		send_stats "システムを再インストールする"
@@ -4380,7 +4400,7 @@ bbrv3() {
 					return 1
 				fi
 				if [ -z "$os_codename" ]; then
-					echo "システムコードネームを取得できません、XanMod ソースを構成できません"
+					echo "システムコードネームを取得できません。XanMod ソースを構成できません"
 					return 1
 				fi
 				install wget gnupg ca-certificates
@@ -5052,7 +5072,7 @@ Kernel_optimize() {
 	  echo -e "1. ハイパフォーマンス最適化モード: システムパフォーマンス、積極的なメモリ、およびネットワークパラメータを最大化します。"
 	  echo -e "2. バランスのとれた最適化モード: パフォーマンスとリソース消費のバランスをとり、日常の使用に適しています。"
 	  echo -e "3. Web サイト最適化モード: Web サイトサーバー、超高同時接続キュー用に最適化されています。"
-	  echo -e "4. ライブ ブロードキャスト最適化モード: ライブ ストリーミングを最適化するために、UDP バッファーを拡大して遅延を削減します。"
+	  echo -e "4. ライブ ブロードキャスト最適化モード: ライブ ストリーミングの最適化では、遅延を減らすために UDP バッファーが拡大されます。"
 	  echo -e "5. ゲームサーバー最適化モード：低遅延を優先してゲームサーバーに最適化します。"
 	  echo -e "6. デフォルト設定の復元: システム設定をデフォルト構成に復元します。"
 	  echo -e "7. 自動チューニング: テストデータに基づいてカーネルパラメータを自動的にチューニングします。${gl_huang}★${gl_bai}"
@@ -5161,7 +5181,7 @@ while true; do
   case $choice in
 	  1)
 		  update_locale "en_US.UTF-8" "en_US.UTF-8"
-		  send_stats "英語に切り替えて"
+		  send_stats "英語に切り替えてください"
 		  ;;
 	  2)
 		  update_locale "zh_CN.UTF-8" "zh_CN.UTF-8"
@@ -5311,9 +5331,9 @@ linux_fav() {
 send_stats "コマンドのお気に入り"
 bash <(curl -l -s ${gh_proxy}raw.githubusercontent.com/byJoey/cmdbox/refs/heads/main/install.sh)
 }
-# バックアップを作成する
+# バックアップの作成
 create_backup() {
-	send_stats "バックアップを作成する"
+	send_stats "バックアップの作成"
 	local TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 	# ユーザーにバックアップ ディレクトリの入力を求めるプロンプトを表示する
 	echo "バックアップの作成例:"
@@ -5348,7 +5368,7 @@ create_backup() {
 	for path in "${BACKUP_PATHS[@]}"; do
 		echo "- $path"
 	done
-	# バックアップを作成する
+	# バックアップの作成
 	echo "バックアップの作成$BACKUP_NAME..."
 	install tar
 	tar -czvf "$BACKUP_DIR/$BACKUP_NAME" "${BACKUP_PATHS[@]}"
@@ -5682,7 +5702,7 @@ list_partitions() {
 }
 # 永続的にマウントされたパーティション
 mount_partition() {
-	send_stats "パーティションのマウント"
+	send_stats "パーティションをマウントする"
 	read -e -p "マウントするパーティションの名前を入力してください (例: sda1):" PARTITION
 	DEVICE="/dev/$PARTITION"
 	MOUNT_POINT="/mnt/$PARTITION"
@@ -6851,7 +6871,7 @@ linux_docker() {
 				  echo ""
 				  echo "ボリューム操作"
 				  echo "------------------------"
-				  echo "1. 新しいボリュームを作成します"
+				  echo "1. 新しいボリュームを作成する"
 				  echo "2. 指定したボリュームを削除します"
 				  echo "3. すべてのボリュームを削除します"
 				  echo "------------------------"
@@ -9010,7 +9030,7 @@ PY2
 			echo "❌ 同期に失敗しました: 上流モデルが空であるか、同期後に使用可能なモデルがありません"
 			;;
 		*)
-			echo "❌ 同期に失敗しました: 構成ファイルの構造またはログ出力を確認してください。"
+			echo "❌ 同期に失敗しました: 設定ファイルの構造またはログ出力を確認してください。"
 			;;
 	esac
 	break_end
@@ -9273,7 +9293,7 @@ PY
 		read -erp "戻るには Enter を押してください..." dummy
 	}
 	openclaw_api_manage_menu() {
-		send_stats "OpenClaw APIの入り口"
+		send_stats "OpenClaw APIの入口"
 		while true; do
 			clear
 			echo "======================================="
@@ -9918,7 +9938,7 @@ PYTHON_EOF
 					if openclaw plugins uninstall "$plugin_id"; then
 						echo "✅ アンインストール済み:$plugin_id"
 					else
-						echo "⚠️ アンインストールに失敗しました。プリインストールされたプラグインである可能性があります。次の機能のみを無効にしてください。$plugin_id"
+						echo "⚠️ アンインストールに失敗しました。プリインストールされたプラグインである可能性があります。以下を無効にするだけです。$plugin_id"
 					fi
 					sync_openclaw_plugin_denylist "$plugin_id" >/dev/null 2>&1
 					success_list="$success_list $plugin_id"
@@ -9931,14 +9951,14 @@ PYTHON_EOF
 			[ -n "$failed_list" ] && echo "❌ 失敗:$failed_list"
 			[ -n "$skipped_list" ] && echo "⏭️スキップ:$skipped_list"
 			if [ "$changed" = true ]; then
-				echo "🔄 変更をロードするために OpenClaw サービスを再起動しています..."
+				echo "🔄 OpenClaw サービスを再起動して変更をロードしています..."
 				start_gateway
 			fi
 			break_end
 		done
 	}
 	install_skill() {
-		send_stats "スキル管理"
+		send_stats "スキルマネジメント"
 		while true; do
 			clear
 			echo "========================================"
@@ -9958,7 +9978,7 @@ PYTHON_EOF
 			echo "things-mac # Things 3 タスク管理の緊密な統合"
 			echo "bluebubbles # BlueBubbles で iMessage を完璧に送受信"
 			echo "ヒマラヤ # 端末メール管理（IMAP/SMTP強力ツール）"
-			echo "要約 # Web ページ/ポッドキャスト/YouTube ビデオ コンテンツのワンクリック要約"
+			echo "要約 # ウェブページ/ポッドキャスト/YouTube ビデオ コンテンツのワンクリック要約"
 			echo "openhue # Philips Hue スマート照明シーンの制御"
 			echo "video-frames # ビデオフレーム抽出とショートクリップ編集 (ffmpeg ドライバー)"
 			echo "openai-whisper # ローカル音声をテキストに変換 (オフラインのプライバシー保護)"
@@ -10035,7 +10055,7 @@ PYTHON_EOF
 			[ -n "$failed_list" ] && echo "❌ 失敗:$failed_list"
 			[ -n "$skipped_list" ] && echo "⏭️スキップ:$skipped_list"
 			if [ "$changed" = true ]; then
-				echo "🔄 変更をロードするために OpenClaw サービスを再起動しています..."
+				echo "🔄 OpenClaw サービスを再起動して変更をロードしています..."
 				start_gateway
 			fi
 			break_end
@@ -10281,7 +10301,7 @@ openclaw_json_get_bool() {
 					break_end
 					;;
 				3)
-					read -e -p "WhatsApp で受信した接続コード (例: NYA99R2F) を入力してください (終了するには 0 を入力してください):" code
+					read -e -p "WhatsApp で受け取った接続コード (例: NYA99R2F) を入力してください (終了するには 0 を入力してください):" code
 					if [ "$code" = "0" ]; then continue; fi
 					if [ -z "$code" ]; then echo "エラー: 接続コードを空にすることはできません。"; sleep 1; continue; fi
 					openclaw pairing approve whatsapp "$code"
@@ -10977,7 +10997,7 @@ for entry in data:
     first = False
     print("Agent: %s" % agent_id)
     backend = s.get("backend") or s.get("provider") or "-"
-    print("基礎となるソリューション: %s" % backend)
+    print("基本的なソリューション: %s" % backend)
     files = s.get("files", 0)
     chunks = s.get("chunks", 0)
     print("含まれるもの: %s ファイル / %s ブロック" % (files, chunks))
@@ -11463,7 +11483,7 @@ EOF
 		while true; do
 			clear
 			echo "======================================="
-			echo "メモリソリューションの自動導入"
+			echo "メモリソリューションの自動展開"
 			echo "======================================="
 			echo "1. QMD"
 			echo "2. Local"
@@ -11545,7 +11565,7 @@ EOF
 		echo "======================================="
 		echo "インデックス修復診断"
 		echo "======================================="
-		echo "現在 includeDefaultMemory: ${include_dm:-not set}"
+		echo "現在の includeDefaultMemory: ${include_dm:-not set}"
 		echo ""
 		if [ "$include_dm" = "false" ]; then
 			echo "⚠️ includeDefaultMemory=false が検出されました"
@@ -11681,7 +11701,7 @@ EOF
 		echo "書類：$file"
 		echo "総行数:$total_lines"
 		read -e -p "開始行を入力してください (Enter キーを押すとデフォルトで行の終わりになります)$default_linesわかりました）：" start_line
-		read -e -p "表示する行数を入力してください (デフォルトでは Enter を押します)$default_lines）: " count
+		read -e -p "表示する行数を入力してください (デフォルトでは Enter キーを押します)$default_lines）: " count
 		[ -z "$count" ] && count=$default_lines
 		if [ -z "$start_line" ]; then
 			if [ "$total_lines" -le "$count" ]; then
@@ -12593,7 +12613,7 @@ for idx,item in enumerate(bindings,1):
 		read -e -p "エージェント ID を入力してください:" agent_id
 		read -e -p "削除するルート バインディング値を入力してください:" bind_value
 		{ [ -z "$agent_id" ] || [ -z "$bind_value" ]; } && echo "キャンセル: パラメータを空にすることはできません。" && return 1
-		echo "エージェントを削除します [$agent_id] ルート バインディング [$bind_value]"
+		echo "エージェントを削除します [$agent_id]ルートバインディング[$bind_value]"
 		read -e -p "続行することを確認するには「yes」と入力します。" confirm
 		[ "$confirm" = "yes" ] || { echo "キャンセル"; return 1; }
 		if openclaw agents unbind --agent "$agent_id" --bind "$bind_value"; then
@@ -13014,7 +13034,7 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}81.  ${color81}JitsiMeet ビデオ会議${gl_kjlan}82.  ${color82}gpt-load 高性能 AI 透過プロキシ"
 	  echo -e "${gl_kjlan}83.  ${color83}komariサーバー監視ツール${gl_kjlan}84.  ${color84}Wallos の個人財務管理ツール"
-	  echo -e "${gl_kjlan}85.  ${color85}イミッチピクチャービデオマネージャー${gl_kjlan}86.  ${color86}ジェリーフィンメディア管理システム"
+	  echo -e "${gl_kjlan}85.  ${color85}イミッチ・ピクチャー・ビデオ・マネージャー${gl_kjlan}86.  ${color86}ジェリーフィンメディア管理システム"
 	  echo -e "${gl_kjlan}87.  ${color87}SyncTV は一緒に映画を見るための素晴らしいツールです${gl_kjlan}88.  ${color88}Owncast の自己ホスト型ライブ ストリーミング プラットフォーム"
 	  echo -e "${gl_kjlan}89.  ${color89}FileCodeBox ファイルエクスプレス${gl_kjlan}90.  ${color90}マトリックス分散型チャットプロトコル"
 	  echo -e "${gl_kjlan}-------------------------"
@@ -13034,6 +13054,14 @@ while true; do
 	  echo -e "${gl_kjlan}113. ${color113}Firefoxブラウザ${gl_kjlan}114. ${color114}OpenClaw ボット管理ツール${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}115. ${color115}ヘルメスロボット管理ツール${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}116. ${color116}x-ui Xray 管理パネル${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}117. ${color117}IP质量检测平台 ${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}118. ${color118}AimiliVPN プロキシ ゲートウェイ${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}119. ${color119}FluxPanel流量转发面板 ${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}120. ${color120}LittlePrinceAgent クラウド アシスタント${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}サードパーティ製アプリケーションのリスト"
   	  echo -e "${gl_kjlan}あなたのアプリをここに表示したいですか?開発者ガイドを確認してください。${gl_huang}https://dev.kejilion.sh/${gl_bai}"
@@ -13204,7 +13232,7 @@ while true; do
 			check_docker_app
 			check_docker_image_update $docker_name
 			clear
-			echo -e "ネザ監視$check_docker $update_status"
+			echo -e "ネザモニタリング$check_docker $update_status"
 			echo "オープンソースの軽量で使いやすいサーバー監視および運用保守ツール"
 			echo "公式 Web サイト構築ドキュメント: https://nezha.wiki/guide/dashboard.html"
 			if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "$docker_name"; then
@@ -13873,7 +13901,7 @@ while true; do
 				 -e DOCKER_ENABLE_SECURITY=false \
 				 frooodle/s-pdf:latest
 		}
-		local docker_describe="これは、Docker を使用してローカルでホストされる強力な Web ベースの PDF 操作ツールで、分割マージ、変換、再編成、画像の追加、回転、圧縮など、PDF ファイルに対してさまざまな操作を実行できます。"
+		local docker_describe="これは、Docker を使用してローカルでホストされる強力な Web ベースの PDF 操作ツールで、PDF ファイルに対して分割マージ、変換、再編成、画像の追加、回転、圧縮などのさまざまな操作を実行できます。"
 		local docker_url="公式サイト紹介：${gh_proxy}github.com/Stirling-Tools/Stirling-PDF"
 		local docker_use=""
 		local docker_passwd=""
@@ -13951,7 +13979,7 @@ while true; do
 		}
 		local docker_describe="ミニマリストの瞬間、模倣性の高いWeChatの瞬間、あなたの素晴らしい人生を記録してください"
 		local docker_url="公式サイト紹介：${gh_proxy}github.com/kingwrcy/moments?tab=readme-ov-file"
-		local docker_use="echo \"アカウント: admin パスワード: a123456\""
+		local docker_use="echo 「アカウント: admin パスワード: a123456」"
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
@@ -14916,7 +14944,7 @@ while true; do
 		local docker_img="tbphp/gpt-load:latest"
 		local docker_port=8082
 		docker_rum() {
-			read -e -p "設定${docker_name}ログイン キー (sk- で始まる文字と数字の組み合わせ) 例: sk-159harveyyyds163:" app_passwd
+			read -e -p "設定${docker_name}的登录密钥（sk-开头字母和数字组合）如: sk-159harveyyyds163: " app_passwd
 			mkdir -p /home/docker/gpt-load && \
 			docker run -d --name gpt-load \
 				-p ${docker_port}:3001 \
@@ -14979,7 +15007,7 @@ while true; do
 		  ;;
 	  85|immich)
 		  local app_id="85"
-		  local app_name="イミッチピクチャービデオマネージャー"
+		  local app_name="イミッチ・ピクチャー・ビデオ・マネージャー"
 		  local app_text="高性能の自己ホスト型写真およびビデオ管理ソリューション。"
 		  local app_url="公式サイト紹介：${gh_https_url}github.com/immich-app/immich"
 		  local docker_name="immich_server"
@@ -15067,7 +15095,7 @@ while true; do
 				--restart=always \
 				owncast/owncast:latest
 		}
-		local docker_describe="オープンソース、無料の自社構築ライブ ブロードキャスト プラットフォーム"
+		local docker_describe="オープンソースの無料の自作ライブ ブロードキャスト プラットフォーム"
 		local docker_url="公式サイト紹介：https://owncast.online"
 		local docker_use="echo \"管理者ページにアクセスするには、アクセス アドレスの後に /admin を続けます\""
 		local docker_passwd="echo \"初期アカウント: admin 初期パスワード: abc123 ログイン後、時間内にログイン パスワードを変更してください\""
@@ -15309,7 +15337,7 @@ while true; do
 		docker_rum() {
 		read -e -p  "ネットワーク内のクライアントの数を入力してください (デフォルトは 5):" COUNT
 		COUNT=${COUNT:-5}
-		read -e -p  "WireGuard ネットワーク セグメントを入力してください (デフォルトは 10.13.13.0)。" NETWORK
+		read -e -p  "WireGuard ネットワーク セグメントを入力してください (デフォルトは 10.13.13.0):" NETWORK
 		NETWORK=${NETWORK:-10.13.13.0}
 		PEERS=$(seq -f "wg%02g" 1 "$COUNT" | paste -sd,)
 		ip link delete wg0 &>/dev/null
@@ -15825,6 +15853,408 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		}
 		install_panel
 		  ;;
+	  117|ip-quality|ipquality)
+		local app_id="117"
+		send_stats "IP品質検査プラットフォーム"
+		while true; do
+			clear
+			local check_status="${gl_hui}インストールされていません${gl_bai}"
+			if pm2 list 2>/dev/null | grep -q "operation-ip-quality-platform"; then
+				check_status="${gl_lv}インストール済み${gl_bai}"
+			fi
+			echo -e "IP品質検査プラットフォーム$check_status"
+			echo "公式ウェブサイト：https://github.com/359073395/operation-ip-quality-platform"
+			echo ""
+			if pm2 list 2>/dev/null | grep -q "operation-ip-quality-platform"; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "アクセスアドレス：http://$ipv4_address:4173"
+				fi
+				if [ -n "$ipv6_address" ]; then
+					echo "アクセスアドレス：http://[$ipv6_address]:4173"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:4173" "$file" 2>/dev/null; then
+						echo "ドメイン名アクセス: https://$(basename"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. インストール 2. アップデート 3. アンインストール"
+			echo "------------------------"
+			echo "5. ドメイン名アクセスを追加します。 6. ドメイン名アクセスを削除します。"
+			echo "7. IP+ポートアクセスを許可します。 8. IP+ポートアクセスをブロックします。"
+			echo "------------------------"
+			echo "0. 前のメニューに戻る"
+			echo "------------------------"
+			read -e -p "選択肢を入力してください:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					check_port_conflict 4173 && { open_port 4173; } || { echo "インストールがキャンセルされました"; break; }
+					bash -c "$(curl -fsSL https://raw.githubusercontent.com/359073395/operation-ip-quality-platform/main/scripts/deploy-vps.sh)" -- "https://github.com/359073395/operation-ip-quality-platform.git"
+					add_app_id
+					send_stats "IP品質検査プラットフォームのインストール"
+					;;
+				2)
+					if [ -f /opt/operation-ip-quality-platform/scripts/update-vps.sh ]; then
+						cd /opt/operation-ip-quality-platform && bash scripts/update-vps.sh
+						echo "アップデート完了"
+					else
+						echo "更新スクリプトが見つかりません。インストールされていることを確認してください"
+					fi
+					add_app_id
+					send_stats "IP品質検査プラットフォームのアップデート"
+					;;
+				3)
+					pm2 stop operation-ip-quality-platform 2>/dev/null
+					pm2 delete operation-ip-quality-platform 2>/dev/null
+					pm2 save 2>/dev/null
+					rm -rf /opt/operation-ip-quality-platform
+					close_port 4173
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "アンインストールが完了しました"
+					send_stats "IP品質検出プラットフォームをアンインストールする"
+					;;
+				5)
+					send_stats "IP品質検査プラットフォームのドメイン名アクセス"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 4173
+					;;
+				6)
+					web_del
+					;;
+				7)
+					send_stats "IP が IP 品質検出プラットフォームにアクセスできるようにする"
+					open_port 4173
+					;;
+				8)
+					send_stats "IP品質検出プラットフォームへのIPアクセスをブロックする"
+					close_port 4173
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  118|aimili|aimilivpn|vpngate)
+		local app_id="118"
+		send_stats "AimiliVPN プロキシ ゲートウェイ"
+		while true; do
+			clear
+			local check_status="${gl_hui}インストールされていません${gl_bai}"
+			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
+				check_status="${gl_lv}インストール済み${gl_bai}"
+			fi
+			echo -e "AimiliVPN プロキシ ゲートウェイ$check_status"
+			echo "公式ウェブサイト：https://github.com/baoweise-bot/aimili-vpngate"
+			echo "VPNGate パブリック VPN を使用して VPS にクリーンな出口 IP を提供します"
+			echo "HTTP/SOCKS5 デュアルプロトコルプロキシ、インテリジェントな自動フェイルオーバーをサポート"
+			echo ""
+			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
+				ip_address
+				local web_port=8787
+				local proxy_port=7928
+				if [ -f "/opt/aimilivpn/vpngate_data/ui_auth.json" ]; then
+					web_port=$(python3 -c "import json; d=json.load(open("/opt/aimilivpn/vpngate_data/ui_auth.json")); print(d.get("web_port",8787))" 2>/dev/null || echo 8787)
+				fi
+				if [ -n "$ipv4_address" ]; then
+					echo "Web管理パネル: http://$ipv4_address:$web_port"
+				fi
+				echo "ローカルプロキシアドレス：socks5://127.0.0.1：$proxy_port"
+				echo "ローカルプロキシアドレス: http://127.0.0.1:$proxy_port"
+				echo "CLI管理コマンド：ml"
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$web_port" "$file" 2>/dev/null; then
+						echo "ドメイン名アクセス: https://$(basename"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. インストール 2. アップデート 3. アンインストール"
+			echo "------------------------"
+			echo "5. ドメイン名アクセスを追加します。 6. ドメイン名アクセスを削除します。"
+			echo "7. 管理パネル 8. エージェントのステータスの表示"
+			echo "------------------------"
+			echo "0. 前のメニューに戻る"
+			echo "------------------------"
+			read -e -p "選択肢を入力してください:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					check_port_conflict 8787 7928 && { open_port 8787; open_port 7928; } || { echo "インストールがキャンセルされました"; break; }
+					bash <(curl -Ls https://raw.githubusercontent.com/baoweise-bot/aimili-vpngate/main/install.sh)
+					add_app_id
+					send_stats "AimiliVPNをインストールする"
+					;;
+				2)
+					if [ -f /usr/bin/ml ]; then
+						ml update
+						echo "アップデート完了"
+					else
+						echo "インストールされていません。最初にインストールしてください"
+					fi
+					add_app_id
+					send_stats "AimiliVPN を更新する"
+					;;
+				3)
+					if [ -f /usr/bin/ml ]; then
+						ml uninstall
+					else
+						systemctl stop aimilivpn 2>/dev/null
+						systemctl disable aimilivpn 2>/dev/null
+						rm -f /usr/bin/ml /lib/systemd/system/aimilivpn.service
+						rm -rf /opt/aimilivpn
+					fi
+					close_port 8787
+					close_port 7928
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "アンインストールが完了しました"
+					send_stats "AimiliVPN をアンインストールする"
+					;;
+				5)
+					send_stats "AimiliVPN ドメイン名アクセス"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 8787
+					;;
+				6)
+					web_del
+					;;
+				7)
+					if [ -f /usr/bin/ml ]; then
+						ml
+					else
+						echo "最初にインストールしてください"
+					fi
+					;;
+				8)
+					if [ -f /usr/bin/ml ]; then
+						ml status
+					else
+						echo "最初にインストールしてください"
+					fi
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  119|flux|fluxpanel|flux-panel)
+		local app_id="119"
+		send_stats "FluxPanel トラフィック転送"
+		while true; do
+			clear
+			local check_status="${gl_hui}インストールされていません${gl_bai}"
+			if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+				check_status="${gl_lv}インストール済み${gl_bai}"
+			fi
+			echo -e "FluxPanel トラフィック転送パネル$check_status"
+			echo "公式サイト：https://github.com/bqlpfy/flux-panel"
+			echo "GOSTベースのトラフィック転送/トランジット管理パネル"
+			echo "TCP/UDP トンネル転送、トラフィック クォータ、方向速度制限、およびマルチエンド管理をサポート"
+			echo ""
+			if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+				ip_address
+				local frontend_port=6366
+				local backend_port=6365
+				if [ -f .env ]; then
+					frontend_port=$(grep FRONTEND_PORT .env 2>/dev/null | cut -d= -f2 | tr -d " ")
+					frontend_port=${frontend_port:-6366}
+					backend_port=$(grep BACKEND_PORT .env 2>/dev/null | cut -d= -f2 | tr -d " ")
+					backend_port=${backend_port:-6365}
+				fi
+				if [ -n "$ipv4_address" ]; then
+					echo "Web管理パネル: http://$ipv4_address:$frontend_port"
+					echo "バックエンド API アドレス: http://$ipv4_address:$backend_port"
+				fi
+				echo "デフォルトのアカウント: admin_user / admin_user"
+				echo "⚠️初回ログイン時はすぐにパスワードを変更してください。"
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$frontend_port" "$file" 2>/dev/null; then
+						echo "ドメイン名アクセス: https://$(basename"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. インストール 2. アップデート 3. アンインストール"
+			echo "------------------------"
+			echo "5. ドメイン名アクセスを追加します。 6. ドメイン名アクセスを削除します。"
+			echo "7. コンテナーのステータスの表示 8. ノード側の管理"
+			echo "------------------------"
+			echo "0. 前のメニューに戻る"
+			echo "------------------------"
+			read -e -p "選択肢を入力してください:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 2
+					install_docker
+					install curl
+check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "インストールがキャンセルされました"; break; }
+					echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+					echo "net.ipv6.conf.all.forwarding = 1" >> /etc/sysctl.conf
+					sysctl -p > /dev/null 2>&1
+					curl -L https://raw.githubusercontent.com/bqlpfy/flux-panel/refs/heads/main/panel_install.sh -o /tmp/panel_install.sh && chmod +x /tmp/panel_install.sh && bash /tmp/panel_install.sh
+					add_app_id
+					send_stats "FluxPanel をインストールする"
+					;;
+				2)
+					if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+						docker compose pull 2>/dev/null || docker-compose pull 2>/dev/null
+						docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null
+						echo "アップデート完了"
+					else
+						echo "インストールされていません。最初にインストールしてください"
+					fi
+					add_app_id
+					send_stats "FluxPanel を更新する"
+					;;
+				3)
+					if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+						docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || docker-compose down --rmi all --volumes --remove-orphans 2>/dev/null
+						echo "アンインストールが完了しました"
+					else
+						echo "インストールされていません"
+					fi
+					close_port 6366
+					close_port 6365
+					rm -f panel_install.sh install.sh docker-compose-v4.yml docker-compose-v6.yml .env gost.sql temp_migration.sql 2>/dev/null
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					send_stats "FluxPanel をアンインストールする"
+					;;
+				5)
+					send_stats "FluxPanel ドメイン名アクセス"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 6366
+					;;
+				6)
+					web_del
+					;;
+				7)
+					docker ps -a --format "table {{.Names}}	{{.Status}}	{{.Ports}}" | head -1
+					docker ps -a --format "table {{.Names}}	{{.Status}}	{{.Ports}}" | grep -E "springboot-backend|gost-mysql|flux"
+					;;
+				8)
+					echo "ノード側のインストール コマンド (ノード サーバー上で実行):"
+					echo "curl -L https://raw.githubusercontent.com/bqlpfy/flux-panel/refs/heads/main/install.sh -o install.sh && chmod +x install.sh && ./install.sh"
+					echo ""
+					echo "インストール後、ノード側にパネルアドレスとバックエンドキーを入力してアクセスします。"
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  120|littleprince|littleprince-agent|lpagent)
+		local app_id="120"
+		send_stats "LittlePrinceAgent"
+		while true; do
+			clear
+			local check_status="${gl_hui}インストールされていません${gl_bai}"
+			if [ -x /bin/systemctl ] && /bin/systemctl is-active --quiet littleprince-agent 2>/dev/null; then
+				check_status="${gl_lv}ランニング${gl_bai}"
+			elif [ -f /etc/systemd/system/littleprince-agent.service ]; then
+				check_status="${gl_huang}インストールされているが実行されていない${gl_bai}"
+			fi
+			local agent_port=3721
+			if [ -f /etc/littleprince-agent.env ]; then
+				agent_port=$(grep "^LITTLE_PRINCE_AGENT_PORT=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+				agent_port=${agent_port:-3721}
+			fi
+			echo -e "LittlePrinceAgent クラウド アシスタント$check_status"
+			echo "公式サイト：https://github.com/359073395/LittlePrinceAgent"
+			echo "Debian/Ubuntu クラウド Web バージョン エージェント、デフォルト ポート:$agent_port"
+			echo ""
+			if [ -f /etc/systemd/system/littleprince-agent.service ]; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "Web管理パネル: http://$ipv4_address:$agent_port"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$agent_port" "$file" 2>/dev/null; then
+						echo "ドメイン名アクセス: https://$(basename"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. インストール 2. アップデート 3. アンインストール"
+			echo "------------------------"
+			echo "5. ドメイン名アクセスを追加します。 6. ドメイン名アクセスを削除します。"
+			echo "7. サービス状況の確認 8. 動作ログの確認"
+			echo "9. アクティベーションリンクを表示"
+			echo "------------------------"
+			echo "0. 前のメニューに戻る"
+			echo "------------------------"
+			read -e -p "選択肢を入力してください:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					install curl
+					check_port_conflict 3721 && { open_port 3721; } || { echo "インストールがキャンセルされました"; break; }
+					curl -fsSL https://raw.githubusercontent.com/359073395/LittlePrinceAgent/main/scripts/install-debian-ubuntu.sh | bash
+					add_app_id
+					send_stats "LittlePrinceAgent をインストールする"
+					;;
+				2)
+					install curl
+					curl -fsSL https://raw.githubusercontent.com/359073395/LittlePrinceAgent/main/scripts/install-debian-ubuntu.sh | bash
+					add_app_id
+					send_stats "リトルプリンスエージェントの更新"
+					;;
+				3)
+					if [ -f /etc/littleprince-agent.env ]; then
+						agent_port=$(grep "^LITTLE_PRINCE_AGENT_PORT=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+						agent_port=${agent_port:-3721}
+					fi
+					[ -x /bin/systemctl ] && /bin/systemctl disable --now littleprince-agent 2>/dev/null
+					rm -f /etc/systemd/system/littleprince-agent.service /etc/littleprince-agent.env
+					[ -x /bin/systemctl ] && /bin/systemctl daemon-reload 2>/dev/null
+					rm -rf /opt/littleprince-agent /var/lib/littleprince-agent
+					id littleprince >/dev/null 2>&1 && userdel littleprince 2>/dev/null
+					close_port "$agent_port"
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "アンインストールが完了しました"
+					send_stats "LittlePrinceAgent をアンインストールする"
+					;;
+				5)
+					send_stats "LittlePrinceAgent ドメイン名アクセス"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 ${agent_port}
+					;;
+				6)
+					web_del
+					;;
+				7)
+					/bin/systemctl status littleprince-agent --no-pager
+					;;
+				8)
+					journalctl -u littleprince-agent -f
+					;;
+				9)
+					if [ -f /etc/littleprince-agent.env ]; then
+						ip_address
+						local agent_token=$(grep "^LITTLE_PRINCE_AGENT_API_TOKEN=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+						echo "初めて開く: http://${ipv4_address:-SERVER_IP}:$agent_port/activation?token=$agent_token"
+					else
+						echo "インストールされていません。最初にインストールしてください"
+					fi
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
 	  b)
 	  	clear
 	  	send_stats "すべてのアプリケーションのバックアップ"
@@ -15914,7 +16344,7 @@ linux_work() {
 	  echo -e "バックエンドワークスペース"
 	  echo -e "システムは、バックグラウンドで永続的に実行できるワークスペースを提供し、長期的なタスクを実行するために使用できます。"
 	  echo -e "SSH を切断しても、ワークスペース内のタスクは中断されず、タスクはバックグラウンドで残ります。"
-	  echo -e "${gl_huang}ヒント：${gl_bai}ワークスペースに入ったら、Ctrl+b を使用し、d だけを押してワークスペースを終了します。"
+	  echo -e "${gl_huang}ヒント：${gl_bai}ワークスペースに入ったら、Ctrl+b を使用し、次に d を単独で押してワークスペースを終了します。"
 	  echo -e "${gl_kjlan}------------------------"
 	  echo "現在存在するワークスペースのリスト"
 	  echo -e "${gl_kjlan}------------------------"
@@ -15924,7 +16354,7 @@ linux_work() {
 	  echo -e "${gl_kjlan}2.   ${gl_bai}作業エリア 2"
 	  echo -e "${gl_kjlan}3.   ${gl_bai}作業エリア 3"
 	  echo -e "${gl_kjlan}4.   ${gl_bai}作業エリア 4"
-	  echo -e "${gl_kjlan}5.   ${gl_bai}ワークスペースNo.5"
+	  echo -e "${gl_kjlan}5.   ${gl_bai}作業エリア5"
 	  echo -e "${gl_kjlan}6.   ${gl_bai}作業エリア6"
 	  echo -e "${gl_kjlan}7.   ${gl_bai}作業エリア 7"
 	  echo -e "${gl_kjlan}8.   ${gl_bai}作業エリア8"
@@ -16507,7 +16937,7 @@ linux_Settings() {
 	  echo -e "${gl_kjlan}------------------------"
 	  echo -e "${gl_kjlan}1.   ${gl_bai}スクリプト起動のショートカットキーを設定する${gl_kjlan}2.   ${gl_bai}ログインパスワードを変更する"
 	  echo -e "${gl_kjlan}3.   ${gl_bai}ユーザーパスワードログインモード${gl_kjlan}4.   ${gl_bai}指定されたバージョンの Python をインストールします"
-	  echo -e "${gl_kjlan}5.   ${gl_bai}すべてのポートを開く${gl_kjlan}6.   ${gl_bai}SSH接続ポートを変更する"
+	  echo -e "${gl_kjlan}5.   ${gl_bai}すべてのポートを開く${gl_kjlan}6.   ${gl_bai}SSH接続ポートの変更"
 	  echo -e "${gl_kjlan}7.   ${gl_bai}DNSアドレスを最適化する${gl_kjlan}8.   ${gl_bai}ワンクリックでシステムを再インストールします${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}9.   ${gl_bai}ROOTアカウントを無効にして新しいアカウントを作成する${gl_kjlan}10.  ${gl_bai}スイッチ優先度 ipv4/ipv6"
 	  echo -e "${gl_kjlan}------------------------"
@@ -16911,7 +17341,7 @@ EOF
 				echo "3. 東京、日本時間 4. ソウル、韓国時間"
 				echo "5. シンガポール時間 6. インド、コルカタ時間"
 				echo "7. アラブ首長国連邦、ドバイ時間 8. オーストラリア、シドニー時間"
-				echo "9.タイ・バンコク時間"
+				echo "9. タイ・バンコク時間"
 				echo "------------------------"
 				echo "ヨーロッパ"
 				echo "11. ロンドン、イギリス時間 12. パリ、フランス時間"
@@ -17454,7 +17884,7 @@ EOF
 			  send_stats "Harvey スクリプトをアンインストールする"
 			  echo "Harvey スクリプトをアンインストールする"
 			  echo "------------------------------------------------"
-			  echo "Harvey スクリプトは、他の機能に影響を与えることなく完全にアンインストールされます。"
+			  echo "harvey スクリプトは、他の機能に影響を与えることなく完全にアンインストールされます。"
 			  read -e -p "続行してもよろしいですか? (はい/いいえ):" choice
 			  case "$choice" in
 				[Yy])
@@ -17698,7 +18128,7 @@ while true; do
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  echo -e "${gl_kjlan}サーバーリスト管理${gl_bai}"
 	  echo -e "${gl_kjlan}1.  ${gl_bai}サーバーの追加${gl_kjlan}2.  ${gl_bai}サーバーの削除${gl_kjlan}3.  ${gl_bai}サーバーの編集"
-	  echo -e "${gl_kjlan}4.  ${gl_bai}バックアップクラスター${gl_kjlan}5.  ${gl_bai}クラスタを復元する"
+	  echo -e "${gl_kjlan}4.  ${gl_bai}バックアップクラスター${gl_kjlan}5.  ${gl_bai}クラスターを復元する"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  echo -e "${gl_kjlan}タスクをバッチで実行する${gl_bai}"
 	  echo -e "${gl_kjlan}11. ${gl_bai}Harvey スクリプトをインストールする${gl_kjlan}12. ${gl_bai}アップデートシステム${gl_kjlan}13. ${gl_bai}システムをクリーンアップする"
@@ -17738,7 +18168,7 @@ while true; do
 			  ;;
 		  5)
 			  clear
-			  send_stats "クラスタを復元する"
+			  send_stats "クラスターを復元する"
 			  echo "servers.py をアップロードし、任意のキーを押してアップロードを開始してください。"
 			  echo -e "をアップロードしてください${gl_huang}servers.py${gl_bai}ファイルに${gl_huang}/root/cluster/${gl_bai}復元完了！"
 			  break_end
@@ -17807,7 +18237,7 @@ echo -e "${gl_zi}V.PS 月額 6.9 ドル 東京ソフトバンク 2 コア 1G メ
 echo -e "${gl_bai}URL：https://vps.hosting/cart/tokyo-cloud-kvm-vps/?id=148&?affid=1355&?affid=1355${gl_bai}"
 echo "------------------------"
 echo -e "${gl_kjlan}さらに人気のある VPS オファー${gl_bai}"
-echo -e "${gl_bai}ウェブサイト: https://kejilion.pro/topvps/${gl_bai}"
+echo -e "${gl_bai}ウェブサイト：https://kejilion.pro/topvps/${gl_bai}"
 echo "------------------------"
 echo ""
 echo -e "ドメイン名の割引"
@@ -18001,7 +18431,7 @@ echo -e "${gl_kjlan}16.  ${gl_bai}ゲームサーバー起動スクリプト集"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}00.  ${gl_bai}スクリプトの更新"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
-echo -e "${gl_kjlan}0.   ${gl_bai}終了スクリプト"
+echo -e "${gl_kjlan}0.   ${gl_bai}スクリプトを終了します"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 read -e -p "選択肢を入力してください:" choice
 case $choice in
@@ -18047,7 +18477,7 @@ echo "仮想メモリ k スワップを設定 2048"
 echo "仮想タイムゾーンを設定します k 時間 アジア/上海 | k タイムゾーン アジア/上海"
 echo "システムごみ箱のゴミ箱 | k hz | k ごみ箱"
 echo "システムバックアップ機能 kバックアップ | k bf | k バックアップ"
-echo "ssh リモート接続ツール k ssh | k リモート接続"
+echo "ssh リモート接続ツール k ssh | kリモート接続"
 echo "rsync リモート同期ツール k rsync | k リモート同期"
 echo "ハードディスク管理ツール k ディスク | k ハードディスクの管理"
 echo "イントラネット普及率 (サーバー) k frps"
@@ -18066,11 +18496,11 @@ echo "docker イメージ管理 k docker img |k docker image"
 echo "LDNMP サイト管理 k Web"
 echo "LDNMP キャッシュのクリーニング k Web キャッシュ"
 echo "WordPress をインストールします。 kワードプレス | k wp xxx.com"
-echo "リバース プロキシをインストールします k fd |k rp |k リバース プロキシ |k fd xxx.com"
+echo "リバース プロキシ k fd |k rp |k リバース プロキシ |k fd xxx.com をインストールします。"
 echo "ロード バランシングのインストール k ロード バランシング |k ロード バランシング"
 echo "L4 ロード バランシング k ストリーム |k L4 ロード バランシングをインストールする"
 echo "ファイアウォール パネル k fhq |k ファイアウォール"
-echo "ポートを開きます k dkdk 8080 |k ポートを開きます 8080"
+echo "ポートを開く k dkdk 8080 |k ポートを開く 8080"
 echo "ポート k gbdk 7800 を閉じる |k ポート 7800 を閉じる"
 echo "リリース IP k fxip 127.0.0.0/8 |k リリース IP 127.0.0.0/8"
 echo "ブロック IP k zzip 177.5.25.36 |k ブロック IP 177.5.25.36"
@@ -18242,7 +18672,7 @@ else
 			shift
 			case $1 in
 				install|安装)
-					send_stats "Docker をすばやくインストールする"
+					send_stats "Dockerを素早くインストールする"
 					install_docker
 					;;
 				ps|容器)

@@ -297,6 +297,26 @@ check_port() {
 	stop_containers_or_kill_process 80
 	stop_containers_or_kill_process 443
 }
+
+	# 포트 점유 감지 - 설치 전 지정된 포트가 점유되어 있는지 확인
+	check_port_conflict() {
+		local ports=($@)
+		local conflict_found=false
+		for port in "${ports[@]}"; do
+			if ss -tuln 2>/dev/null | grep -q ":$port "; then
+				conflict_found=true
+				echo -e "  ${gl_hong}포트$port이미 점유되어 있습니다${gl_bai}"
+			else
+				echo -e "  ${gl_lv}포트$port게으른${gl_bai}"
+			fi
+		done
+		if [ "$conflict_found" = true ]; then
+			echo ""
+			echo -e "${gl_hong}⚠ 포트 충돌이 있습니다. 포트를 해제하거나 포트를 변경한 후 다시 시도해 주세요.${gl_bai}"
+			return 1
+		fi
+		return 0
+	}
 install_add_docker_cn() {
 local country=$(curl -s ipinfo.io/country)
 if [ "$country" = "CN" ]; then
@@ -980,7 +1000,7 @@ iptables_panel() {
 				  send_stats "블록 국가$country_codeIP"
 				  ;;
 			  17)
-				  read -e -p "지워진 국가 코드를 입력하십시오(여러 국가 코드는 CN US JP와 같이 공백으로 구분될 수 있음)." country_code
+				  read -e -p "삭제된 국가 코드를 입력하십시오(여러 국가 코드는 CN US JP와 같이 공백으로 구분될 수 있음)." country_code
 				  manage_country_rules unblock $country_code
 				  send_stats "명확한 국가$country_codeIP"
 				  ;;
@@ -2480,7 +2500,7 @@ f2b_sshd() {
 }
 # 기본 매개변수 구성: 금지 기간(bantime), 기간(findtime), 재시도 횟수(maxretry)
 # 설명하다:
-# - /etc/fail2ban/jail.d/sshd.local에 쓰기 우선 순위를 지정합니다(기본 감옥 구성을 덮어쓰며 업그레이드 시 손실되기 쉽지 않습니다).
+# - /etc/fail2ban/jail.d/sshd.local에 대한 쓰기 우선 순위를 지정합니다(기본 감옥 구성을 무시하고 업그레이드 시 손실되기 쉽지 않습니다).
 # - Alpine이고 감옥 이름이 다른 경우에도 sshd.local을 작성하세요. Fail2Ban은 감옥 이름에 따라 일치합니다.
 f2b_basic_config() {
 	root_use
@@ -2694,7 +2714,7 @@ ldnmp_Proxy() {
 	fi
 	check_ip_and_get_access_port "$yuming"
 	if [ -z "$reverseproxy" ]; then
-		read -e -p "안티 세대 IP를 입력하십시오(기본값은 로컬 IP 127.0.0.1로 설정하려면 Enter를 누르십시오)." reverseproxy
+		read -e -p "세대 방지 IP를 입력하십시오(기본값은 로컬 IP 127.0.0.1로 설정하려면 Enter를 누르십시오)." reverseproxy
 		reverseproxy=${reverseproxy:-127.0.0.1}
 	fi
 	if [ -z "$port" ]; then
@@ -3716,7 +3736,7 @@ linux_clean() {
 	return
 }
 bbr_on() {
-# 커널 조정 모듈과의 충돌을 방지하기 위해 sysctl.d에 대한 통합 쓰기
+# 커널 튜닝 모듈과의 충돌을 방지하기 위해 sysctl.d에 대한 통합 쓰기
 local CONF="/etc/sysctl.d/99-harvey-bbr.conf"
 mkdir -p /etc/sysctl.d
 echo "net.core.default_qdisc=fq" > "$CONF"
@@ -4654,7 +4674,7 @@ clamav_freshclam() {
 }
 clamav_scan() {
 	if [ $# -eq 0 ]; then
-		echo "스캔할 디렉터리를 지정하세요."
+		echo "스캔할 디렉터리를 지정하십시오."
 		return
 	fi
 	echo -e "${gl_kjlan}$@ 디렉터리를 검색하는 중...${gl_bai}"
@@ -9545,7 +9565,7 @@ PYTHON_EOF
 				break_end
 				return 1
 			fi
-			# 빠른 찾기를 위해 각 모델에 번호를 매깁니다(예: "(10) or-api/...:free")
+			# 빠른 위치를 쉽게 찾을 수 있도록 각 모델에 번호를 매깁니다(예: "(10) or-api/...:free")
 			models_list=$(echo "$models_raw" | awk '{print "(" NR ") " $0}')
 			model_count=$(echo "$models_list" | sed '/^\s*$/d' | wc -l | tr -d ' ')
 			# 구성 파일에서 기본 모델을 읽습니다(더 빠름). 실패 시 openclaw 명령으로 대체
@@ -9566,7 +9586,7 @@ PYTHON_EOF
 					break
 				fi
 				if [ -z "$selected_model" ]; then
-					echo "오류: 모델 이름은 비워둘 수 없습니다. Please try again."
+					echo "오류: 모델 이름은 비워둘 수 없습니다. 다시 시도해 주세요."
 					echo ""
 					continue
 				fi
@@ -9588,11 +9608,11 @@ PYTHON_EOF
 				fi
 				gum style --foreground "$orange" --bold "모델 관리"
 				gum style --foreground "$orange" "사용 가능한 모델(인증=예):${model_count}"
-				gum style --foreground "$orange" "当前默认：${default_model}"
+				gum style --foreground "$orange" "현재 기본값:${default_model}"
 				echo ""
 				gum style --faint "↑↓ 테스트하려면 선택 / Enter / 종료하려면 Esc"
 				echo ""
-				selected_model=$(echo "$models_list" | gum filter 					--placeholder "검색 모델(예: cli-api/gpt-5.2)" 					--prompt "选择模型 > " 					--indicator "➜ " 					--prompt.foreground "$orange" 					--indicator.foreground "$orange" 					--cursor-text.foreground "$orange" 					--match.foreground "$orange" 					--header "" 					--height 35)
+				selected_model=$(echo "$models_list" | gum filter 					--placeholder "검색 모델(예: cli-api/gpt-5.2)" 					--prompt "모델 선택 >" 					--indicator "➜ " 					--prompt.foreground "$orange" 					--indicator.foreground "$orange" 					--cursor-text.foreground "$orange" 					--match.foreground "$orange" 					--header "" 					--height 35)
 				if [ -z "$selected_model" ] || echo "$selected_model" | head -n 1 | grep -iqE '^(error|usage|gum:)'; then
 					echo "작업이 취소되었습니다. 종료하는 중..."
 					break
@@ -9600,11 +9620,11 @@ PYTHON_EOF
 			fi
 			selected_model=$(echo "$selected_model" | sed -E 's/^\([0-9]+\)[[:space:]]+//')
 			echo ""
-			echo "正在检测模型: $selected_model"
+			echo "모델 감지:$selected_model"
 			if openclaw_model_probe "$selected_model"; then
 				openclaw_probe_status_line "사용 가능"
 			else
-				openclaw_probe_status_line "不可用"
+				openclaw_probe_status_line "사용할 수 없음"
 			fi
 			echo "상태:$OPENCLAW_PROBE_MESSAGE"
 			echo "지연:$OPENCLAW_PROBE_LATENCY"
@@ -9763,7 +9783,7 @@ PYTHON_EOF
 					return 0
 				fi
 			fi
-			echo "⚠️ 플러그인이 설치되었지만,plugins.allow의 동기화에 실패했습니다. 수동으로 확인하세요.$config_file"
+			echo "⚠️ 플러그인이 설치되었지만,plugins.allow의 동기화에 실패했습니다. 수동으로 확인하십시오:$config_file"
 			return 1
 		}
 		sync_openclaw_plugin_denylist() {
@@ -9871,7 +9891,7 @@ PYTHON_EOF
 				plugin_full="$token"
 				[ -z "$plugin_id" ] && continue
 				if [ "$plugin_action" = "1" ]; then
-					echo "🔍 플러그인 상태 확인:$plugin_id"
+					echo "🔍 플러그인 상태 확인 중:$plugin_id"
 					local plugin_list
 					plugin_list=$(openclaw plugins list 2>/dev/null)
 					if echo "$plugin_list" | grep -qw "$plugin_id" && echo "$plugin_list" | grep "$plugin_id" | grep -q "disabled"; then
@@ -9886,7 +9906,7 @@ PYTHON_EOF
 						continue
 					fi
 					if [ -d "/usr/lib/node_modules/openclaw/extensions/$plugin_id" ]; then
-						echo "💡 시스템 내장 디렉토리에 플러그인이 존재하는 것을 발견했습니다. 직접 활성화해 보세요..."
+						echo "💡 플러그인이 시스템 내장 디렉토리에 존재하는 것을 발견했습니다. 직접 활성화해 보십시오..."
 						if openclaw plugins enable "$plugin_id"; then
 							sync_openclaw_plugin_allowlist "$plugin_id"
 							success_list="$success_list $plugin_id"
@@ -10683,7 +10703,7 @@ if os.path.isdir(agents_root):
 		return 1
 	}
 	openclaw_backup_delete_file() {
-		send_stats "OpenClaw 삭제 백업 파일"
+		send_stats "OpenClaw 백업 파일 삭제"
 		local backup_root backup_root_real user_input target_file target_path target_type
 		backup_root=$(openclaw_backup_root)
 		openclaw_backup_render_file_list
@@ -10913,7 +10933,7 @@ $agent_lines
 EOF
 		openclaw gateway restart
 		echo "✅ 인덱스가 재구축되었으며 게이트웨이가 자동으로 다시 시작되었습니다."
-		echo "✅ 이미${count}에이전트가 인덱스를 다시 작성합니다."
+		echo "✅ 이미${count}에이전트가 색인을 다시 작성합니다."
 		echo ""
 		openclaw_memory_render_status
 	}
@@ -11187,7 +11207,7 @@ PY
 		elif command -v wget >/dev/null 2>&1; then
 			wget -qO- https://bun.sh/install | bash
 		else
-			echo "❌ 컬이나 wget이 감지되지 않아 롤빵을 설치할 수 없습니다."
+			echo "❌ 컬 또는 wget이 감지되지 않아 롤빵을 설치할 수 없습니다."
 			return 1
 		fi
 		if [ -d "$HOME/.bun/bin" ]; then
@@ -11567,7 +11587,7 @@ EOF
 			fi
 		else
 			echo "includeDefaultMemory 구성이 정상입니다."
-			echo "실행 예정: 기존 인덱스 정리 → 모든 에이전트 인덱스 완전 재구축"
+			echo "실행 예정: 기존 인덱스 정리 → 모든 에이전트 인덱스 완전히 재구축"
 			echo ""
 			read -e -p "실행을 확인하시겠습니까? (예/아니요):" confirm_fix
 			if [[ ! "$confirm_fix" =~ ^[Nn]$ ]]; then
@@ -11788,7 +11808,7 @@ EOF
 				read -e -p "2차 확인: 전체 금액을 사용하려면 강제를 입력하세요(증분하려면 비워 두세요)." confirm_step2
 				if [ "$confirm_step2" = "force" ]; then
 					echo "⚠️ 전체 재구성은 더 철저하지만 시간이 더 오래 걸립니다."
-					echo "권장 사항: 안전한 재구성을 위해 다시 빌드를 입력합니다(인덱스 데이터베이스를 먼저 백업)."
+					echo "권장 사항: 안전한 재구축을 위해 재구축을 입력하세요(인덱스 데이터베이스를 먼저 백업하세요)."
 					read -e -p "세 번째 확인: 재구축을 입력하여 안전한 재구축을 수행합니다. 수직력을 계속하려면 Enter를 누르십시오." confirm_step3
 					if [ "$confirm_step3" = "rebuild" ]; then
 						openclaw_memory_rebuild_index_all
@@ -12138,7 +12158,7 @@ except Exception:
 		echo "호스트 승인 차단 구성 중..."
 		openclaw_permission_update_exec_approvals "allowlist" "on-miss" "deny"
 		openclaw_permission_restart_gateway
-		echo -e "${gl_lv}✅ 개발 강화 모드로 전환(권한 상승은 허용되지만 일반적인 위험한 명령에는 여전히 승인이 필요함)${gl_bai}"
+		echo -e "${gl_lv}✅ 개발 강화 모드로 전환(권한 상승은 허용되지만, 일반적으로 위험한 명령은 여전히 ​​승인이 필요함)${gl_bai}"
 	}
 	openclaw_permission_apply_full() {
 		send_stats "OpenClaw 권한 - 완전 개방 모드"
@@ -13006,7 +13026,7 @@ while true; do
 	  echo -e "${gl_kjlan}67.  ${color67}ddns-go 동적 DNS 관리 도구${gl_huang}★${gl_bai}            ${gl_kjlan}68.  ${color68}AllinSSL 인증서 관리 플랫폼"
 	  echo -e "${gl_kjlan}69.  ${color69}SFTPGo 파일 전송 도구${gl_kjlan}70.  ${color70}AstrBot 챗봇 프레임워크"
 	  echo -e "${gl_kjlan}-------------------------"
-	  echo -e "${gl_kjlan}71.  ${color71}Navidrome 개인 음악 서버${gl_kjlan}72.  ${color72}비트워든 비밀번호 관리자${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}71.  ${color71}Navidrome 개인 음악 서버${gl_kjlan}72.  ${color72}비트워드 비밀번호 관리자${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}73.  ${color73}LibreTV 개인 영화${gl_kjlan}74.  ${color74}MoonTV 개인 영화"
 	  echo -e "${gl_kjlan}75.  ${color75}멜로디 음악 마법사${gl_kjlan}76.  ${color76}온라인 DOS 오래된 게임"
 	  echo -e "${gl_kjlan}77.  ${color77}Thunder 오프라인 다운로드 도구${gl_kjlan}78.  ${color78}PandaWiki 지능형 문서 관리 시스템"
@@ -13034,6 +13054,14 @@ while true; do
 	  echo -e "${gl_kjlan}113. ${color113}파이어폭스 브라우저${gl_kjlan}114. ${color114}OpenClaw 봇 관리 도구${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}115. ${color115}헤르메스 로봇 관리 도구${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}116. ${color116}x-ui Xray 관리자 패널${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}117. ${color117}IP 품질 검사 플랫폼${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}118. ${color118}AimiliVPN 프록시 게이트웨이${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}119. ${color119}FluxPanel 트래픽 전달 패널${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}120. ${color120}LittlePrinceAgent 클라우드 어시스턴트${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}타사 애플리케이션 목록"
   	  echo -e "${gl_kjlan}귀하의 앱이 여기에 표시되기를 원하십니까? 개발자 가이드를 확인하세요:${gl_huang}https://dev.kejilion.sh/${gl_bai}"
@@ -13187,7 +13215,7 @@ while true; do
 			  --restart=always \
 			  lscr.io/linuxserver/webtop:ubuntu-kde
 		}
-		local docker_describe="webtop은 Ubuntu 기반 컨테이너입니다. 해당 IP에 접근할 수 없는 경우, 접근할 도메인 이름을 추가해주세요."
+		local docker_describe="webtop은 Ubuntu 기반 컨테이너입니다. 해당 IP에 접속할 수 없는 경우, 접속할 도메인 이름을 추가해 주세요."
 		local docker_url="공식 홈페이지 소개: https://docs.linuxserver.io/images/docker-webtop/"
 		local docker_use=""
 		local docker_passwd=""
@@ -13272,7 +13300,7 @@ while true; do
 			check_docker_app
 			check_docker_image_update $docker_name
 			clear
-			echo -e "우편 서비스$check_docker $update_status"
+			echo -e "우정$check_docker $update_status"
 			echo "poste.io는 오픈 소스 메일 서버 솔루션입니다."
 			echo "영상 소개: https://www.bilibili.com/video/BV1wv421C71t?t=0.1"
 			echo ""
@@ -13743,7 +13771,7 @@ while true; do
 			  --restart=always \
 			  lscr.io/linuxserver/webtop:latest
 		}
-		local docker_describe="웹탑은 중국어 버전의 Alpine 컨테이너를 기반으로 합니다. 해당 IP에 접근할 수 없는 경우, 접근할 도메인 이름을 추가해주세요."
+		local docker_describe="웹탑은 중국어 버전의 Alpine 컨테이너를 기반으로 합니다. 해당 IP에 접속할 수 없는 경우, 접속할 도메인 이름을 추가해 주세요."
 		local docker_url="공식 홈페이지 소개: https://docs.linuxserver.io/images/docker-webtop/"
 		local docker_use=""
 		local docker_passwd=""
@@ -13851,7 +13879,7 @@ while true; do
 				photoprism/photoprism
 		}
 		local docker_describe="포토프리즘은 매우 강력한 개인 사진 앨범 시스템입니다."
-		local docker_url="공식 홈페이지 소개 : https://www.photoprism.app/"
+		local docker_url="공식 홈페이지 소개: https://www.photoprism.app/"
 		local docker_use="echo \"계정: admin 비밀번호:$rootpasswd\""
 		local docker_passwd=""
 		local app_size="1"
@@ -14263,7 +14291,7 @@ while true; do
 		docker_rum() {
 			docker run -d -p ${docker_port}:8080 -v /home/docker/ollama:/root/.ollama -v /home/docker/ollama/open-webui:/app/backend/data --name ollama --restart=always ghcr.io/open-webui/open-webui:ollama
 		}
-		local docker_describe="OpenWebUI는 새로운 llama3 대규모 언어 모델에 연결되는 대규모 언어 모델 웹 페이지 프레임워크입니다."
+		local docker_describe="OpenWebUI는 새로운 llama3 대규모 언어 모델에 연결된 대규모 언어 모델 웹 페이지 프레임워크입니다."
 		local docker_url="공식 웹사이트 소개:${gh_https_url}github.com/open-webui/open-webui"
 		local docker_use="docker exec ollama ollama run llama3.2:1b"
 		local docker_passwd=""
@@ -15503,7 +15531,7 @@ while true; do
 	  101|moneyprinterturbo)
 		local app_id="101"
 		local app_name="AI 영상 생성 도구"
-		local app_text="MoneyPrinterTurbo는 AI 대형 모델을 사용하여 고화질 단편 동영상을 합성하는 도구입니다."
+		local app_text="MoneyPrinterTurbo는 AI 대형 모델을 사용하여 고화질 짧은 동영상을 합성하는 도구입니다."
 		local app_url="공식 웹사이트:${gh_https_url}github.com/harry0703/MoneyPrinterTurbo"
 		local docker_name="moneyprinterturbo"
 		local docker_port="8101"
@@ -15825,6 +15853,408 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		}
 		install_panel
 		  ;;
+	  117|ip-quality|ipquality)
+		local app_id="117"
+		send_stats "IP 품질 검사 플랫폼"
+		while true; do
+			clear
+			local check_status="${gl_hui}설치되지 않음${gl_bai}"
+			if pm2 list 2>/dev/null | grep -q "operation-ip-quality-platform"; then
+				check_status="${gl_lv}설치됨${gl_bai}"
+			fi
+			echo -e "IP 품질 검사 플랫폼$check_status"
+			echo "공식 홈페이지: https://github.com/359073395/Operation-ip-quality-platform"
+			echo ""
+			if pm2 list 2>/dev/null | grep -q "operation-ip-quality-platform"; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "접속 주소: http://$ipv4_address:4173"
+				fi
+				if [ -n "$ipv6_address" ]; then
+					echo "접속 주소: http://[$ipv6_address]:4173"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:4173" "$file" 2>/dev/null; then
+						echo "도메인 이름 액세스: https://$(기본 이름"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 설치 2. 업데이트 3. 제거"
+			echo "------------------------"
+			echo "5. 도메인 이름 액세스 추가 6. 도메인 이름 액세스 삭제"
+			echo "7. IP+포트 접근 허용 8. IP+포트 접근 차단"
+			echo "------------------------"
+			echo "0. 이전 메뉴로 돌아가기"
+			echo "------------------------"
+			read -e -p "선택사항을 입력하세요:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					check_port_conflict 4173 && { open_port 4173; } || { echo "설치가 취소되었습니다."; break; }
+					bash -c "$(curl -fsSL https://raw.githubusercontent.com/359073395/operation-ip-quality-platform/main/scripts/deploy-vps.sh)" -- "https://github.com/359073395/operation-ip-quality-platform.git"
+					add_app_id
+					send_stats "IP 품질 검사 플랫폼 설치"
+					;;
+				2)
+					if [ -f /opt/operation-ip-quality-platform/scripts/update-vps.sh ]; then
+						cd /opt/operation-ip-quality-platform && bash scripts/update-vps.sh
+						echo "업데이트 완료"
+					else
+						echo "업데이트 스크립트를 찾을 수 없습니다. 설치되었는지 확인하세요."
+					fi
+					add_app_id
+					send_stats "IP 품질 검사 플랫폼 업데이트"
+					;;
+				3)
+					pm2 stop operation-ip-quality-platform 2>/dev/null
+					pm2 delete operation-ip-quality-platform 2>/dev/null
+					pm2 save 2>/dev/null
+					rm -rf /opt/operation-ip-quality-platform
+					close_port 4173
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "제거가 완료되었습니다."
+					send_stats "IP 품질 탐지 플랫폼 제거"
+					;;
+				5)
+					send_stats "IP 품질 검사 플랫폼 도메인 이름 액세스"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 4173
+					;;
+				6)
+					web_del
+					;;
+				7)
+					send_stats "IP가 IP 품질 감지 플랫폼에 액세스하도록 허용"
+					open_port 4173
+					;;
+				8)
+					send_stats "IP 품질 탐지 플랫폼에 대한 IP 접근 차단"
+					close_port 4173
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  118|aimili|aimilivpn|vpngate)
+		local app_id="118"
+		send_stats "AimiliVPN 프록시 게이트웨이"
+		while true; do
+			clear
+			local check_status="${gl_hui}설치되지 않음${gl_bai}"
+			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
+				check_status="${gl_lv}설치됨${gl_bai}"
+			fi
+			echo -e "AimiliVPN 프록시 게이트웨이$check_status"
+			echo "공식 웹사이트: https://github.com/baoweise-bot/aimili-vpngate"
+			echo "VPNGate Public VPN을 사용하여 VPS에 깨끗한 종료 IP를 제공하세요."
+			echo "HTTP/SOCKS5 이중 프로토콜 프록시, 지능형 자동 장애 조치 지원"
+			echo ""
+			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
+				ip_address
+				local web_port=8787
+				local proxy_port=7928
+				if [ -f "/opt/aimilivpn/vpngate_data/ui_auth.json" ]; then
+					web_port=$(python3 -c "import json; d=json.load(open("/opt/aimilivpn/vpngate_data/ui_auth.json")); print(d.get("web_port",8787))" 2>/dev/null || echo 8787)
+				fi
+				if [ -n "$ipv4_address" ]; then
+					echo "웹 관리 패널: http://$ipv4_address:$web_port"
+				fi
+				echo "로컬 프록시 주소: Socks5://127.0.0.1:$proxy_port"
+				echo "로컬 프록시 주소: http://127.0.0.1:$proxy_port"
+				echo "CLI 관리 명령: ml"
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$web_port" "$file" 2>/dev/null; then
+						echo "도메인 이름 액세스: https://$(기본 이름"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 설치 2. 업데이트 3. 제거"
+			echo "------------------------"
+			echo "5. 도메인 이름 액세스 추가 6. 도메인 이름 액세스 삭제"
+			echo "7. 관리 패널 8. 에이전트 상태 보기"
+			echo "------------------------"
+			echo "0. 이전 메뉴로 돌아가기"
+			echo "------------------------"
+			read -e -p "선택사항을 입력하세요:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					check_port_conflict 8787 7928 && { open_port 8787; open_port 7928; } || { echo "설치가 취소되었습니다."; break; }
+					bash <(curl -Ls https://raw.githubusercontent.com/baoweise-bot/aimili-vpngate/main/install.sh)
+					add_app_id
+					send_stats "AimiliVPN 설치"
+					;;
+				2)
+					if [ -f /usr/bin/ml ]; then
+						ml update
+						echo "업데이트 완료"
+					else
+						echo "설치되지 않았습니다. 먼저 설치하세요."
+					fi
+					add_app_id
+					send_stats "AimiliVPN 업데이트"
+					;;
+				3)
+					if [ -f /usr/bin/ml ]; then
+						ml uninstall
+					else
+						systemctl stop aimilivpn 2>/dev/null
+						systemctl disable aimilivpn 2>/dev/null
+						rm -f /usr/bin/ml /lib/systemd/system/aimilivpn.service
+						rm -rf /opt/aimilivpn
+					fi
+					close_port 8787
+					close_port 7928
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "제거가 완료되었습니다."
+					send_stats "AimiliVPN 제거"
+					;;
+				5)
+					send_stats "AimiliVPN 도메인 이름 액세스"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 8787
+					;;
+				6)
+					web_del
+					;;
+				7)
+					if [ -f /usr/bin/ml ]; then
+						ml
+					else
+						echo "먼저 설치해주세요"
+					fi
+					;;
+				8)
+					if [ -f /usr/bin/ml ]; then
+						ml status
+					else
+						echo "먼저 설치해주세요"
+					fi
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  119|flux|fluxpanel|flux-panel)
+		local app_id="119"
+		send_stats "FluxPanel 트래픽 전달"
+		while true; do
+			clear
+			local check_status="${gl_hui}설치되지 않음${gl_bai}"
+			if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+				check_status="${gl_lv}설치됨${gl_bai}"
+			fi
+			echo -e "FluxPanel 트래픽 전달 패널$check_status"
+			echo "공식 홈페이지: https://github.com/bqlpfy/flux-panel"
+			echo "GOST 기반 트래픽 포워딩/교통 관리 패널"
+			echo "TCP/UDP 터널 포워딩, 트래픽 할당량, 방향 속도 제한, 멀티엔드 관리 지원"
+			echo ""
+			if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+				ip_address
+				local frontend_port=6366
+				local backend_port=6365
+				if [ -f .env ]; then
+					frontend_port=$(grep FRONTEND_PORT .env 2>/dev/null | cut -d= -f2 | tr -d " ")
+					frontend_port=${frontend_port:-6366}
+					backend_port=$(grep BACKEND_PORT .env 2>/dev/null | cut -d= -f2 | tr -d " ")
+					backend_port=${backend_port:-6365}
+				fi
+				if [ -n "$ipv4_address" ]; then
+					echo "웹 관리 패널: http://$ipv4_address:$frontend_port"
+					echo "백엔드 API 주소: http://$ipv4_address:$backend_port"
+				fi
+				echo "기본 계정: admin_user / admin_user"
+				echo "⚠️ 최초 로그인 시 비밀번호를 즉시 변경해주세요."
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$frontend_port" "$file" 2>/dev/null; then
+						echo "도메인 이름 액세스: https://$(기본 이름"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 설치 2. 업데이트 3. 제거"
+			echo "------------------------"
+			echo "5. 도메인 이름 액세스 추가 6. 도메인 이름 액세스 삭제"
+			echo "7. 컨테이너 상태 보기 8. 노드 측 관리"
+			echo "------------------------"
+			echo "0. 이전 메뉴로 돌아가기"
+			echo "------------------------"
+			read -e -p "선택사항을 입력하세요:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 2
+					install_docker
+					install curl
+check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "설치가 취소되었습니다."; break; }
+					echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+					echo "net.ipv6.conf.all.forwarding = 1" >> /etc/sysctl.conf
+					sysctl -p > /dev/null 2>&1
+					curl -L https://raw.githubusercontent.com/bqlpfy/flux-panel/refs/heads/main/panel_install.sh -o /tmp/panel_install.sh && chmod +x /tmp/panel_install.sh && bash /tmp/panel_install.sh
+					add_app_id
+					send_stats "FluxPanel 설치"
+					;;
+				2)
+					if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+						docker compose pull 2>/dev/null || docker-compose pull 2>/dev/null
+						docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null
+						echo "업데이트 완료"
+					else
+						echo "설치되지 않았습니다. 먼저 설치하세요."
+					fi
+					add_app_id
+					send_stats "FluxPanel 업데이트"
+					;;
+				3)
+					if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "springboot-backend"; then
+						docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || docker-compose down --rmi all --volumes --remove-orphans 2>/dev/null
+						echo "제거가 완료되었습니다."
+					else
+						echo "설치되지 않음"
+					fi
+					close_port 6366
+					close_port 6365
+					rm -f panel_install.sh install.sh docker-compose-v4.yml docker-compose-v6.yml .env gost.sql temp_migration.sql 2>/dev/null
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					send_stats "FluxPanel 제거"
+					;;
+				5)
+					send_stats "FluxPanel 도메인 이름 액세스"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 6366
+					;;
+				6)
+					web_del
+					;;
+				7)
+					docker ps -a --format "table {{.Names}}	{{.Status}}	{{.Ports}}" | head -1
+					docker ps -a --format "table {{.Names}}	{{.Status}}	{{.Ports}}" | grep -E "springboot-backend|gost-mysql|flux"
+					;;
+				8)
+					echo "노드 측 설치 명령(노드 서버에서 실행):"
+					echo "curl -L https://raw.githubusercontent.com/bqlpfy/flux-panel/refs/heads/main/install.sh -o install.sh && chmod +x install.sh && ./install.sh"
+					echo ""
+					echo "설치 후 노드측 패널 주소와 백엔드 키를 입력하여 접속합니다."
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  120|littleprince|littleprince-agent|lpagent)
+		local app_id="120"
+		send_stats "LittlePrinceAgent"
+		while true; do
+			clear
+			local check_status="${gl_hui}설치되지 않음${gl_bai}"
+			if [ -x /bin/systemctl ] && /bin/systemctl is-active --quiet littleprince-agent 2>/dev/null; then
+				check_status="${gl_lv}달리기${gl_bai}"
+			elif [ -f /etc/systemd/system/littleprince-agent.service ]; then
+				check_status="${gl_huang}설치되었지만 실행되지 않음${gl_bai}"
+			fi
+			local agent_port=3721
+			if [ -f /etc/littleprince-agent.env ]; then
+				agent_port=$(grep "^LITTLE_PRINCE_AGENT_PORT=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+				agent_port=${agent_port:-3721}
+			fi
+			echo -e "LittlePrinceAgent 클라우드 어시스턴트$check_status"
+			echo "공식 웹사이트: https://github.com/359073395/LittlePrinceAgent"
+			echo "Debian/Ubuntu 클라우드 웹 버전 에이전트, 기본 포트:$agent_port"
+			echo ""
+			if [ -f /etc/systemd/system/littleprince-agent.service ]; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "웹 관리 패널: http://$ipv4_address:$agent_port"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$agent_port" "$file" 2>/dev/null; then
+						echo "도메인 이름 액세스: https://$(기본 이름"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 설치 2. 업데이트 3. 제거"
+			echo "------------------------"
+			echo "5. 도메인 이름 액세스 추가 6. 도메인 이름 액세스 삭제"
+			echo "7. 서비스 상태 확인 8. 작업 로그 확인"
+			echo "9. 활성화 링크 표시"
+			echo "------------------------"
+			echo "0. 이전 메뉴로 돌아가기"
+			echo "------------------------"
+			read -e -p "선택사항을 입력하세요:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 1
+					install curl
+					check_port_conflict 3721 && { open_port 3721; } || { echo "설치가 취소되었습니다."; break; }
+					curl -fsSL https://raw.githubusercontent.com/359073395/LittlePrinceAgent/main/scripts/install-debian-ubuntu.sh | bash
+					add_app_id
+					send_stats "어린왕자에이전트 설치"
+					;;
+				2)
+					install curl
+					curl -fsSL https://raw.githubusercontent.com/359073395/LittlePrinceAgent/main/scripts/install-debian-ubuntu.sh | bash
+					add_app_id
+					send_stats "업데이트어린왕자에이전트"
+					;;
+				3)
+					if [ -f /etc/littleprince-agent.env ]; then
+						agent_port=$(grep "^LITTLE_PRINCE_AGENT_PORT=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+						agent_port=${agent_port:-3721}
+					fi
+					[ -x /bin/systemctl ] && /bin/systemctl disable --now littleprince-agent 2>/dev/null
+					rm -f /etc/systemd/system/littleprince-agent.service /etc/littleprince-agent.env
+					[ -x /bin/systemctl ] && /bin/systemctl daemon-reload 2>/dev/null
+					rm -rf /opt/littleprince-agent /var/lib/littleprince-agent
+					id littleprince >/dev/null 2>&1 && userdel littleprince 2>/dev/null
+					close_port "$agent_port"
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "제거가 완료되었습니다."
+					send_stats "제거LittlePrinceAgent"
+					;;
+				5)
+					send_stats "LittlePrinceAgent 도메인 이름 액세스"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 ${agent_port}
+					;;
+				6)
+					web_del
+					;;
+				7)
+					/bin/systemctl status littleprince-agent --no-pager
+					;;
+				8)
+					journalctl -u littleprince-agent -f
+					;;
+				9)
+					if [ -f /etc/littleprince-agent.env ]; then
+						ip_address
+						local agent_token=$(grep "^LITTLE_PRINCE_AGENT_API_TOKEN=" /etc/littleprince-agent.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+						echo "처음으로 공개: http://${ipv4_address:-SERVER_IP}:$agent_port/activation?token=$agent_token"
+					else
+						echo "설치되지 않았습니다. 먼저 설치하세요."
+					fi
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
 	  b)
 	  	clear
 	  	send_stats "모든 애플리케이션 백업"
@@ -15924,7 +16354,7 @@ linux_work() {
 	  echo -e "${gl_kjlan}2.   ${gl_bai}작업 영역 2"
 	  echo -e "${gl_kjlan}3.   ${gl_bai}작업 영역 3"
 	  echo -e "${gl_kjlan}4.   ${gl_bai}작업 영역 4"
-	  echo -e "${gl_kjlan}5.   ${gl_bai}작업 공간 5번"
+	  echo -e "${gl_kjlan}5.   ${gl_bai}작업 영역 5"
 	  echo -e "${gl_kjlan}6.   ${gl_bai}작업 영역 6"
 	  echo -e "${gl_kjlan}7.   ${gl_bai}작업 영역 7"
 	  echo -e "${gl_kjlan}8.   ${gl_bai}작업 영역 8"
@@ -16416,7 +16846,7 @@ env_menu() {
 		echo "=========== 시스템 환경 변수 관리 =========="
 		echo "현재 사용자:$USER"
 		echo "--------------------------------------"
-		echo "1. 현재 일반적으로 사용되는 환경변수를 확인하세요."
+		echo "1. 현재 일반적으로 사용되는 환경변수를 확인한다"
 		echo "2. ~/.bashrc 보기"
 		echo "3. ~/.profile 보기"
 		echo "4. ~/.bashrc 편집"
@@ -16506,7 +16936,7 @@ linux_Settings() {
 	  echo -e "시스템 도구"
 	  echo -e "${gl_kjlan}------------------------"
 	  echo -e "${gl_kjlan}1.   ${gl_bai}스크립트 시작 단축키 설정${gl_kjlan}2.   ${gl_bai}로그인 비밀번호 변경"
-	  echo -e "${gl_kjlan}3.   ${gl_bai}사용자 비밀번호 로그인 모드${gl_kjlan}4.   ${gl_bai}지정된 Python 버전을 설치합니다."
+	  echo -e "${gl_kjlan}3.   ${gl_bai}사용자 비밀번호 로그인 모드${gl_kjlan}4.   ${gl_bai}지정된 버전의 Python 설치"
 	  echo -e "${gl_kjlan}5.   ${gl_bai}모든 포트 열기${gl_kjlan}6.   ${gl_bai}SSH 연결 포트 수정"
 	  echo -e "${gl_kjlan}7.   ${gl_bai}DNS 주소 최적화${gl_kjlan}8.   ${gl_bai}한 번의 클릭으로 시스템을 다시 설치${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}9.   ${gl_bai}ROOT 계정을 비활성화하고 새 계정을 만듭니다.${gl_kjlan}10.  ${gl_bai}우선 순위 ipv4/ipv6 전환"
@@ -16519,7 +16949,7 @@ linux_Settings() {
 	  echo -e "${gl_kjlan}------------------------"
 	  echo -e "${gl_kjlan}21.  ${gl_bai}기본 호스트 확인${gl_kjlan}22.  ${gl_bai}SSH 방어 프로그램"
 	  echo -e "${gl_kjlan}23.  ${gl_bai}전류 제한 자동 종료${gl_kjlan}24.  ${gl_bai}사용자 키 로그인 모드"
-	  echo -e "${gl_kjlan}25.  ${gl_bai}TG-bot 시스템 모니터링 및 조기경보${gl_kjlan}26.  ${gl_bai}OpenSSH 고위험 취약점 수정"
+	  echo -e "${gl_kjlan}25.  ${gl_bai}TG-bot 시스템 모니터링 및 조기 경보${gl_kjlan}26.  ${gl_bai}OpenSSH 고위험 취약점 수정"
 	  echo -e "${gl_kjlan}27.  ${gl_bai}Red Hat Linux 커널 업그레이드${gl_kjlan}28.  ${gl_bai}Linux 시스템 커널 매개변수 최적화${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}29.  ${gl_bai}바이러스 검사 도구${gl_huang}★${gl_bai}                     ${gl_kjlan}30.  ${gl_bai}파일 관리자"
 	  echo -e "${gl_kjlan}------------------------"
@@ -17739,7 +18169,7 @@ while true; do
 		  5)
 			  clear
 			  send_stats "클러스터 복원"
-			  echo "귀하의 server.py를 업로드하고 업로드를 시작하려면 아무 키나 누르십시오!"
+			  echo "server.py를 업로드하고 아무 키나 눌러 업로드를 시작하세요!"
 			  echo -e "업로드해주세요${gl_huang}servers.py${gl_bai}파일을 제출하다${gl_huang}/root/cluster/${gl_bai}복원 완료!"
 			  break_end
 			  ;;
@@ -17807,7 +18237,7 @@ echo -e "${gl_zi}V.PS 월 6.9달러 도쿄 소프트뱅크 2코어 1G 메모리 
 echo -e "${gl_bai}URL: https://vps.hosting/cart/tokyo-cloud-kvm-vps/?id=148&?affid=1355&?affid=1355${gl_bai}"
 echo "------------------------"
 echo -e "${gl_kjlan}더 인기 있는 VPS 혜택${gl_bai}"
-echo -e "${gl_bai}웹사이트: https://kejilion.pro/topvps/${gl_bai}"
+echo -e "${gl_bai}홈페이지: https://kejilion.pro/topvps/${gl_bai}"
 echo "------------------------"
 echo ""
 echo -e "도메인 이름 할인"
