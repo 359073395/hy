@@ -139,14 +139,5 @@ bash <(curl -sL https://sh.hyjiexi.eu.org/harvey.sh) en
 
 <br><br>
 
-## 💖 支持我们 (Support Us)
-觉得脚本还可以 USTD TRC20 打赏
-
-Feel free to support us with USTD TRC20 donations.
-
-<strong style="color: navy;">TCP3PLGUTG9Z4z4tnHHSLbw5bgp8NXhTT3</strong>
-
-<br><br>
-
 ## ⭐ Star History
 [![Star History Chart](https://api.star-history.com/svg?repos=harvey/sh&type=Date)](https://star-history.com/#harvey/sh&Date)
