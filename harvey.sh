@@ -13063,6 +13063,8 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}120. ${color120}LittlePrinceAgent云端助手 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}121. ${color121}影链工坊视频解析 ${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方应用列表"
   	  echo -e "${gl_kjlan}想要让你的应用出现在这里？查看开发者指南: ${gl_huang}https://dev.kejilion.sh/${gl_bai}"
 	  for f in "$HOME"/apps/*.conf; do
@@ -16247,6 +16249,102 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					else
 						echo "未安装，请先安装"
 					fi
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  121|yt|video-parser|yinglian)
+		local app_id="121"
+		send_stats "影链工坊视频解析"
+		while true; do
+			clear
+			local check_status="${gl_hui}未安装${gl_bai}"
+			if docker ps --format "{{.Names}}" 2>/dev/null | grep -q "^video-parser$"; then
+				check_status="${gl_lv}运行中${gl_bai}"
+			elif [ -d /opt/video-parser/project/video-parser ]; then
+				check_status="${gl_huang}已安装未运行${gl_bai}"
+			fi
+			local yt_port=9890
+			if [ -f /opt/video-parser/project/video-parser/.env ]; then
+				yt_port=$(grep "^PUBLIC_PORT=" /opt/video-parser/project/video-parser/.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+				yt_port=${yt_port:-9890}
+			fi
+			echo -e "影链工坊视频解析 $check_status"
+			echo "官网: https://github.com/359073395/yt"
+			echo "公开视频解析与服务器临时下载工具，默认端口: $yt_port"
+			echo "默认管理员: admin / lhw111111"
+			echo ""
+			if [ -d /opt/video-parser/project/video-parser ]; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "Web管理面板: http://$ipv4_address:$yt_port"
+					echo "健康检查: http://$ipv4_address:$yt_port/api/health"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$yt_port" "$file" 2>/dev/null; then
+						echo "域名访问: https://$(basename "$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 安装              2. 更新            3. 卸载"
+			echo "------------------------"
+			echo "5. 添加域名访问      6. 删除域名访问"
+			echo "7. 查看容器状态      8. 查看运行日志"
+			echo "------------------------"
+			echo "0. 返回上一级选单"
+			echo "------------------------"
+			read -e -p "请输入你的选择: " sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 2
+					install curl
+					check_port_conflict 9890 && { open_port 9890; } || { echo "安装取消"; break; }
+					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh) --port 9890
+					add_app_id
+					send_stats "安装影链工坊"
+					;;
+				2)
+					install curl
+					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh) --port 9890
+					add_app_id
+					send_stats "更新影链工坊"
+					;;
+				3)
+					if [ -f /opt/video-parser/project/video-parser/.env ]; then
+						yt_port=$(grep "^PUBLIC_PORT=" /opt/video-parser/project/video-parser/.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+						yt_port=${yt_port:-9890}
+					fi
+					if [ -d /opt/video-parser/project/video-parser ]; then
+						cd /opt/video-parser/project/video-parser && docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || docker rm -f video-parser 2>/dev/null
+					else
+						docker rm -f video-parser 2>/dev/null
+					fi
+					rm -rf /opt/video-parser
+					close_port "$yt_port"
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "卸载完成"
+					send_stats "卸载影链工坊"
+					;;
+				5)
+					send_stats "影链工坊域名访问"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 ${yt_port}
+					;;
+				6)
+					web_del
+					;;
+				7)
+					docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | head -1
+					docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "^video-parser|video-parser"
+					;;
+				8)
+					docker logs -f video-parser
 					;;
 				*)
 					break
