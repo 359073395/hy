@@ -298,7 +298,7 @@ check_port() {
 	stop_containers_or_kill_process 443
 }
 
-	# 連接埠佔用偵測 - 安裝前檢查指定連接埠是否已佔用
+	# 端口占用检测 - 安装前检查指定端口是否被占用
 	check_port_conflict() {
 		local ports=($@)
 		local conflict_found=false
@@ -1195,7 +1195,7 @@ ssl_ps
 }
 ssl_ps() {
 	echo -e "${gl_huang}已申請的證書到期情況${gl_bai}"
-	echo "站點資訊 證書到期時間"
+	echo "網站資訊 證書到期時間"
 	echo "------------------------"
 	for cert_dir in /etc/letsencrypt/live/*; do
 	  local cert_file="$cert_dir/fullchain.pem"
@@ -3005,7 +3005,7 @@ ldnmp_web_status() {
 			2)
 				send_stats "克隆站點域名"
 				read -e -p "請輸入舊網域名稱:" oddyuming
-				read -e -p "請輸入新網域:" yuming
+				read -e -p "請輸入新網域名稱:" yuming
 				install_certbot
 				install_ssltls
 				certs_status
@@ -3035,7 +3035,7 @@ ldnmp_web_status() {
 				send_stats "建立關聯站點"
 				echo -e "為現有的站點再關聯一個新網域用於訪問"
 				read -e -p "請輸入現有的網域名稱:" oddyuming
-				read -e -p "請輸入新網域:" yuming
+				read -e -p "請輸入新網域名稱:" yuming
 				install_certbot
 				install_ssltls
 				certs_status
@@ -3222,7 +3222,7 @@ local_port = ${local_port}
 remote_port = ${remote_port}
 EOF
 	# 輸出產生的信息
-	echo "服務$service_name已成功加入 frpc.toml"
+	echo "服務$service_name已成功加入到 frpc.toml"
 	docker restart frpc
 	open_port $local_port
 }
@@ -5736,7 +5736,7 @@ mount_partition() {
 		rmdir "$MOUNT_POINT"
 		return 1
 	fi
-	echo "分區已成功掛載到$MOUNT_POINT"
+	echo "分割區已成功掛載到$MOUNT_POINT"
 	# 檢查 /etc/fstab 是否已經存在 UUID 或掛載點
 	if grep -qE "UUID=$UUID|[[:space:]]$MOUNT_POINT[[:space:]]" /etc/fstab; then
 		echo "/etc/fstab 中已存在該分區記錄，跳過寫入"
@@ -7899,7 +7899,7 @@ linux_ldnmp() {
 	  echo "-------------------------"
 	  ls -lt /home/*.gz | awk '{print $NF}'
 	  echo ""
-	  read -e -p  "回車鍵還原最新的備份，輸入備份檔名還原指定的備份，輸入0退出：" filename
+	  read -e -p  "回車鍵還原最新的備份，輸入備份檔案名稱還原指定的備份，輸入0退出：" filename
 	  if [ "$filename" == "0" ]; then
 		  break_end
 		  linux_ldnmp
@@ -13044,7 +13044,7 @@ while true; do
 	  echo -e "${gl_kjlan}97.  ${color97}WireGuard組網(服務端)${gl_kjlan}98.  ${color98}WireGuard組網(客戶端)"
 	  echo -e "${gl_kjlan}99.  ${color99}DSM群暉虛擬機${gl_kjlan}100. ${color100}Syncthing點對點檔案同步工具"
 	  echo -e "${gl_kjlan}-------------------------"
-	  echo -e "${gl_kjlan}101. ${color101}AI影片生成工具${gl_kjlan}102. ${color102}VoceChat多人線上聊天系統"
+	  echo -e "${gl_kjlan}101. ${color101}AI影片產生工具${gl_kjlan}102. ${color102}VoceChat多人線上聊天系統"
 	  echo -e "${gl_kjlan}103. ${color103}Umami網站統計工具${gl_kjlan}104. ${color104}Stream四層代理轉送工具"
 	  echo -e "${gl_kjlan}105. ${color105}思源筆記${gl_kjlan}106. ${color106}Drawnix開源白板工具"
 	  echo -e "${gl_kjlan}107. ${color107}PanSou網盤搜尋${gl_kjlan}108. ${color108}LangBot聊天機器人"
@@ -13062,6 +13062,8 @@ while true; do
 	  echo -e "${gl_kjlan}119. ${color119}FluxPanel流量轉送面板${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}120. ${color120}LittlePrinceAgent雲端助手${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}121. ${color121}影鏈工坊影片解析${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方應用程式列表"
   	  echo -e "${gl_kjlan}想要讓你的應用程式出現在這裡？查看開發者指南:${gl_huang}https://dev.kejilion.sh/${gl_bai}"
@@ -14944,7 +14946,7 @@ while true; do
 		local docker_img="tbphp/gpt-load:latest"
 		local docker_port=8082
 		docker_rum() {
-			read -e -p "設定${docker_name}的登入金鑰（sk-開頭字母和數字組合）如: sk-159harveyyyds163:" app_passwd
+			read -e -p "設定${docker_name}的登录密钥（sk-开头字母和数字组合）如: sk-159harveyyyds163: " app_passwd
 			mkdir -p /home/docker/gpt-load && \
 			docker run -d --name gpt-load \
 				-p ${docker_port}:3001 \
@@ -15530,7 +15532,7 @@ while true; do
 		;;
 	  101|moneyprinterturbo)
 		local app_id="101"
-		local app_name="AI影片生成工具"
+		local app_name="AI影片產生工具"
 		local app_text="MoneyPrinterTurbo是一款使用AI大模型合成高清短影片的工具"
 		local app_url="官方網站:${gh_https_url}github.com/harry0703/MoneyPrinterTurbo"
 		local docker_name="moneyprinterturbo"
@@ -15875,7 +15877,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 				fi
 				for file in /home/web/conf.d/*; do
 					if [ -f "$file" ] && grep -q "127.0.0.1:4173" "$file" 2>/dev/null; then
-						echo "網域存取: https://$(basename"$file" | sed "s/.conf$//")"
+						echo "域名访问: https://$(basename "$file" | sed "s/.conf$//")"
 					fi
 				done
 			fi
@@ -15905,7 +15907,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 						echo "未找到更新腳本，請確認已安裝"
 					fi
 					add_app_id
-					send_stats "更新IP品質檢測平台"
+					send_stats "更新IP质量检测平台"
 					;;
 				3)
 					pm2 stop operation-ip-quality-platform 2>/dev/null
@@ -15951,7 +15953,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			fi
 			echo -e "AimiliVPN代理網關$check_status"
 			echo "官網: https://github.com/baoweise-bot/aimili-vpngate"
-			echo "利用VPNGate公共VPN為VPS提供乾淨的出口IP"
+			echo "利用VPNGate公共VPN为VPS提供干净的出口IP"
 			echo "支援HTTP/SOCKS5雙協定代理，智慧自動故障轉移"
 			echo ""
 			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
@@ -16162,7 +16164,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			if [ -x /bin/systemctl ] && /bin/systemctl is-active --quiet littleprince-agent 2>/dev/null; then
 				check_status="${gl_lv}運作中${gl_bai}"
 			elif [ -f /etc/systemd/system/littleprince-agent.service ]; then
-				check_status="${gl_huang}已安装未运行${gl_bai}"
+				check_status="${gl_huang}已安裝未運行${gl_bai}"
 			fi
 			local agent_port=3721
 			if [ -f /etc/littleprince-agent.env ]; then
@@ -16170,7 +16172,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 				agent_port=${agent_port:-3721}
 			fi
 			echo -e "LittlePrinceAgent雲端助手$check_status"
-			echo "官网: https://github.com/359073395/LittlePrinceAgent"
+			echo "官網: https://github.com/359073395/LittlePrinceAgent"
 			echo "Debian/Ubuntu 雲端網頁版 Agent，預設連接埠:$agent_port"
 			echo ""
 			if [ -f /etc/systemd/system/littleprince-agent.service ]; then
@@ -16189,8 +16191,8 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			echo "1. 安裝 2. 更新 3. 卸載"
 			echo "------------------------"
 			echo "5. 新增網域存取 6. 刪除網域存取"
-			echo "7. 查看服務狀態 8. 查看執行日誌"
-			echo "9. 显示激活链接"
+			echo "7. 查看服务状态      8. 查看运行日志"
+			echo "9. 顯示激活鏈接"
 			echo "------------------------"
 			echo "0. 返回上一級選單"
 			echo "------------------------"
@@ -16255,6 +16257,102 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			break_end
 		done
 		  ;;
+	  121|yt|video-parser|yinglian)
+		local app_id="121"
+		send_stats "影鏈工坊影片解析"
+		while true; do
+			clear
+			local check_status="${gl_hui}未安裝${gl_bai}"
+			if docker ps --format "{{.Names}}" 2>/dev/null | grep -q "^video-parser$"; then
+				check_status="${gl_lv}運作中${gl_bai}"
+			elif [ -d /opt/video-parser/project/video-parser ]; then
+				check_status="${gl_huang}已安裝未運行${gl_bai}"
+			fi
+			local yt_port=9890
+			if [ -f /opt/video-parser/project/video-parser/.env ]; then
+				yt_port=$(grep "^PUBLIC_PORT=" /opt/video-parser/project/video-parser/.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+				yt_port=${yt_port:-9890}
+			fi
+			echo -e "影鏈工坊影片解析$check_status"
+			echo "官網: https://github.com/359073395/yt"
+			echo "公開視訊解析與伺服器臨時下載工具，預設連接埠:$yt_port"
+			echo "預設管理員: admin / lhw111111"
+			echo ""
+			if [ -d /opt/video-parser/project/video-parser ]; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "Web管理面板: http://$ipv4_address:$yt_port"
+					echo "健康檢查: http://$ipv4_address:$yt_port/api/health"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$yt_port" "$file" 2>/dev/null; then
+						echo "網域存取: https://$(basename"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 安裝 2. 更新 3. 卸載"
+			echo "------------------------"
+			echo "5. 新增網域存取 6. 刪除網域存取"
+			echo "7. 查看容器狀態 8. 查看執行日誌"
+			echo "------------------------"
+			echo "0. 返回上一級選單"
+			echo "------------------------"
+			read -e -p "請輸入你的選擇:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 2
+					install curl
+					check_port_conflict 9890 && { open_port 9890; } || { echo "安裝取消"; break; }
+					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh) --port 9890
+					add_app_id
+					send_stats "安裝影鏈工坊"
+					;;
+				2)
+					install curl
+					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh) --port 9890
+					add_app_id
+					send_stats "更新影鏈工坊"
+					;;
+				3)
+					if [ -f /opt/video-parser/project/video-parser/.env ]; then
+						yt_port=$(grep "^PUBLIC_PORT=" /opt/video-parser/project/video-parser/.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
+						yt_port=${yt_port:-9890}
+					fi
+					if [ -d /opt/video-parser/project/video-parser ]; then
+						cd /opt/video-parser/project/video-parser && docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || docker rm -f video-parser 2>/dev/null
+					else
+						docker rm -f video-parser 2>/dev/null
+					fi
+					rm -rf /opt/video-parser
+					close_port "$yt_port"
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "卸載完成"
+					send_stats "卸載影鏈工坊"
+					;;
+				5)
+					send_stats "影鏈工坊網域訪問"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 ${yt_port}
+					;;
+				6)
+					web_del
+					;;
+				7)
+					docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | head -1
+					docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "^video-parser|video-parser"
+					;;
+				8)
+					docker logs -f video-parser
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
 	  b)
 	  	clear
 	  	send_stats "全部應用程式備份"
@@ -16295,7 +16393,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 	  	echo "-------------------------"
 	  	ls -lt /app*.gz | awk '{print $NF}'
 	  	echo ""
-	  	read -e -p  "回車鍵還原最新的備份，輸入備份檔名還原指定的備份，輸入0退出：" filename
+	  	read -e -p  "回車鍵還原最新的備份，輸入備份檔案名稱還原指定的備份，輸入0退出：" filename
 	  	if [ "$filename" == "0" ]; then
 			  break_end
 			  linux_panel
@@ -17093,7 +17191,7 @@ EOF
 						send_stats "SSH連接埠已修改"
 						new_ssh_port $new_port
 					elif [[ $new_port -eq 0 ]]; then
-						send_stats "退出SSH埠修改"
+						send_stats "退出SSH連接埠修改"
 						break
 					else
 						echo "連接埠號碼無效，請輸入1到65535之間的數字。"
@@ -17638,7 +17736,7 @@ EOF
 			  echo "TG-bot監控預警功能"
 			  echo "影片介紹: https://youtu.be/vLL-eb3Z_TY"
 			  echo "------------------------------------------------"
-			  echo "您需要設定tg機器人API和接收預警的用戶ID，即可實現本機CPU，內存，硬碟，流量，SSH登入的即時監控預警"
+			  echo "您需要設定tg機器人API和接收預警的使用者ID，即可實現本機CPU，內存，硬碟，流量，SSH登入的即時監控預警"
 			  echo "到達閾值後會向用戶發送預警訊息"
 			  echo -e "${gl_hui}-關於流量，重啟伺服器將重新計算-${gl_bai}"
 			  read -e -p "確定繼續嗎？ (Y/N):" choice
@@ -18006,7 +18104,7 @@ linux_file() {
 				send_stats "壓縮檔案/目錄"
 				;;
 			22) # 解压文件/目录
-				read -e -p "請輸入要解壓縮的檔案名稱 (.tar.gz):" filename
+				read -e -p "請輸入要解壓縮的檔名 (.tar.gz):" filename
 				install tar
 				tar -xzvf "$filename" && echo "已解壓縮$filename" || echo "解壓縮失敗"
 				send_stats "解壓縮檔案/目錄"
@@ -18131,7 +18229,7 @@ while true; do
 	  echo -e "${gl_kjlan}4.  ${gl_bai}備份叢集${gl_kjlan}5.  ${gl_bai}還原叢集"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  echo -e "${gl_kjlan}批次執行任務${gl_bai}"
-	  echo -e "${gl_kjlan}11. ${gl_bai}安裝Harvey腳本${gl_kjlan}12. ${gl_bai}更新系統${gl_kjlan}13. ${gl_bai}清理系統"
+	  echo -e "${gl_kjlan}11. ${gl_bai}安装Harvey脚本         ${gl_kjlan}12. ${gl_bai}更新系統${gl_kjlan}13. ${gl_bai}清理系統"
 	  echo -e "${gl_kjlan}14. ${gl_bai}安裝docker${gl_kjlan}15. ${gl_bai}安裝BBR3${gl_kjlan}16. ${gl_bai}設定1G虛擬內存"
 	  echo -e "${gl_kjlan}17. ${gl_bai}設定時區到上海${gl_kjlan}18. ${gl_bai}開放所有連接埠${gl_kjlan}51. ${gl_bai}自訂指令"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
@@ -18243,7 +18341,7 @@ echo ""
 echo -e "網域優惠"
 echo "------------------------"
 echo -e "${gl_lan}GNAME 8.8刀首年COM域名 6.68刀首年CC域名${gl_bai}"
-echo -e "${gl_bai}網址: https://www.gname.com/register?tt=86836&ttcode=HARVEY868​​36&ttbj=sh${gl_bai}"
+echo -e "${gl_bai}网址: https://www.gname.com/register?tt=86836&ttcode=HARVEY86836&ttbj=sh${gl_bai}"
 echo "------------------------"
 echo ""
 echo -e "Harvey週邊"
@@ -18506,7 +18604,7 @@ echo "放行IP k fxip 127.0.0.0/8 |k 放行IP 127.0.0.0/8"
 echo "阻止IP k zzip 177.5.25.36 |k 阻止IP 177.5.25.36"
 echo "命令收藏 k fav | k 指令收藏夾"
 echo "應用程式市場管理 H app"
-echo "應用編號快捷管理 H app 26 | H app 1panel | H app npm"
+echo "应用编号快捷管理    H app 26 | H app 1panel | H app npm"
 echo "fail2ban管理 k fail2ban | k f2b"
 echo "顯示系統資訊 k info"
 echo "ROOT金鑰管理 k sshkey"
