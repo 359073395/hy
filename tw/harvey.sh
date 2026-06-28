@@ -298,7 +298,7 @@ check_port() {
 	stop_containers_or_kill_process 443
 }
 
-	# 端口占用检测 - 安装前检查指定端口是否被占用
+	# 連接埠佔用偵測 - 安裝前檢查指定連接埠是否已佔用
 	check_port_conflict() {
 		local ports=($@)
 		local conflict_found=false
@@ -1012,7 +1012,7 @@ iptables_panel() {
 }
 add_swap() {
 	local new_swap=$1  # 获取传入的参数
-	# 取得目前系統中所有的 swap 分區
+	# 取得目前系統中所有的 swap 分割區
 	local swap_partitions=$(grep -E '^/dev/' /proc/swaps | awk '{print $1}')
 	# 遍歷並刪除所有的 swap 分割區
 	for partition in $swap_partitions; do
@@ -1195,7 +1195,7 @@ ssl_ps
 }
 ssl_ps() {
 	echo -e "${gl_huang}已申請的證書到期情況${gl_bai}"
-	echo "網站資訊 證書到期時間"
+	echo "站點資訊 證書到期時間"
 	echo "------------------------"
 	for cert_dir in /etc/letsencrypt/live/*; do
 	  local cert_file="$cert_dir/fullchain.pem"
@@ -5736,7 +5736,7 @@ mount_partition() {
 		rmdir "$MOUNT_POINT"
 		return 1
 	fi
-	echo "分割區已成功掛載到$MOUNT_POINT"
+	echo "分區已成功掛載到$MOUNT_POINT"
 	# 檢查 /etc/fstab 是否已經存在 UUID 或掛載點
 	if grep -qE "UUID=$UUID|[[:space:]]$MOUNT_POINT[[:space:]]" /etc/fstab; then
 		echo "/etc/fstab 中已存在該分區記錄，跳過寫入"
@@ -13044,7 +13044,7 @@ while true; do
 	  echo -e "${gl_kjlan}97.  ${color97}WireGuard組網(服務端)${gl_kjlan}98.  ${color98}WireGuard組網(客戶端)"
 	  echo -e "${gl_kjlan}99.  ${color99}DSM群暉虛擬機${gl_kjlan}100. ${color100}Syncthing點對點檔案同步工具"
 	  echo -e "${gl_kjlan}-------------------------"
-	  echo -e "${gl_kjlan}101. ${color101}AI影片產生工具${gl_kjlan}102. ${color102}VoceChat多人線上聊天系統"
+	  echo -e "${gl_kjlan}101. ${color101}AI影片生成工具${gl_kjlan}102. ${color102}VoceChat多人線上聊天系統"
 	  echo -e "${gl_kjlan}103. ${color103}Umami網站統計工具${gl_kjlan}104. ${color104}Stream四層代理轉送工具"
 	  echo -e "${gl_kjlan}105. ${color105}思源筆記${gl_kjlan}106. ${color106}Drawnix開源白板工具"
 	  echo -e "${gl_kjlan}107. ${color107}PanSou網盤搜尋${gl_kjlan}108. ${color108}LangBot聊天機器人"
@@ -14180,7 +14180,7 @@ while true; do
 			ip_address
 			echo "已經安裝完成"
 			check_docker_app_ip
-			echo "初始使用者名稱密碼皆為: admin"
+			echo "初始使用者名稱密碼均為: admin"
 		}
 		docker_app_update() {
 			docker rm -f node-exporter prometheus grafana
@@ -14946,7 +14946,7 @@ while true; do
 		local docker_img="tbphp/gpt-load:latest"
 		local docker_port=8082
 		docker_rum() {
-			read -e -p "設定${docker_name}的登录密钥（sk-开头字母和数字组合）如: sk-159harveyyyds163: " app_passwd
+			read -e -p "設定${docker_name}的登入金鑰（sk-開頭字母和數字組合）如: sk-159harveyyyds163:" app_passwd
 			mkdir -p /home/docker/gpt-load && \
 			docker run -d --name gpt-load \
 				-p ${docker_port}:3001 \
@@ -15532,7 +15532,7 @@ while true; do
 		;;
 	  101|moneyprinterturbo)
 		local app_id="101"
-		local app_name="AI影片產生工具"
+		local app_name="AI影片生成工具"
 		local app_text="MoneyPrinterTurbo是一款使用AI大模型合成高清短影片的工具"
 		local app_url="官方網站:${gh_https_url}github.com/harry0703/MoneyPrinterTurbo"
 		local docker_name="moneyprinterturbo"
@@ -15877,7 +15877,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 				fi
 				for file in /home/web/conf.d/*; do
 					if [ -f "$file" ] && grep -q "127.0.0.1:4173" "$file" 2>/dev/null; then
-						echo "域名访问: https://$(basename "$file" | sed "s/.conf$//")"
+						echo "網域存取: https://$(basename"$file" | sed "s/.conf$//")"
 					fi
 				done
 			fi
@@ -15907,7 +15907,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 						echo "未找到更新腳本，請確認已安裝"
 					fi
 					add_app_id
-					send_stats "更新IP质量检测平台"
+					send_stats "更新IP品質檢測平台"
 					;;
 				3)
 					pm2 stop operation-ip-quality-platform 2>/dev/null
@@ -15953,7 +15953,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			fi
 			echo -e "AimiliVPN代理網關$check_status"
 			echo "官網: https://github.com/baoweise-bot/aimili-vpngate"
-			echo "利用VPNGate公共VPN为VPS提供干净的出口IP"
+			echo "利用VPNGate公共VPN為VPS提供乾淨的出口IP"
 			echo "支援HTTP/SOCKS5雙協定代理，智慧自動故障轉移"
 			echo ""
 			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
@@ -16191,7 +16191,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			echo "1. 安裝 2. 更新 3. 卸載"
 			echo "------------------------"
 			echo "5. 新增網域存取 6. 刪除網域存取"
-			echo "7. 查看服务状态      8. 查看运行日志"
+			echo "7. 查看服務狀態 8. 查看執行日誌"
 			echo "9. 顯示激活鏈接"
 			echo "------------------------"
 			echo "0. 返回上一級選單"
@@ -16228,7 +16228,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					send_stats "卸載LittlePrinceAgent"
 					;;
 				5)
-					send_stats "LittlePrinceAgent域名訪問"
+					send_stats "LittlePrinceAgent網域訪問"
 					add_yuming
 					ldnmp_Proxy ${yuming} 127.0.0.1 ${agent_port}
 					;;
@@ -17191,7 +17191,7 @@ EOF
 						send_stats "SSH連接埠已修改"
 						new_ssh_port $new_port
 					elif [[ $new_port -eq 0 ]]; then
-						send_stats "退出SSH連接埠修改"
+						send_stats "退出SSH埠修改"
 						break
 					else
 						echo "連接埠號碼無效，請輸入1到65535之間的數字。"
@@ -17736,7 +17736,7 @@ EOF
 			  echo "TG-bot監控預警功能"
 			  echo "影片介紹: https://youtu.be/vLL-eb3Z_TY"
 			  echo "------------------------------------------------"
-			  echo "您需要設定tg機器人API和接收預警的使用者ID，即可實現本機CPU，內存，硬碟，流量，SSH登入的即時監控預警"
+			  echo "您需要設定tg機器人API和接收預警的用戶ID，即可實現本機CPU，內存，硬碟，流量，SSH登入的即時監控預警"
 			  echo "到達閾值後會向用戶發送預警訊息"
 			  echo -e "${gl_hui}-關於流量，重啟伺服器將重新計算-${gl_bai}"
 			  read -e -p "確定繼續嗎？ (Y/N):" choice
@@ -18229,7 +18229,7 @@ while true; do
 	  echo -e "${gl_kjlan}4.  ${gl_bai}備份叢集${gl_kjlan}5.  ${gl_bai}還原叢集"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  echo -e "${gl_kjlan}批次執行任務${gl_bai}"
-	  echo -e "${gl_kjlan}11. ${gl_bai}安装Harvey脚本         ${gl_kjlan}12. ${gl_bai}更新系統${gl_kjlan}13. ${gl_bai}清理系統"
+	  echo -e "${gl_kjlan}11. ${gl_bai}安裝Harvey腳本${gl_kjlan}12. ${gl_bai}更新系統${gl_kjlan}13. ${gl_bai}清理系統"
 	  echo -e "${gl_kjlan}14. ${gl_bai}安裝docker${gl_kjlan}15. ${gl_bai}安裝BBR3${gl_kjlan}16. ${gl_bai}設定1G虛擬內存"
 	  echo -e "${gl_kjlan}17. ${gl_bai}設定時區到上海${gl_kjlan}18. ${gl_bai}開放所有連接埠${gl_kjlan}51. ${gl_bai}自訂指令"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
@@ -18341,7 +18341,7 @@ echo ""
 echo -e "網域優惠"
 echo "------------------------"
 echo -e "${gl_lan}GNAME 8.8刀首年COM域名 6.68刀首年CC域名${gl_bai}"
-echo -e "${gl_bai}网址: https://www.gname.com/register?tt=86836&ttcode=HARVEY86836&ttbj=sh${gl_bai}"
+echo -e "${gl_bai}網址: https://www.gname.com/register?tt=86836&ttcode=HARVEY868​​36&ttbj=sh${gl_bai}"
 echo "------------------------"
 echo ""
 echo -e "Harvey週邊"
@@ -18449,7 +18449,7 @@ while true; do
 				if [ -f ~/harvey.sh.bak ]; then
 					mv -f ~/harvey.sh.bak ~/harvey.sh
 				fi
-				echo -e "${gl_hong}更新失敗！下載出錯或檔案校驗不通過，已恢復原版本${gl_bai}"
+				echo -e "${gl_hong}更新失敗！下載出錯或檔案校驗不通過，已恢復原始版本${gl_bai}"
 				send_stats "腳本更新失敗"
 			fi
 			break_end
@@ -18604,7 +18604,7 @@ echo "放行IP k fxip 127.0.0.0/8 |k 放行IP 127.0.0.0/8"
 echo "阻止IP k zzip 177.5.25.36 |k 阻止IP 177.5.25.36"
 echo "命令收藏 k fav | k 指令收藏夾"
 echo "應用程式市場管理 H app"
-echo "应用编号快捷管理    H app 26 | H app 1panel | H app npm"
+echo "應用編號快捷管理 H app 26 | H app 1panel | H app npm"
 echo "fail2ban管理 k fail2ban | k f2b"
 echo "顯示系統資訊 k info"
 echo "ROOT金鑰管理 k sshkey"
