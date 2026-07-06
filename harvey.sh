@@ -13065,6 +13065,8 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}121. ${color121}影链工坊视频解析 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}122. ${color122}流量IP核爆引擎 ${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方应用列表"
   	  echo -e "${gl_kjlan}想要让你的应用出现在这里？查看开发者指南: ${gl_huang}https://dev.kejilion.sh/${gl_bai}"
 	  for f in "$HOME"/apps/*.conf; do
@@ -16345,6 +16347,159 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					;;
 				8)
 					docker logs -f video-parser
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  122|ip-commerce|ipcg|liuliangip)
+		local app_id="122"
+		send_stats "流量IP核爆引擎"
+		local ipcg_dir="/opt/ip-commerce-generator"
+		local ipcg_port=8790
+		local ipcg_repo="359073395/ip-commerce-generator"
+		ipcg_env_value() {
+			local key="$1"
+			[ -f "$ipcg_dir/.env" ] || return 1
+			grep "^${key}=" "$ipcg_dir/.env" 2>/dev/null | tail -n 1 | cut -d= -f2- | sed 's/^"//; s/"$//'
+		}
+		ipcg_deploy() {
+			local ipcg_github_token="${GITHUB_TOKEN:-}"
+			local ipcg_api_key="${OPENAI_API_KEY:-}"
+			local ipcg_base_url="${OPENAI_BASE_URL:-}"
+			local ipcg_model="${OPENAI_MODEL:-}"
+			local ipcg_fallback_models="${OPENAI_FALLBACK_MODELS:-}"
+			if [ -z "$ipcg_github_token" ]; then
+				read -r -s -p "请输入可读取私有仓库 ${ipcg_repo} 的 GitHub Token: " ipcg_github_token
+				echo ""
+			fi
+			[ -z "$ipcg_github_token" ] && echo "GitHub Token 不能为空，已取消" && return 1
+			[ -n "$ipcg_api_key" ] || ipcg_api_key=$(ipcg_env_value OPENAI_API_KEY || true)
+			[ -n "$ipcg_base_url" ] || ipcg_base_url=$(ipcg_env_value OPENAI_BASE_URL || true)
+			[ -n "$ipcg_model" ] || ipcg_model=$(ipcg_env_value OPENAI_MODEL || true)
+			[ -n "$ipcg_fallback_models" ] || ipcg_fallback_models=$(ipcg_env_value OPENAI_FALLBACK_MODELS || true)
+			ipcg_base_url=${ipcg_base_url:-https://api.example.com/v1}
+			ipcg_model=${ipcg_model:-gpt-5.5}
+			ipcg_fallback_models=${ipcg_fallback_models:-gpt-5.4,gemini-3-flash,gpt-5.4-mini}
+			if [ -z "$ipcg_api_key" ]; then
+				read -r -s -p "请输入 OpenAI-compatible API Key: " ipcg_api_key
+				echo ""
+			fi
+			[ -z "$ipcg_api_key" ] && echo "API Key 不能为空，已取消" && return 1
+			read -e -p "请输入 OpenAI Base URL，回车默认 ${ipcg_base_url}: " ipcg_base_url_input
+			ipcg_base_url=${ipcg_base_url_input:-$ipcg_base_url}
+			read -e -p "请输入主模型，回车默认 ${ipcg_model}: " ipcg_model_input
+			ipcg_model=${ipcg_model_input:-$ipcg_model}
+			local ipcg_installer="/tmp/ip-commerce-generator-install.sh"
+			curl -fsSL \
+				-H "Authorization: Bearer ${ipcg_github_token}" \
+				-H "Accept: application/vnd.github.raw" \
+				"https://raw.githubusercontent.com/359073395/ip-commerce-generator/main/scripts/install-from-github.sh" \
+				-o "$ipcg_installer" || { echo "下载安装脚本失败，请确认 GitHub Token 有仓库读取权限"; return 1; }
+			chmod +x "$ipcg_installer"
+			OPENAI_BASE_URL="$ipcg_base_url" \
+			OPENAI_API_KEY="$ipcg_api_key" \
+			OPENAI_MODEL="$ipcg_model" \
+			OPENAI_FALLBACK_MODELS="$ipcg_fallback_models" \
+			OPENAI_TIMEOUT_MS=45000 \
+			OPENAI_MAX_TOKENS=1200 \
+			OPENAI_TEMPERATURE=0.4 \
+			OPENAI_REASONING_EFFORT=low \
+			KNOWLEDGE_BUDGET_CHARS=1200 \
+			ENABLE_NGINX_BASIC_AUTH=no \
+			PORT="$ipcg_port" \
+			HOST=0.0.0.0 \
+			APP_DIR="$ipcg_dir" \
+			GITHUB_TOKEN="$ipcg_github_token" \
+			GITHUB_REPO="$ipcg_repo" \
+			GITHUB_REF=main \
+			SERVICE_NAME=ip-commerce-generator \
+			bash "$ipcg_installer"
+			rm -f "$ipcg_installer"
+		}
+		while true; do
+			clear
+			local check_status="${gl_hui}未安装${gl_bai}"
+			if [ -x /bin/systemctl ] && /bin/systemctl is-active --quiet ip-commerce-generator 2>/dev/null; then
+				check_status="${gl_lv}运行中${gl_bai}"
+			elif [ -f /etc/systemd/system/ip-commerce-generator.service ]; then
+				check_status="${gl_huang}已安装未运行${gl_bai}"
+			fi
+			if [ -f "$ipcg_dir/.env" ]; then
+				ipcg_port=$(ipcg_env_value PORT || true)
+				ipcg_port=${ipcg_port:-8790}
+			fi
+			echo -e "流量IP核爆引擎 $check_status"
+			echo "官网: https://github.com/359073395/ip-commerce-generator"
+			echo "知识库驱动的 IP 定位、选题、脚本与带货方案生成器，默认端口: $ipcg_port"
+			echo ""
+			if [ -d "$ipcg_dir" ]; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "Web管理面板: http://$ipv4_address:$ipcg_port"
+					echo "健康检查: http://$ipv4_address:$ipcg_port/api/health"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$ipcg_port" "$file" 2>/dev/null; then
+						echo "域名访问: https://$(basename "$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 安装              2. 更新            3. 卸载"
+			echo "------------------------"
+			echo "5. 添加域名访问      6. 删除域名访问"
+			echo "7. 查看服务状态      8. 查看运行日志"
+			echo "------------------------"
+			echo "0. 返回上一级选单"
+			echo "------------------------"
+			read -e -p "请输入你的选择: " sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 2
+					install curl git
+					check_port_conflict 8790 && { open_port 8790; } || { echo "安装取消"; break; }
+					ipcg_deploy
+					add_app_id
+					send_stats "安装流量IP核爆引擎"
+					;;
+				2)
+					install curl git
+					ipcg_deploy
+					add_app_id
+					send_stats "更新流量IP核爆引擎"
+					;;
+				3)
+					if [ -f "$ipcg_dir/.env" ]; then
+						ipcg_port=$(ipcg_env_value PORT || true)
+						ipcg_port=${ipcg_port:-8790}
+					fi
+					[ -x /bin/systemctl ] && /bin/systemctl disable --now ip-commerce-generator 2>/dev/null
+					rm -f /etc/systemd/system/ip-commerce-generator.service
+					[ -x /bin/systemctl ] && /bin/systemctl daemon-reload 2>/dev/null
+					rm -rf "$ipcg_dir"
+					close_port "$ipcg_port"
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "卸载完成"
+					send_stats "卸载流量IP核爆引擎"
+					;;
+				5)
+					send_stats "流量IP核爆引擎域名访问"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 ${ipcg_port}
+					;;
+				6)
+					web_del
+					;;
+				7)
+					/bin/systemctl status ip-commerce-generator --no-pager
+					;;
+				8)
+					journalctl -u ip-commerce-generator -f
 					;;
 				*)
 					break
