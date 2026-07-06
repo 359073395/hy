@@ -16394,10 +16394,12 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			read -e -p "请输入主模型，回车默认 ${ipcg_model}: " ipcg_model_input
 			ipcg_model=${ipcg_model_input:-$ipcg_model}
 			local ipcg_installer="/tmp/ip-commerce-generator-install.sh"
+			local ipcg_installer_url="https://api.github.com/repos/${ipcg_repo}/contents/scripts/install-from-github.sh?ref=main"
 			curl -fsSL \
 				-H "Authorization: Bearer ${ipcg_github_token}" \
-				-H "Accept: application/vnd.github.raw" \
-				"https://raw.githubusercontent.com/359073395/ip-commerce-generator/main/scripts/install-from-github.sh" \
+				-H "Accept: application/vnd.github.raw+json" \
+				-H "X-GitHub-Api-Version: 2022-11-28" \
+				"$ipcg_installer_url" \
 				-o "$ipcg_installer" || { echo "下载安装脚本失败，请确认 GitHub Token 有仓库读取权限"; return 1; }
 			chmod +x "$ipcg_installer"
 			OPENAI_BASE_URL="$ipcg_base_url" \
@@ -16412,6 +16414,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			ENABLE_NGINX_BASIC_AUTH=no \
 			PORT="$ipcg_port" \
 			HOST=0.0.0.0 \
+			FORCE_ENV=1 \
 			APP_DIR="$ipcg_dir" \
 			GITHUB_TOKEN="$ipcg_github_token" \
 			GITHUB_REPO="$ipcg_repo" \
@@ -16463,15 +16466,21 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					check_disk_space 2
 					install curl git
 					check_port_conflict 8790 && { open_port 8790; } || { echo "安装取消"; break; }
-					ipcg_deploy
-					add_app_id
-					send_stats "安装流量IP核爆引擎"
+					if ipcg_deploy; then
+						add_app_id
+						send_stats "安装流量IP核爆引擎"
+					else
+						echo "流量IP核爆引擎安装失败，请检查 GitHub Token、API Key 或上方错误日志"
+					fi
 					;;
 				2)
 					install curl git
-					ipcg_deploy
-					add_app_id
-					send_stats "更新流量IP核爆引擎"
+					if ipcg_deploy; then
+						add_app_id
+						send_stats "更新流量IP核爆引擎"
+					else
+						echo "流量IP核爆引擎更新失败，请检查 GitHub Token、API Key 或上方错误日志"
+					fi
 					;;
 				3)
 					if [ -f "$ipcg_dir/.env" ]; then
