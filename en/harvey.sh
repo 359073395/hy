@@ -744,7 +744,7 @@ close_port() {
 		# Delete existing open rules
 		iptables -D INPUT -p tcp --dport $port -j ACCEPT 2>/dev/null
 		iptables -D INPUT -p udp --dport $port -j ACCEPT 2>/dev/null
-		# Add a shutdown rule
+		# Add shutdown rule
 		if ! iptables -C INPUT -p tcp --dport $port -j DROP 2>/dev/null; then
 			iptables -I INPUT 1 -p tcp --dport $port -j DROP
 		fi
@@ -2279,7 +2279,7 @@ while true; do
 			rm -rf "/home/docker/$docker_name"
 			rm -f /home/docker/${docker_name}_port.conf
 			sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 			send_stats "uninstall$docker_name"
 			;;
 		5)
@@ -2772,7 +2772,7 @@ ldnmp_Proxy_backend() {
 }
 list_stream_services() {
 	STREAM_DIR="/home/web/stream.d"
-	printf "%-25s %-18s %-25s %-20s\n" "Service name" "Communication type" "Local address" "Backend address"
+	printf "%-25s %-18s %-25s %-20s\n" "Service name" "Communication type" "local address" "Backend address"
 	if [ -z "$(ls -A "$STREAM_DIR")" ]; then
 		return
 	fi
@@ -3405,7 +3405,7 @@ frps_panel() {
 				rm -rf /home/frp
 				close_port 8055 8056
 				sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
-				echo "App has been uninstalled"
+				echo "App uninstalled"
 				;;
 			5)
 				echo "Reverse intranet penetration service into domain name access"
@@ -3492,7 +3492,7 @@ frpc_panel() {
 				rm -rf /home/frp
 				close_port 8055
 				sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
-				echo "App has been uninstalled"
+				echo "App uninstalled"
 				;;
 			4)
 				add_forwarding_service
@@ -3968,7 +3968,7 @@ fetch_github_ssh_keys() {
 	local username="$1"
 	local base_dir="${2:-$HOME}"
 	echo "Before proceeding, make sure you have added your SSH public key to your GitHub account:"
-	echo "1. Login${gh_https_url}github.com/settings/keys"
+	echo "1. Log in${gh_https_url}github.com/settings/keys"
 	echo "2. Click New SSH key or Add SSH key"
 	echo "3. Title can be filled in as desired (for example: Home Laptop 2026)"
 	echo "4. Paste the contents of the local public key (usually the entire contents of ~/.ssh/id_ed25519.pub or id_rsa.pub) into the Key field"
@@ -4322,7 +4322,7 @@ dd_xitong() {
 				exit
 				;;
 			  41)
-				send_stats "Reinstall Windows 11"
+				send_stats "Reinstall windows 11"
 				dd_xitong_2
 				bash InstallNET.sh -windows 11 -lang "cn"
 				reboot
@@ -5098,7 +5098,7 @@ Kernel_optimize() {
 			  cd ~
 			  clear
 			  optimize_web_server
-			  send_stats "Website optimization mode"
+			  send_stats "Website optimization model"
 			  ;;
 		  4)
 			  cd ~
@@ -5736,7 +5736,7 @@ mount_partition() {
 		rmdir "$MOUNT_POINT"
 		return 1
 	fi
-	echo "Partition successfully mounted to$MOUNT_POINT"
+	echo "The partition was successfully mounted to$MOUNT_POINT"
 	# Check /etc/fstab to see if the UUID or mount point already exists
 	if grep -qE "UUID=$UUID|[[:space:]]$MOUNT_POINT[[:space:]]" /etc/fstab; then
 		echo "The partition record already exists in /etc/fstab, skip writing"
@@ -6138,7 +6138,7 @@ linux_info() {
 linux_tools() {
   while true; do
 	  clear
-	  # send_stats "Basic tools"
+	  # send_stats "Basic Tools"
 	  echo -e "basic tools"
 	  tools=(
 		curl wget sudo socat htop iftop unzip tar tmux ffmpeg
@@ -6555,7 +6555,7 @@ docker_ssh_migration() {
 				# volume mapping
 				local VOL_ARGS=""
 				for path in $VOL_PATHS; do VOL_ARGS+="-v $path:$path "; done
-				# Mirror
+				# mirror
 				local IMAGE
 				IMAGE=$(jq -r '.[0].Config.Image' "$inspect_file")
 				echo -e "\n# Restore container:$c" >> "$RESTORE_SCRIPT"
@@ -6683,7 +6683,7 @@ docker_ssh_migration() {
 		local LATEST_TAR="$BACKUP_DIR"
 		echo -e "${gl_huang}Transferring backup...${gl_bai}"
 		if [[ -z "$TARGET_PASS" ]]; then
-			# Log in using key
+			# Log in with key
 			scp -P "$TARGET_PORT" -o StrictHostKeyChecking=no -r "$LATEST_TAR" "$TARGET_USER@$TARGET_IP:/tmp/"
 		fi
 	}
@@ -6996,7 +6996,7 @@ linux_test() {
 	  echo -e "${gl_kjlan}14.  ${gl_bai}nxtrace fast backhaul test script"
 	  echo -e "${gl_kjlan}15.  ${gl_bai}nxtrace specifies IP backhaul test script"
 	  echo -e "${gl_kjlan}16.  ${gl_bai}ludashi2020 three network line test"
-	  echo -e "${gl_kjlan}17.  ${gl_bai}i-abc multi-function speed test script"
+	  echo -e "${gl_kjlan}17.  ${gl_bai}i-abc multifunctional speed test script"
 	  echo -e "${gl_kjlan}18.  ${gl_bai}NetQuality network quality check script${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}------------------------"
 	  echo -e "${gl_kjlan}Hardware performance testing"
@@ -8082,7 +8082,7 @@ moltbot_menu() {
 		if ! command -v npm >/dev/null 2>&1; then
 			return 1
 		fi
-		# Add --no-update-notifier and make sure error redirection is in the correct location
+		# Add --no-update-notifier and make sure error redirects are in the correct location
 		local_version=$(npm list -g openclaw --depth=0 --no-update-notifier 2>/dev/null | grep openclaw | awk '{print $NF}' | sed 's/^.*@//')
 		if [ -z "$local_version" ]; then
 			return 1
@@ -8127,7 +8127,7 @@ moltbot_menu() {
 		echo "--------------------"
 		echo "4. View status log"
 		echo "5. Change model"
-		echo "6. API Management"
+		echo "6. API management"
 		echo "7. Robot connection and docking"
 		echo "8. Plug-in management (installation/removal)"
 		echo "9. Skill management (installation/removal)"
@@ -8997,7 +8997,7 @@ if changed:
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(work, f, ensure_ascii=False, indent=2)
         f.write('\n')
-print(f'✅ {target}: Added {len(added_ids)}, deleted {len(removed_ids)}, current {len(new_models)}')
+print(f'✅ {target}: Add {len(added_ids)}, delete {len(removed_ids)}, current {len(new_models)}')
 if added_ids:
     print(f'➕ Add new model ({len(added_ids)}):')
     for mid in added_ids:
@@ -9872,7 +9872,7 @@ PYTHON_EOF
 			echo "--------------------------------------------------------"
 			echo "1) Install/enable plugin"
 			echo "2) Delete/disable plugins"
-			echo "0) return"
+			echo "0) Return"
 			read -e -p "Please select an action:" plugin_action
 			[ "$plugin_action" = "0" ] && break
 			[ -z "$plugin_action" ] && continue
@@ -9986,7 +9986,7 @@ PYTHON_EOF
 			echo "----------------------------------------"
 			echo "1) Installation skills"
 			echo "2) Delete skills"
-			echo "0) return"
+			echo "0) Return"
 			read -e -p "Please select an action:" skill_action
 			[ "$skill_action" = "0" ] && break
 			[ -z "$skill_action" ] && continue
@@ -11389,7 +11389,7 @@ EOF
 		model_path=$(openclaw_memory_expand_path "$model_path")
 		model_status=$(openclaw_memory_local_model_status "$model_path")
 		if [ "$model_status" = "ok" ]; then
-			echo "✅ The model file already exists:$model_path"
+			echo "✅ Model file already exists:$model_path"
 			OPENCLAW_MEMORY_MODEL_PATH="$model_path"
 		else
 			local model_name="embeddinggemma-300M-Q8_0.gguf"
@@ -11587,7 +11587,7 @@ EOF
 			fi
 		else
 			echo "includeDefaultMemory configuration is normal."
-			echo "Will be executed: Clean old indexes → Fully rebuild all agent indexes"
+			echo "Will be executed: clean old indexes → fully rebuild all agent indexes"
 			echo ""
 			read -e -p "Confirm execution? (Y/n):" confirm_fix
 			if [[ ! "$confirm_fix" =~ ^[Nn]$ ]]; then
@@ -11701,7 +11701,7 @@ EOF
 		echo "document:$file"
 		echo "Total number of rows:$total_lines"
 		read -e -p "Please enter the starting line (Press Enter to default to the end of$default_linesOK):" start_line
-		read -e -p "Please enter the number of rows to display (default is to press Enter$default_lines）: " count
+		read -e -p "Please enter the number of displayed lines (press Enter to default$default_lines）: " count
 		[ -z "$count" ] && count=$default_lines
 		if [ -z "$start_line" ]; then
 			if [ "$total_lines" -le "$count" ]; then
@@ -11718,7 +11718,7 @@ EOF
 			start_line=1
 		fi
 		if [ "$count" -le 0 ]; then
-			echo "❌ Number of rows must be greater than 0."
+			echo "❌ The number of rows must be greater than 0."
 			return 1
 		fi
 		local end_line=$((start_line + count - 1))
@@ -12051,7 +12051,7 @@ print(json.dumps(data, indent=2))
 		if openclaw_has_command openclaw && echo "$json_payload" | openclaw approvals set --stdin >/dev/null 2>&1; then
 			return 0
 		fi
-		# Fallback: Write the file directly
+		# Fallback: write file directly
 		echo "$json_payload" > "$approvals_file"
 	}
 	openclaw_permission_render_status() {
@@ -12144,7 +12144,7 @@ except Exception:
 		echo "Configuring host approval interception..."
 		openclaw_permission_update_exec_approvals "allowlist" "on-miss" "deny"
 		openclaw_permission_restart_gateway
-		echo -e "${gl_lv}✅ Switched to standard safety mode (all dangerous commands will ask for your approval through UI/TG)${gl_bai}"
+		echo -e "${gl_lv}✅ Switched to standard safe mode (all dangerous commands will request your approval through UI/TG)${gl_bai}"
 	}
 	openclaw_permission_apply_developer() {
 		send_stats "OpenClaw Permissions - Development Enhanced Mode"
@@ -12200,7 +12200,7 @@ except Exception:
 		echo "======================================="
 		openclaw security audit
 		echo "---------------------------------------"
-		read -e -p "Attempt to automatically remediate discovered security vulnerabilities? (y/n):" fix_choice
+		read -e -p "Do you want to automatically remediate discovered security vulnerabilities? (y/n):" fix_choice
 		if [[ "$fix_choice" == "y" || "$fix_choice" == "Y" || "$fix_choice" == "yes" ]]; then
 			openclaw security audit --fix
 			echo -e "${gl_lv}✅ Automatic repair completed.${gl_bai}"
@@ -12547,7 +12547,7 @@ for idx,item in enumerate(agents,1):
 		read -e -p "Enter yes to confirm to continue:" confirm
 		[ "$confirm" = "yes" ] || { echo "Canceled"; return 1; }
 		if openclaw agents add "$agent_id" --workspace "$workspace"; then
-			echo "✅ The agent was created successfully:$agent_id"
+			echo "✅The agent is created successfully:$agent_id"
 			local name theme
 			read -e -p "Please enter the agent identity name (e.g.: Code Expert):" name
 			[ -z "$name" ] && name="$agent_id"
@@ -12607,7 +12607,7 @@ for idx,item in enumerate(bindings,1):
 		fi
 	}
 	openclaw_multiagent_remove_binding() {
-		send_stats "OpenClaw multi-agent - remove route binding"
+		send_stats "OpenClaw multi-agent - remove routing binding"
 		openclaw_multiagent_require_openclaw || return 1
 		local agent_id bind_value confirm
 		read -e -p "Please enter the agent ID:" agent_id
@@ -12986,7 +12986,7 @@ while true; do
 	  done
 	  echo -e "${gl_kjlan}1.   ${color1}Pagoda panel official version${gl_kjlan}2.   ${color2}aaPanel Pagoda International Version"
 	  echo -e "${gl_kjlan}3.   ${color3}1Panel new generation management panel${gl_kjlan}4.   ${color4}NginxProxyManager visualization panel"
-	  echo -e "${gl_kjlan}5.   ${color5}OpenList multi-store file list program${gl_kjlan}6.   ${color6}Ubuntu Remote Desktop Web Edition"
+	  echo -e "${gl_kjlan}5.   ${color5}OpenList multi-store file list program${gl_kjlan}6.   ${color6}Ubuntu Remote Desktop Web Version"
 	  echo -e "${gl_kjlan}7.   ${color7}Nezha Probe VPS Monitoring Panel${gl_kjlan}8.   ${color8}QB offline BT magnetic download panel"
 	  echo -e "${gl_kjlan}9.   ${color9}Poste.io mail server program${gl_kjlan}10.  ${color10}RocketChat multi-person online chat system"
 	  echo -e "${gl_kjlan}-------------------------"
@@ -13064,6 +13064,8 @@ while true; do
 	  echo -e "${gl_kjlan}120. ${color120}LittlePrinceAgent Cloud Assistant${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}121. ${color121}Shadow Chain Workshop video analysis${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}122. ${color122}Traffic IP nuclear explosion engine${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}Third-party application list"
   	  echo -e "${gl_kjlan}Want your app to appear here? Check out the developer guide:${gl_huang}https://dev.kejilion.sh/${gl_bai}"
@@ -13391,7 +13393,7 @@ while true; do
 					rm /home/docker/mail.txt
 					rm -rf /home/docker/mail
 					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
-					echo "App has been uninstalled"
+					echo "App uninstalled"
 					;;
 				*)
 					break
@@ -13436,7 +13438,7 @@ while true; do
 			docker rm -f db
 			docker rmi -f mongo:latest
 			rm -rf /home/docker/mongo
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -13508,7 +13510,7 @@ while true; do
 		docker_app_uninstall() {
 			cd /home/docker/cloud/ && docker compose down --rmi all
 			rm -rf /home/docker/cloud
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -13566,7 +13568,7 @@ while true; do
 		docker_rum() {
 			docker run -d --name looking-glass --restart=always -p ${docker_port}:80 wikihostinc/looking-glass-server
 		}
-		local docker_describe="Speedtest speed measurement panel is a VPS network speed test tool with multiple test functions and can also monitor VPS inbound and outbound traffic in real time."
+		local docker_describe="Speedtest speed test panel is a VPS network speed test tool with multiple test functions and can also monitor VPS inbound and outbound traffic in real time."
 		local docker_url="Official website introduction:${gh_proxy}github.com/wikihost-opensource/als"
 		local docker_use=""
 		local docker_passwd=""
@@ -14195,7 +14197,7 @@ while true; do
 			docker rmi -f prom/prometheus:latest
 			docker rmi -f grafana/grafana:latest
 			rm -rf /home/docker/monitoring
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -14369,7 +14371,7 @@ while true; do
 		docker_app_uninstall() {
 			cd  /home/docker/dify/docker/ && docker compose down --rmi all
 			rm -rf /home/docker/dify
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -14409,7 +14411,7 @@ while true; do
 		docker_app_uninstall() {
 			cd  /home/docker/new-api/ && docker compose down --rmi all
 			rm -rf /home/docker/new-api
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -14440,7 +14442,7 @@ while true; do
 			cd /opt
 			rm -rf jumpserver-installer*/
 			rm -rf jumpserver
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -14491,7 +14493,7 @@ while true; do
 		docker_app_uninstall() {
 			cd  /home/docker/ragflow/docker/ && docker compose down --rmi all
 			rm -rf /home/docker/ragflow
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -14677,7 +14679,7 @@ while true; do
 				-v /home/docker/bitwarden/data:/data \
 				vaultwarden/server
 		}
-		local docker_describe="A password manager that puts you in control of your data"
+		local docker_describe="A password manager where you can control your data"
 		local docker_url="Official website introduction: https://bitwarden.com/"
 		local docker_use=""
 		local docker_passwd=""
@@ -14739,7 +14741,7 @@ while true; do
 		docker_app_uninstall() {
 			cd /home/docker/moontv/ && docker compose down --rmi all
 			rm -rf /home/docker/moontv
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -14898,7 +14900,7 @@ while true; do
 		  docker_app_uninstall() {
 			  cd /home/docker/linkwarden && docker compose down --rmi all
 			  rm -rf /home/docker/linkwarden
-			  echo "App has been uninstalled"
+			  echo "App uninstalled"
 		  }
 		  docker_app_plus
 		  ;;
@@ -14936,7 +14938,7 @@ while true; do
 			  cd "$(ls -dt */ | head -n 1)"
 			  docker compose down --rmi all
 			  rm -rf /home/docker/jitsi
-			  echo "App has been uninstalled"
+			  echo "App uninstalled"
 		  }
 		  docker_app_plus
 		  ;;
@@ -15033,7 +15035,7 @@ while true; do
 		  docker_app_uninstall() {
 			  cd /home/docker/${docker_name} && docker compose down --rmi all
 			  rm -rf /home/docker/${docker_name}
-			  echo "App has been uninstalled"
+			  echo "App uninstalled"
 		  }
 		  docker_app_plus
 		  ;;
@@ -15076,7 +15078,7 @@ while true; do
 				--restart=always \
 				synctvorg/synctv
 		}
-		local docker_describe="A program to watch movies and live broadcasts together remotely. It provides simultaneous viewing, live broadcast, chat and other functions"
+		local docker_describe="A program for watching movies and live broadcasts together remotely. It provides simultaneous viewing, live broadcast, chat and other functions"
 		local docker_url="Official website introduction:${gh_https_url}github.com/synctv-org/synctv"
 		local docker_use="echo \"Initial account and password: root. Please change the login password in time after logging in\""
 		local docker_passwd=""
@@ -15193,7 +15195,7 @@ while true; do
 		docker_app_uninstall() {
 			cd /home/docker/gitea/ && docker compose down --rmi all
 			rm -rf /home/docker/gitea
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -15291,7 +15293,7 @@ while true; do
 		docker_app_uninstall() {
 			cd /home/docker/paperless/ && docker compose down --rmi all
 			rm -rf /home/docker/paperless
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -15327,7 +15329,7 @@ while true; do
 		docker_app_uninstall() {
 			cd /home/docker/2fauth/ && docker compose down --rmi all
 			rm -rf /home/docker/2fauth
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -15502,7 +15504,7 @@ while true; do
 		docker_app_uninstall() {
 			cd /home/docker/dsm/ && docker compose down --rmi all
 			rm -rf /home/docker/dsm
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -15557,7 +15559,7 @@ while true; do
 		docker_app_uninstall() {
 			cd  /home/docker/MoneyPrinterTurbo/ && docker compose down --rmi all
 			rm -rf /home/docker/MoneyPrinterTurbo
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -15609,7 +15611,7 @@ while true; do
 		docker_app_uninstall() {
 			cd  /home/docker/umami/ && docker compose down --rmi all
 			rm -rf /home/docker/umami
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -15714,7 +15716,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		docker_app_uninstall() {
 			cd  /home/docker/LangBot/docker/ && docker compose down --rmi all
 			rm -rf /home/docker/LangBot
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -15766,7 +15768,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		docker_app_uninstall() {
 			cd  /home/docker/karakeep/docker/ && docker compose down --rmi all
 			rm -rf /home/docker/karakeep
-			echo "App has been uninstalled"
+			echo "App uninstalled"
 		}
 		docker_app_plus
 		  ;;
@@ -16282,7 +16284,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 				ip_address
 				if [ -n "$ipv4_address" ]; then
 					echo "Web management panel: http://$ipv4_address:$yt_port"
-					echo "Health Check: http://$ipv4_address:$yt_port/api/health"
+					echo "Health check: http://$ipv4_address:$yt_port/api/health"
 				fi
 				for file in /home/web/conf.d/*; do
 					if [ -f "$file" ] && grep -q "127.0.0.1:$yt_port" "$file" 2>/dev/null; then
@@ -16345,6 +16347,149 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					;;
 				8)
 					docker logs -f video-parser
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  122|ip-commerce|ipcg|liuliangip)
+		local app_id="122"
+		send_stats "Traffic IP nuclear explosion engine"
+		local ipcg_dir="/opt/ip-commerce-generator"
+		local ipcg_port=8790
+		local ipcg_repo="359073395/ip-commerce-generator"
+		ipcg_env_value() {
+			local key="$1"
+			[ -f "$ipcg_dir/.env" ] || return 1
+			grep "^${key}=" "$ipcg_dir/.env" 2>/dev/null | tail -n 1 | cut -d= -f2- | sed 's/^"//; s/"$//'
+		}
+		ipcg_deploy() {
+			local ipcg_force_env="${1:-0}"
+			local ipcg_github_token="${GITHUB_TOKEN:-}"
+			local ipcg_api_key="${OPENAI_API_KEY:-}"
+			local ipcg_base_url="${OPENAI_BASE_URL:-}"
+			local ipcg_model="${OPENAI_MODEL:-}"
+			local ipcg_fallback_models="${OPENAI_FALLBACK_MODELS:-}"
+			[ -n "$ipcg_api_key" ] || ipcg_api_key=$(ipcg_env_value OPENAI_API_KEY || true)
+			[ -n "$ipcg_base_url" ] || ipcg_base_url=$(ipcg_env_value OPENAI_BASE_URL || true)
+			[ -n "$ipcg_model" ] || ipcg_model=$(ipcg_env_value OPENAI_MODEL || true)
+			[ -n "$ipcg_fallback_models" ] || ipcg_fallback_models=$(ipcg_env_value OPENAI_FALLBACK_MODELS || true)
+			ipcg_fallback_models=${ipcg_fallback_models:-gpt-5.4,gemini-3-flash,gpt-5.4-mini}
+			local ipcg_installer="/tmp/ip-commerce-generator-install.sh"
+			curl -fsSL \
+				"https://raw.githubusercontent.com/359073395/ip-commerce-generator/main/scripts/install-from-github.sh" \
+				-o "$ipcg_installer" || { echo "Failed to download and install script, please confirm${ipcg_repo}Public or web accessible"; return 1; }
+			chmod +x "$ipcg_installer"
+			OPENAI_BASE_URL="$ipcg_base_url" \
+			OPENAI_API_KEY="$ipcg_api_key" \
+			OPENAI_MODEL="$ipcg_model" \
+			OPENAI_FALLBACK_MODELS="$ipcg_fallback_models" \
+			OPENAI_TIMEOUT_MS=45000 \
+			OPENAI_MAX_TOKENS=1200 \
+			OPENAI_TEMPERATURE=0.4 \
+			OPENAI_REASONING_EFFORT=low \
+			KNOWLEDGE_BUDGET_CHARS=1200 \
+			ENABLE_NGINX_BASIC_AUTH=no \
+			PORT="$ipcg_port" \
+			HOST=0.0.0.0 \
+			FORCE_ENV="$ipcg_force_env" \
+			APP_DIR="$ipcg_dir" \
+			GITHUB_TOKEN="$ipcg_github_token" \
+			GITHUB_REPO="$ipcg_repo" \
+			GITHUB_REF=main \
+			SERVICE_NAME=ip-commerce-generator \
+			bash "$ipcg_installer"
+			rm -f "$ipcg_installer"
+		}
+		while true; do
+			clear
+			local check_status="${gl_hui}Not installed${gl_bai}"
+			if [ -x /bin/systemctl ] && /bin/systemctl is-active --quiet ip-commerce-generator 2>/dev/null; then
+				check_status="${gl_lv}Running${gl_bai}"
+			elif [ -f /etc/systemd/system/ip-commerce-generator.service ]; then
+				check_status="${gl_huang}Installed but not running${gl_bai}"
+			fi
+			if [ -f "$ipcg_dir/.env" ]; then
+				ipcg_port=$(ipcg_env_value PORT || true)
+				ipcg_port=${ipcg_port:-8790}
+			fi
+			echo -e "Traffic IP nuclear explosion engine$check_status"
+			echo "Official website: https://github.com/359073395/ip-commerce-generator"
+			echo "Knowledge base-driven IP positioning, topic selection, script and delivery plan generator, default port:$ipcg_port"
+			echo ""
+			if [ -d "$ipcg_dir" ]; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "Web management panel: http://$ipv4_address:$ipcg_port"
+					echo "Health check: http://$ipv4_address:$ipcg_port/api/health"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$ipcg_port" "$file" 2>/dev/null; then
+						echo "Domain name access: https://$(basename"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. Install 2. Update 3. Uninstall"
+			echo "------------------------"
+			echo "5. Add domain name access 6. Delete domain name access"
+			echo "7. Check the service status 8. Check the operation log"
+			echo "------------------------"
+			echo "0. Return to the previous menu"
+			echo "------------------------"
+			read -e -p "Please enter your choice:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 2
+					install curl git
+					check_port_conflict 8790 && { open_port 8790; } || { echo "Installation canceled"; break; }
+					if ipcg_deploy 1; then
+						add_app_id
+						send_stats "Install traffic IP nuclear explosion engine"
+					else
+						echo "Traffic IP nuclear explosion engine installation failed, please check the network or the error log above"
+					fi
+					;;
+				2)
+					install curl git
+					if ipcg_deploy 0; then
+						add_app_id
+						send_stats "Update traffic IP nuclear explosion engine"
+					else
+						echo "Traffic IP nuclear explosion engine update failed, please check the network or the error log above"
+					fi
+					;;
+				3)
+					if [ -f "$ipcg_dir/.env" ]; then
+						ipcg_port=$(ipcg_env_value PORT || true)
+						ipcg_port=${ipcg_port:-8790}
+					fi
+					[ -x /bin/systemctl ] && /bin/systemctl disable --now ip-commerce-generator 2>/dev/null
+					rm -f /etc/systemd/system/ip-commerce-generator.service
+					[ -x /bin/systemctl ] && /bin/systemctl daemon-reload 2>/dev/null
+					rm -rf "$ipcg_dir"
+					close_port "$ipcg_port"
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "Uninstall completed"
+					send_stats "Uninstall traffic IP nuclear explosion engine"
+					;;
+				5)
+					send_stats "Traffic IP nuclear explosion engine domain name access"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 ${ipcg_port}
+					;;
+				6)
+					web_del
+					;;
+				7)
+					/bin/systemctl status ip-commerce-generator --no-pager
+					;;
+				8)
+					journalctl -u ip-commerce-generator -f
 					;;
 				*)
 					break
@@ -16441,7 +16586,7 @@ linux_work() {
 	  send_stats "Backend workspace"
 	  echo -e "Backend workspace"
 	  echo -e "The system will provide you with a workspace that can run permanently in the background, which you can use to perform long-term tasks."
-	  echo -e "Even if you disconnect SSH, the tasks in the workspace will not be interrupted, and the tasks will remain in the background."
+	  echo -e "Even if you disconnect SSH, the tasks in the workspace will not be interrupted, and the background tasks will persist."
 	  echo -e "${gl_huang}hint:${gl_bai}After entering the workspace, use Ctrl+b and then press d alone to exit the workspace!"
 	  echo -e "${gl_kjlan}------------------------"
 	  echo "List of currently existing workspaces"
@@ -16452,7 +16597,7 @@ linux_work() {
 	  echo -e "${gl_kjlan}2.   ${gl_bai}Work Area 2"
 	  echo -e "${gl_kjlan}3.   ${gl_bai}Work Area 3"
 	  echo -e "${gl_kjlan}4.   ${gl_bai}Work Area 4"
-	  echo -e "${gl_kjlan}5.   ${gl_bai}Workspace No. 5"
+	  echo -e "${gl_kjlan}5.   ${gl_bai}Work Area 5"
 	  echo -e "${gl_kjlan}6.   ${gl_bai}Work Area 6"
 	  echo -e "${gl_kjlan}7.   ${gl_bai}Work Area 7"
 	  echo -e "${gl_kjlan}8.   ${gl_bai}Work Area 8"
@@ -16796,7 +16941,7 @@ log_menu() {
 		show_log_overview
 		echo
 		echo "=========== System log management menu ==========="
-		echo "1. View the latest system log (journal)"
+		echo "1. Check the latest system log (journal)"
 		echo "2. View the specified service log"
 		echo "3. View login/security logs"
 		echo "4. Real-time tracking logs"
@@ -16807,7 +16952,7 @@ log_menu() {
 		case $choice in
 			1)
 				send_stats "View recent logs"
-				read -erp "View the most recent log lines? [Default 100]:" lines
+				read -erp "How many recent log lines have you viewed? [Default 100]:" lines
 				lines=${lines:-100}
 				journalctl -n "$lines" --no-pager
 				read -erp "Press Enter to continue..."
@@ -16879,7 +17024,7 @@ env_menu() {
 	send_stats "System variable management tool"
 	show_env_vars() {
 		clear
-		send_stats "Currently in effect environment variables"
+		send_stats "Environment variables currently in effect"
 		echo "========== Currently in effect environment variables (excerpt) =========="
 		printf "%-20s %s\n" "variable name" "value"
 		echo "-----------------------------------------------"
@@ -17102,7 +17247,7 @@ linux_Settings() {
 			echo "python version management"
 			echo "Video introduction: https://www.bilibili.com/video/BV1Pm42157cK?t=0.1"
 			echo "---------------------------------------"
-			echo "This function can seamlessly install any version officially supported by python!"
+			echo "This function can seamlessly install any version officially supported by Python!"
 			local VERSION=$(python3 -V 2>&1 | awk '{print $2}')
 			echo -e "Current python version number:${gl_huang}$VERSION${gl_bai}"
 			echo "------------"
@@ -17250,8 +17395,8 @@ EOF
 						;;
 					2)
 						rm -f /etc/gai.conf
-						echo "Switched to IPv6 priority"
-						send_stats "Switched to IPv6 priority"
+						echo "Switched to IPv6 first"
+						send_stats "Switched to IPv6 first"
 						;;
 					3)
 						clear
@@ -17449,7 +17594,7 @@ EOF
 				echo "America"
 				echo "21. US Western Time 22. US Eastern Time"
 				echo "23. Canada time 24. Mexico time"
-				echo "25. Brazil time 26. Argentina time"
+				echo "25. Brazil Time 26. Argentina Time"
 				echo "------------------------"
 				echo "31. UTC global standard time"
 				echo "------------------------"
@@ -18129,7 +18274,7 @@ linux_file() {
 				read -e -p "Please enter the file or directory path to copy:" src_path
 				if [ ! -e "$src_path" ]; then
 					echo "Error: File or directory does not exist."
-					send_stats "Copying file or directory failed: File or directory does not exist"
+					send_stats "Failed to copy file or directory: File or directory does not exist"
 					continue
 				fi
 				read -e -p "Please enter the destination path (including new file or directory name):" dest_path
@@ -18231,7 +18376,7 @@ while true; do
 	  echo -e "${gl_kjlan}Execute tasks in batches${gl_bai}"
 	  echo -e "${gl_kjlan}11. ${gl_bai}Install Harvey script${gl_kjlan}12. ${gl_bai}Update system${gl_kjlan}13. ${gl_bai}Clean the system"
 	  echo -e "${gl_kjlan}14. ${gl_bai}Install docker${gl_kjlan}15. ${gl_bai}Install BBR3${gl_kjlan}16. ${gl_bai}Set 1G virtual memory"
-	  echo -e "${gl_kjlan}17. ${gl_bai}Set time zone to Shanghai${gl_kjlan}18. ${gl_bai}Open all ports${gl_kjlan}51. ${gl_bai}Custom instructions"
+	  echo -e "${gl_kjlan}17. ${gl_bai}Set time zone to Shanghai${gl_kjlan}18. ${gl_bai}Open all ports${gl_kjlan}51. ${gl_bai}custom directive"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  echo -e "${gl_kjlan}0.  ${gl_bai}Return to main menu"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
@@ -18559,7 +18704,7 @@ esac
 done
 }
 k_info() {
-send_stats "k command reference examples"
+send_stats "k command reference use case"
 echo "-------------------"
 echo "Video introduction: https://www.bilibili.com/video/BV1ib421E7it?t=0.1"
 echo "The following is a reference use case for the k command:"

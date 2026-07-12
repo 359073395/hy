@@ -1195,7 +1195,7 @@ ssl_ps
 }
 ssl_ps() {
 	echo -e "${gl_huang}已申請的證書到期情況${gl_bai}"
-	echo "網站資訊 證書到期時間"
+	echo "站點資訊 證書到期時間"
 	echo "------------------------"
 	for cert_dir in /etc/letsencrypt/live/*; do
 	  local cert_file="$cert_dir/fullchain.pem"
@@ -1764,7 +1764,7 @@ web_security() {
 					  sed -i "s/harvey@outlook.com/$cfuser/g" /etc/fail2ban/action.d/cloudflare-docker.conf
 					  sed -i "s/APIKEY00000/$cftoken/g" /etc/fail2ban/action.d/cloudflare-docker.conf
 					  f2b_status
-					  echo "已配置cloudflare模式，可在cf後台，站點-安全性-事件中查看攔截記錄"
+					  echo "已設定cloudflare模式，可在cf後台，網站-安全性-事件中查看攔截記錄"
 					  ;;
 				  22)
 					  send_stats "高負載開啟5秒盾"
@@ -3005,7 +3005,7 @@ ldnmp_web_status() {
 			2)
 				send_stats "克隆站點域名"
 				read -e -p "請輸入舊網域名稱:" oddyuming
-				read -e -p "請輸入新網域:" yuming
+				read -e -p "請輸入新網域名稱:" yuming
 				install_certbot
 				install_ssltls
 				certs_status
@@ -3035,7 +3035,7 @@ ldnmp_web_status() {
 				send_stats "建立關聯站點"
 				echo -e "為現有的站點再關聯一個新網域用於訪問"
 				read -e -p "請輸入現有的網域名稱:" oddyuming
-				read -e -p "請輸入新網域:" yuming
+				read -e -p "請輸入新網域名稱:" yuming
 				install_certbot
 				install_ssltls
 				certs_status
@@ -3741,7 +3741,7 @@ local CONF="/etc/sysctl.d/99-harvey-bbr.conf"
 mkdir -p /etc/sysctl.d
 echo "net.core.default_qdisc=fq" > "$CONF"
 echo "net.ipv4.tcp_congestion_control=bbr" >> "$CONF"
-# 清理可能導致衝突的舊版 sysctl.conf 殘留
+# 清理可能導致衝突的舊版本 sysctl.conf 殘留
 sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf 2>/dev/null
 sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf 2>/dev/null
 sysctl -p "$CONF" >/dev/null 2>&1 || sysctl --system >/dev/null 2>&1
@@ -10301,7 +10301,7 @@ openclaw_json_get_bool() {
 					break_end
 					;;
 				3)
-					read -e -p "請輸入WhatsApp收到的連接碼 (例如 NYA99R2F)（輸入 0 退出）：" code
+					read -e -p "請輸入WhatsApp收到的連線碼 (例如 NYA99R2F)（輸入 0 退出）：" code
 					if [ "$code" = "0" ]; then continue; fi
 					if [ -z "$code" ]; then echo "錯誤：連接碼不能為空。"; sleep 1; continue; fi
 					openclaw pairing approve whatsapp "$code"
@@ -13065,6 +13065,8 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}121. ${color121}影鏈工坊影片解析${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
+	  echo -e "${gl_kjlan}122. ${color122}流量IP核爆引擎${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方應用程式列表"
   	  echo -e "${gl_kjlan}想要讓你的應用程式出現在這裡？查看開發者指南:${gl_huang}https://dev.kejilion.sh/${gl_bai}"
 	  for f in "$HOME"/apps/*.conf; do
@@ -14180,7 +14182,7 @@ while true; do
 			ip_address
 			echo "已經安裝完成"
 			check_docker_app_ip
-			echo "初始使用者名稱密碼皆為: admin"
+			echo "初始使用者名稱密碼均為: admin"
 		}
 		docker_app_update() {
 			docker rm -f node-exporter prometheus grafana
@@ -15904,7 +15906,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 						cd /opt/operation-ip-quality-platform && bash scripts/update-vps.sh
 						echo "更新完成"
 					else
-						echo "未找到更新脚本，请确认已安装"
+						echo "未找到更新腳本，請確認已安裝"
 					fi
 					add_app_id
 					send_stats "更新IP品質檢測平台"
@@ -15954,7 +15956,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			echo -e "AimiliVPN代理網關$check_status"
 			echo "官網: https://github.com/baoweise-bot/aimili-vpngate"
 			echo "利用VPNGate公共VPN為VPS提供乾淨的出口IP"
-			echo "支持HTTP/SOCKS5双协议代理，智能自动故障转移"
+			echo "支援HTTP/SOCKS5雙協定代理，智慧自動故障轉移"
 			echo ""
 			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
 				ip_address
@@ -16228,7 +16230,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					send_stats "卸載LittlePrinceAgent"
 					;;
 				5)
-					send_stats "LittlePrinceAgent網域訪問"
+					send_stats "LittlePrinceAgent域名訪問"
 					add_yuming
 					ldnmp_Proxy ${yuming} 127.0.0.1 ${agent_port}
 					;;
@@ -16345,6 +16347,149 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					;;
 				8)
 					docker logs -f video-parser
+					;;
+				*)
+					break
+					;;
+			esac
+			break_end
+		done
+		  ;;
+	  122|ip-commerce|ipcg|liuliangip)
+		local app_id="122"
+		send_stats "流量IP核爆引擎"
+		local ipcg_dir="/opt/ip-commerce-generator"
+		local ipcg_port=8790
+		local ipcg_repo="359073395/ip-commerce-generator"
+		ipcg_env_value() {
+			local key="$1"
+			[ -f "$ipcg_dir/.env" ] || return 1
+			grep "^${key}=" "$ipcg_dir/.env" 2>/dev/null | tail -n 1 | cut -d= -f2- | sed 's/^"//; s/"$//'
+		}
+		ipcg_deploy() {
+			local ipcg_force_env="${1:-0}"
+			local ipcg_github_token="${GITHUB_TOKEN:-}"
+			local ipcg_api_key="${OPENAI_API_KEY:-}"
+			local ipcg_base_url="${OPENAI_BASE_URL:-}"
+			local ipcg_model="${OPENAI_MODEL:-}"
+			local ipcg_fallback_models="${OPENAI_FALLBACK_MODELS:-}"
+			[ -n "$ipcg_api_key" ] || ipcg_api_key=$(ipcg_env_value OPENAI_API_KEY || true)
+			[ -n "$ipcg_base_url" ] || ipcg_base_url=$(ipcg_env_value OPENAI_BASE_URL || true)
+			[ -n "$ipcg_model" ] || ipcg_model=$(ipcg_env_value OPENAI_MODEL || true)
+			[ -n "$ipcg_fallback_models" ] || ipcg_fallback_models=$(ipcg_env_value OPENAI_FALLBACK_MODELS || true)
+			ipcg_fallback_models=${ipcg_fallback_models:-gpt-5.4,gemini-3-flash,gpt-5.4-mini}
+			local ipcg_installer="/tmp/ip-commerce-generator-install.sh"
+			curl -fsSL \
+				"https://raw.githubusercontent.com/359073395/ip-commerce-generator/main/scripts/install-from-github.sh" \
+				-o "$ipcg_installer" || { echo "下載安裝腳本失敗，請確認${ipcg_repo}已公開或網路可存取"; return 1; }
+			chmod +x "$ipcg_installer"
+			OPENAI_BASE_URL="$ipcg_base_url" \
+			OPENAI_API_KEY="$ipcg_api_key" \
+			OPENAI_MODEL="$ipcg_model" \
+			OPENAI_FALLBACK_MODELS="$ipcg_fallback_models" \
+			OPENAI_TIMEOUT_MS=45000 \
+			OPENAI_MAX_TOKENS=1200 \
+			OPENAI_TEMPERATURE=0.4 \
+			OPENAI_REASONING_EFFORT=low \
+			KNOWLEDGE_BUDGET_CHARS=1200 \
+			ENABLE_NGINX_BASIC_AUTH=no \
+			PORT="$ipcg_port" \
+			HOST=0.0.0.0 \
+			FORCE_ENV="$ipcg_force_env" \
+			APP_DIR="$ipcg_dir" \
+			GITHUB_TOKEN="$ipcg_github_token" \
+			GITHUB_REPO="$ipcg_repo" \
+			GITHUB_REF=main \
+			SERVICE_NAME=ip-commerce-generator \
+			bash "$ipcg_installer"
+			rm -f "$ipcg_installer"
+		}
+		while true; do
+			clear
+			local check_status="${gl_hui}未安裝${gl_bai}"
+			if [ -x /bin/systemctl ] && /bin/systemctl is-active --quiet ip-commerce-generator 2>/dev/null; then
+				check_status="${gl_lv}運作中${gl_bai}"
+			elif [ -f /etc/systemd/system/ip-commerce-generator.service ]; then
+				check_status="${gl_huang}已安裝未運行${gl_bai}"
+			fi
+			if [ -f "$ipcg_dir/.env" ]; then
+				ipcg_port=$(ipcg_env_value PORT || true)
+				ipcg_port=${ipcg_port:-8790}
+			fi
+			echo -e "流量IP核爆引擎$check_status"
+			echo "官網: https://github.com/359073395/ip-commerce-generator"
+			echo "知識庫驅動的 IP 定位、選題、腳本與帶貨方案產生器，預設連接埠:$ipcg_port"
+			echo ""
+			if [ -d "$ipcg_dir" ]; then
+				ip_address
+				if [ -n "$ipv4_address" ]; then
+					echo "Web管理面板: http://$ipv4_address:$ipcg_port"
+					echo "健康檢查: http://$ipv4_address:$ipcg_port/api/health"
+				fi
+				for file in /home/web/conf.d/*; do
+					if [ -f "$file" ] && grep -q "127.0.0.1:$ipcg_port" "$file" 2>/dev/null; then
+						echo "網域存取: https://$(basename"$file" | sed "s/.conf$//")"
+					fi
+				done
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 安裝 2. 更新 3. 卸載"
+			echo "------------------------"
+			echo "5. 新增網域存取 6. 刪除網域存取"
+			echo "7. 查看服務狀態 8. 查看執行日誌"
+			echo "------------------------"
+			echo "0. 返回上一級選單"
+			echo "------------------------"
+			read -e -p "請輸入你的選擇:" sub_choice
+			case $sub_choice in
+				1)
+					check_disk_space 2
+					install curl git
+					check_port_conflict 8790 && { open_port 8790; } || { echo "安裝取消"; break; }
+					if ipcg_deploy 1; then
+						add_app_id
+						send_stats "安裝流量IP核爆引擎"
+					else
+						echo "流量IP核爆引擎安裝失敗，請檢查網路或上方錯誤日誌"
+					fi
+					;;
+				2)
+					install curl git
+					if ipcg_deploy 0; then
+						add_app_id
+						send_stats "更新流量IP核爆引擎"
+					else
+						echo "流量IP核爆引擎更新失敗，請檢查網路或上方錯誤日誌"
+					fi
+					;;
+				3)
+					if [ -f "$ipcg_dir/.env" ]; then
+						ipcg_port=$(ipcg_env_value PORT || true)
+						ipcg_port=${ipcg_port:-8790}
+					fi
+					[ -x /bin/systemctl ] && /bin/systemctl disable --now ip-commerce-generator 2>/dev/null
+					rm -f /etc/systemd/system/ip-commerce-generator.service
+					[ -x /bin/systemctl ] && /bin/systemctl daemon-reload 2>/dev/null
+					rm -rf "$ipcg_dir"
+					close_port "$ipcg_port"
+					sed -i "/\b${app_id}\b/d" /home/docker/appno.txt
+					echo "卸載完成"
+					send_stats "卸載流量IP核爆引擎"
+					;;
+				5)
+					send_stats "流量IP核爆引擎域名訪問"
+					add_yuming
+					ldnmp_Proxy ${yuming} 127.0.0.1 ${ipcg_port}
+					;;
+				6)
+					web_del
+					;;
+				7)
+					/bin/systemctl status ip-commerce-generator --no-pager
+					;;
+				8)
+					journalctl -u ip-commerce-generator -f
 					;;
 				*)
 					break
@@ -17736,7 +17881,7 @@ EOF
 			  echo "TG-bot監控預警功能"
 			  echo "影片介紹: https://youtu.be/vLL-eb3Z_TY"
 			  echo "------------------------------------------------"
-			  echo "您需要設定tg機器人API和接收預警的使用者ID，即可實現本機CPU，內存，硬碟，流量，SSH登入的即時監控預警"
+			  echo "您需要設定tg機器人API和接收預警的用戶ID，即可實現本機CPU，內存，硬碟，流量，SSH登入的即時監控預警"
 			  echo "到達閾值後會向用戶發送預警訊息"
 			  echo -e "${gl_hui}-關於流量，重啟伺服器將重新計算-${gl_bai}"
 			  read -e -p "確定繼續嗎？ (Y/N):" choice
@@ -18028,7 +18173,7 @@ linux_file() {
 		echo "1. 進入目錄 2. 建立目錄 3. 修改目錄權限 4. 重新命名目錄"
 		echo "5. 刪除目錄 6. 返回上一層選單目錄"
 		echo "------------------------"
-		echo "11. 建立檔案 12. 編輯檔案 13. 修改檔案權限 14. 重新命名文件"
+		echo "11. 建立文件 12. 編輯文件 13. 修改文件權限 14. 重新命名文件"
 		echo "15. 刪除文件"
 		echo "------------------------"
 		echo "21. 壓縮檔案目錄 22. 解壓縮檔案目錄 23. 行動檔案目錄 24. 複製檔案目錄"
