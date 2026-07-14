@@ -11,6 +11,21 @@ gl_kjlan='\033[96m'
 canshu="default"
 permission_granted="false"
 ENABLE_STATS="true"
+if [ ! -t 0 ] && [ -r /dev/tty ] && [ "${HARVEY_TTY_REEXEC:-0}" != "1" ]; then
+	tmp_script="${TMPDIR:-/tmp}/harvey-tty-$$.sh"
+	if command -v curl >/dev/null 2>&1; then
+		if curl -fsSL "https://raw.githubusercontent.com/359073395/hy/main/harvey.sh?ts=$(date +%s)" -o "$tmp_script"; then
+			chmod +x "$tmp_script" && HARVEY_TTY_REEXEC=1 exec bash "$tmp_script" "$@" </dev/tty
+		fi
+	fi
+	if command -v wget >/dev/null 2>&1; then
+		if wget -qO "$tmp_script" "https://raw.githubusercontent.com/359073395/hy/main/harvey.sh?ts=$(date +%s)"; then
+			chmod +x "$tmp_script" && HARVEY_TTY_REEXEC=1 exec bash "$tmp_script" "$@" </dev/tty
+		fi
+	fi
+	echo "当前以管道方式运行，菜单无法读取键盘输入。请下载脚本后运行，或使用: bash <(curl -fsSL https://raw.githubusercontent.com/359073395/hy/main/harvey.sh)"
+	exit 1
+fi
 quanju_canshu() {
 if [ "$canshu" = "CN" ]; then
 	zhushi=0
@@ -75,7 +90,11 @@ yinsiyuanquan2
 sed -i '/^alias k=/d' ~/.bashrc > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.profile > /dev/null 2>&1
 sed -i '/^alias k=/d' ~/.bash_profile > /dev/null 2>&1
-cp -f ./harvey.sh ~/harvey.sh > /dev/null 2>&1
+if [ -f "${BASH_SOURCE[0]}" ]; then
+	cp -f "${BASH_SOURCE[0]}" ~/harvey.sh > /dev/null 2>&1
+else
+	cp -f ./harvey.sh ~/harvey.sh > /dev/null 2>&1
+fi
 cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
 ln -sf /usr/local/bin/H /usr/bin/H > /dev/null 2>&1
 CheckFirstRun_false() {
