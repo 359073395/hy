@@ -16369,6 +16369,8 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 		ipcg_deploy() {
 			local ipcg_force_env="${1:-0}"
 			local ipcg_github_token="${GITHUB_TOKEN:-}"
+			local ipcg_ref="${IPCG_GITHUB_REF:-main}"
+			local ipcg_latest_sha=""
 			local ipcg_api_key="${OPENAI_API_KEY:-}"
 			local ipcg_base_url="${OPENAI_BASE_URL:-}"
 			local ipcg_model="${OPENAI_MODEL:-}"
@@ -16379,8 +16381,26 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			[ -n "$ipcg_fallback_models" ] || ipcg_fallback_models=$(ipcg_env_value OPENAI_FALLBACK_MODELS || true)
 			ipcg_fallback_models=${ipcg_fallback_models:-gpt-5.4,gemini-3-flash,gpt-5.4-mini}
 			local ipcg_installer="/tmp/ip-commerce-generator-install.sh"
+			ipcg_latest_sha=$(curl -fsSL \
+				-H "Accept: application/vnd.github+json" \
+				-H "Cache-Control: no-cache" \
+				-H "X-GitHub-Api-Version: 2022-11-28" \
+				"https://api.github.com/repos/${ipcg_repo}/commits/${ipcg_ref}?_=$(date +%s)" \
+				| sed -n 's/^[[:space:]]*"sha":[[:space:]]*"\([0-9a-f]\{40\}\)".*/\1/p' | head -n 1 || true)
+			if [ -n "$ipcg_latest_sha" ]; then
+				ipcg_ref="$ipcg_latest_sha"
+			else
+				echo "未能解析 ${ipcg_repo} 最新提交，将继续使用 ${ipcg_ref}"
+			fi
+			echo "准备部署 ${ipcg_repo}@${ipcg_ref}"
 			curl -fsSL \
-				"https://raw.githubusercontent.com/359073395/ip-commerce-generator/main/scripts/install-from-github.sh" \
+				-H "Accept: application/vnd.github.raw+json" \
+				-H "Cache-Control: no-cache" \
+				-H "X-GitHub-Api-Version: 2022-11-28" \
+				"https://api.github.com/repos/${ipcg_repo}/contents/scripts/install-from-github.sh?ref=${ipcg_ref}" \
+				-o "$ipcg_installer" || curl -fsSL \
+				-H "Cache-Control: no-cache" \
+				"https://raw.githubusercontent.com/359073395/ip-commerce-generator/${ipcg_ref}/scripts/install-from-github.sh?_=$(date +%s)" \
 				-o "$ipcg_installer" || { echo "下载安装脚本失败，请确认 ${ipcg_repo} 已公开或网络可访问"; return 1; }
 			chmod +x "$ipcg_installer"
 			OPENAI_BASE_URL="$ipcg_base_url" \
@@ -16399,7 +16419,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			APP_DIR="$ipcg_dir" \
 			GITHUB_TOKEN="$ipcg_github_token" \
 			GITHUB_REPO="$ipcg_repo" \
-			GITHUB_REF=main \
+			GITHUB_REF="$ipcg_ref" \
 			SERVICE_NAME=ip-commerce-generator \
 			bash "$ipcg_installer"
 			rm -f "$ipcg_installer"
