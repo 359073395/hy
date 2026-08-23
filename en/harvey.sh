@@ -661,7 +661,7 @@ docker_ipv6_on() {
 	install jq
 	local CONFIG_FILE="/etc/docker/daemon.json"
 	local REQUIRED_IPV6_CONFIG='{"ipv6": true, "fixed-cidr-v6": "2001:db8:1::/64"}'
-	# Check if the configuration file exists, if not create the file and write default settings
+	# Check if the configuration file exists, if not create the file and write the default settings
 	if [ ! -f "$CONFIG_FILE" ]; then
 		echo "$REQUIRED_IPV6_CONFIG" | jq . > "$CONFIG_FILE"
 		restart docker
@@ -1790,7 +1790,7 @@ web_security() {
 					  echo -e "${gl_huang}The website automatically detects every 5 minutes. When it detects high load, it will automatically open the shield, and when it detects low load, it will automatically close the shield for 5 seconds.${gl_bai}"
 					  echo "--------------"
 					  echo "Get CF parameters:"
-					  echo -e "Go to my profile in the upper right corner of the cf backend, select the API token on the left, and obtain${gl_huang}Global API Key${gl_bai}"
+					  echo -e "Go to my profile in the upper right corner of the cf backend, select the API token on the left, and get${gl_huang}Global API Key${gl_bai}"
 					  echo -e "Go to the bottom right of the cf backend domain name summary page to get it${gl_huang}Area ID${gl_bai}"
 					  echo "https://dash.cloudflare.com/login"
 					  echo "--------------"
@@ -2791,7 +2791,7 @@ ldnmp_Proxy_backend() {
 }
 list_stream_services() {
 	STREAM_DIR="/home/web/stream.d"
-	printf "%-25s %-18s %-25s %-20s\n" "Service name" "Communication type" "local address" "Backend address"
+	printf "%-25s %-18s %-25s %-20s\n" "Service name" "Communication type" "Local address" "Backend address"
 	if [ -z "$(ls -A "$STREAM_DIR")" ]; then
 		return
 	fi
@@ -3871,7 +3871,7 @@ sshkey_on() {
 		   -e 's/^\s*#\?\s*ChallengeResponseAuthentication .*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
 	rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
 	restart_ssh
-	echo -e "${gl_lv}The user key login mode is turned on and the password login mode is turned off. Reconnection will take effect.${gl_bai}"
+	echo -e "${gl_lv}The user key login mode has been turned on and the password login mode has been turned off. Reconnection will take effect.${gl_bai}"
 }
 add_sshkey() {
 	chmod 700 "${HOME}"
@@ -4487,7 +4487,7 @@ bbrv3() {
 					return 1
 				}
 				package=$(xanmod_detect_package) || {
-					echo "The current CPU cannot be recognized or a matching kernel package cannot be found. The installation has been cancelled."
+					echo "The current CPU cannot be recognized or the matching kernel package cannot be found. The installation has been cancelled."
 					return 1
 				}
 				apt update -y
@@ -4527,7 +4527,7 @@ bbrv3() {
 		  if [ -r /etc/os-release ]; then
 			. /etc/os-release
 			if [ "$ID" != "debian" ] && [ "$ID" != "ubuntu" ]; then
-				echo "The current environment does not support it. Only Debian and Ubuntu systems are supported."
+				echo "The current environment does not support it, only Debian and Ubuntu systems are supported."
 				break_end
 				linux_Settings
 			fi
@@ -4568,7 +4568,7 @@ bbrv3() {
 		  echo "Video introduction: https://www.bilibili.com/video/BV14K421x7BS?t=0.1"
 		  echo "------------------------------------------------"
 		  echo "Only supports Debian/Ubuntu"
-		  echo "Please back up your data and we will upgrade your Linux kernel and enable BBR3."
+		  echo "Please back up your data, we will upgrade your Linux kernel and enable BBR3"
 		  echo "------------------------------------------------"
 		  read -e -p "Are you sure you want to continue? (Y/N):" choice
 		  case "$choice" in
@@ -4585,7 +4585,7 @@ bbrv3() {
 		fi
 }
 elrepo_install() {
-	# 导入 ELRepo GPG 公钥
+	# Import the ELRepo GPG public key
 	echo "Import the ELRepo GPG public key..."
 	rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
 	# Check system version
@@ -4675,7 +4675,7 @@ elrepo() {
 			  server_reboot
 			  ;;
 			[Nn])
-			  echo "已取消"
+			  echo "Canceled"
 			  ;;
 			*)
 			  echo "Invalid selection, please enter Y or N."
@@ -4887,7 +4887,7 @@ _kernel_optimize_core() {
 		SOMAXCONN=1024
 		BACKLOG=1000
 	fi
-	# ── 直播场景额外：UDP 缓冲区加大 ──
+	# ── Extras for live broadcast scenarios: UDP buffer enlarged ──
 	local STREAM_EXTRA=""
 	if [ "$scene" = "stream" ]; then
 		STREAM_EXTRA="
@@ -4926,7 +4926,7 @@ net.ipv4.tcp_slow_start_after_idle = 0"
 	# ── Back up existing configuration ──
 	[ -f "$CONF" ] && cp "$CONF" "${CONF}.bak.$(date +%s)"
 	# ── Write configuration file (persistence) ──
-	echo -e "${gl_lv}写入优化配置...${gl_bai}"
+	echo -e "${gl_lv}Write optimization configuration...${gl_bai}"
 	cat > "$CONF" << SYSCTL
 # harvey kernel tuning configuration
 # Mode: $mode_name | Scene: $scene
@@ -5057,7 +5057,7 @@ restore_defaults() {
 	rm -f /etc/sysctl.d/99-network-optimize.conf
 	# Clean up possible remaining bbr configuration in sysctl.conf
 	sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf 2>/dev/null
-	# 重新加载系统默认配置
+	# Reload system default configuration
 	sysctl --system 2>/dev/null | tail -1
 	# Restore transparent huge pages
 	[ -f /sys/kernel/mm/transparent_hugepage/enabled ] && \
@@ -5074,7 +5074,7 @@ Kernel_optimize() {
 	root_use
 	while true; do
 	  clear
-	  send_stats "Linux内核调优管理"
+	  send_stats "Linux kernel tuning management"
 	  local current_mode=$(grep "^# Mode:" /etc/sysctl.d/99-harvey-optimize.conf 2>/dev/null | sed 's/# mode: //' | awk -F'|' '{print $1}' | xargs)
 	  [ -z "$current_mode" ] && [ -f /etc/sysctl.d/99-network-optimize.conf ] && current_mode="Automatic tuning mode"
 	  echo "Linux system kernel parameter optimization"
@@ -5096,7 +5096,7 @@ Kernel_optimize() {
 	  echo -e "6. Restore default settings: Restore system settings to default configuration."
 	  echo -e "7. Automatic tuning: Automatically tune kernel parameters based on test data.${gl_huang}★${gl_bai}"
 	  echo "--------------------"
-	  echo "0. 返回上一级选单"
+	  echo "0. Return to the previous menu"
 	  echo "--------------------"
 	  read -e -p "Please enter your choice:" sub_choice
 	  case $sub_choice in
@@ -5142,7 +5142,7 @@ Kernel_optimize() {
 			  cd ~
 			  clear
 			  curl -sS ${gh_proxy}raw.githubusercontent.com/kejilion/sh/refs/heads/main/network-optimize.sh | bash
-			  send_stats "内核自动调优"
+			  send_stats "Kernel automatic tuning"
 			  ;;
 		  *)
 			  break
@@ -5163,7 +5163,7 @@ update_locale() {
 				locale-gen
 				echo "LANG=${lang}" > /etc/default/locale
 				export LANG=${lang}
-				echo -e "${gl_lv}The system language has been modified to:$lang 重新连接SSH生效。${gl_bai}"
+				echo -e "${gl_lv}The system language has been modified to:$langReconnect to SSH to take effect.${gl_bai}"
 				hash -r
 				break_end
 				;;
@@ -5171,7 +5171,7 @@ update_locale() {
 				install glibc-langpack-zh
 				localectl set-locale LANG=${lang}
 				echo "LANG=${lang}" | tee /etc/locale.conf
-				echo -e "${gl_lv}The system language has been modified to:$lang 重新连接SSH生效。${gl_bai}"
+				echo -e "${gl_lv}The system language has been modified to:$langReconnect to SSH to take effect.${gl_bai}"
 				hash -r
 				break_end
 				;;
@@ -5232,10 +5232,10 @@ break_end
 }
 shell_bianse() {
   root_use
-  send_stats "命令行美化工具"
+  send_stats "Command line beautification tool"
   while true; do
 	clear
-	echo "命令行美化工具"
+	echo "Command line beautification tool"
 	echo "------------------------"
 	echo -e "1. \033[1;32mroot \033[1;34mlocalhost \033[1;31m~ \033[0m${gl_bai}#"
 	echo -e "2. \033[1;35mroot \033[1;36mlocalhost \033[1;33m~ \033[0m${gl_bai}#"
@@ -5296,7 +5296,7 @@ linux_trash() {
 		trash_status="${gl_lv}Enabled${gl_bai}"
 	fi
 	clear
-	echo -e "当前回收站 ${trash_status}"
+	echo -e "Current recycle bin${trash_status}"
 	echo -e "After enabling it, files deleted by rm will be put into the recycle bin first to prevent accidental deletion of important files!"
 	echo "------------------------------------------------"
 	ls -l --color=auto "$TRASH_DIR" 2>/dev/null || echo "Recycle bin is empty"
@@ -5330,7 +5330,7 @@ linux_trash() {
 		  mv "$TRASH_DIR/$file_to_restore" "$HOME/"
 		  echo "$file_to_restoreRestored to home directory."
 		else
-		  echo "文件不存在。"
+		  echo "File does not exist."
 		fi
 		;;
 	  4)
@@ -5350,9 +5350,9 @@ linux_fav() {
 send_stats "Command Favorites"
 bash <(curl -l -s ${gh_proxy}raw.githubusercontent.com/byJoey/cmdbox/refs/heads/main/install.sh)
 }
-# 创建备份
+# Create backup
 create_backup() {
-	send_stats "Create a backup"
+	send_stats "Create backup"
 	local TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 	# Prompt user for backup directory
 	echo "Example of creating a backup:"
@@ -5382,12 +5382,12 @@ create_backup() {
 	local PREFIX=${PREFIX%_}
 	# Generate backup file name
 	local BACKUP_NAME="${PREFIX}_$TIMESTAMP.tar.gz"
-	# 打印用户选择的目录
+	# Print directory selected by user
 	echo "The backup directory you selected is:"
 	for path in "${BACKUP_PATHS[@]}"; do
 		echo "- $path"
 	done
-	# Create a backup
+	# Create backup
 	echo "Creating backup$BACKUP_NAME..."
 	install tar
 	tar -czvf "$BACKUP_DIR/$BACKUP_NAME" "${BACKUP_PATHS[@]}"
@@ -5402,7 +5402,7 @@ create_backup() {
 # Restore backup
 restore_backup() {
 	send_stats "Restore backup"
-	# 选择要恢复的备份
+	# Select the backup to restore
 	read -e -p "Please enter the backup file name to be restored:" BACKUP_NAME
 	# Check if the backup file exists
 	if [ ! -f "$BACKUP_DIR/$BACKUP_NAME" ]; then
@@ -5420,7 +5420,7 @@ restore_backup() {
 }
 # List backups
 list_backups() {
-	echo "可用的备份："
+	echo "Available backups:"
 	ls -1 "$BACKUP_DIR"
 }
 # Delete backup
@@ -5629,7 +5629,7 @@ add_connection() {
 }
 # Delete connection
 delete_connection() {
-	send_stats "删除连接"
+	send_stats "Delete connection"
 	read -e -p "Please enter the connection number to be deleted:" num
 	local connection=$(sed -n "${num}p" "$CONFIG_FILE")
 	if [[ -z "$connection" ]]; then
@@ -5642,7 +5642,7 @@ delete_connection() {
 		rm -f "$password_or_key"
 	fi
 	sed -i "${num}d" "$CONFIG_FILE"
-	echo "连接已删除!"
+	echo "Connection deleted!"
 }
 # Use connection
 use_connection() {
@@ -5659,7 +5659,7 @@ use_connection() {
 		# Connect using a key
 		ssh -o StrictHostKeyChecking=no -i "$password_or_key" -p "$port" "$user@$ip"
 		if [[ $? -ne 0 ]]; then
-			echo "连接失败！请检查以下内容："
+			echo "Connection failed! Please check the following:"
 			echo "1. Is the key file path correct?$password_or_key"
 			echo "2. Are the key file permissions correct (should be 600)."
 			echo "3. Whether the target server allows login using a key."
@@ -5704,7 +5704,7 @@ ssh_manager() {
 		echo "------------------------"
 		echo "0. Return to the previous menu"
 		echo "------------------------"
-		read -e -p "请输入你的选择: " choice
+		read -e -p "Please enter your choice:" choice
 		case $choice in
 			1) add_connection ;;
 			2) use_connection ;;
@@ -5714,15 +5714,15 @@ ssh_manager() {
 		esac
 	done
 }
-# 列出可用的硬盘分区
+# List available hard disk partitions
 list_partitions() {
-	echo "可用的硬盘分区："
+	echo "Available hard drive partitions:"
 	lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT | grep -v "sr\|loop"
 }
 # Persistently mounted partition
 mount_partition() {
 	send_stats "Mount partition"
-	read -e -p "Please enter the name of the partition to be mounted (e.g. sda1):" PARTITION
+	read -e -p "Please enter the partition name to be mounted (e.g. sda1):" PARTITION
 	DEVICE="/dev/$PARTITION"
 	MOUNT_POINT="/mnt/$PARTITION"
 	# Check if the partition exists
@@ -5751,7 +5751,7 @@ mount_partition() {
 	mkdir -p "$MOUNT_POINT"
 	# mount
 	if ! mount "$DEVICE" "$MOUNT_POINT"; then
-		echo "分区挂载失败！"
+		echo "Partition mount failed!"
 		rmdir "$MOUNT_POINT"
 		return 1
 	fi
@@ -5772,13 +5772,13 @@ unmount_partition() {
 	# Check whether the partition is mounted
 	MOUNT_POINT=$(lsblk -o MOUNTPOINT | grep -w "$PARTITION")
 	if [ -z "$MOUNT_POINT" ]; then
-		echo "分区未挂载！"
+		echo "The partition is not mounted!"
 		return
 	fi
 	# Unmount partition
 	umount "/dev/$PARTITION"
 	if [ $? -eq 0 ]; then
-		echo "分区卸载成功: $MOUNT_POINT"
+		echo "Partition uninstalled successfully:$MOUNT_POINT"
 		rmdir "$MOUNT_POINT"
 	else
 		echo "Partition uninstall failed!"
@@ -5786,12 +5786,12 @@ unmount_partition() {
 }
 # List mounted partitions
 list_mounted_partitions() {
-	echo "已挂载的分区："
+	echo "Mounted partition:"
 	df -h | grep -v "tmpfs\|udev\|overlay"
 }
 # Format partition
 format_partition() {
-	send_stats "格式化分区"
+	send_stats "Format partition"
 	read -e -p "Please enter the name of the partition to be formatted (e.g. sda1):" PARTITION
 	# Check if the partition exists
 	if ! lsblk -o NAME | grep -w "$PARTITION" > /dev/null; then
@@ -5850,7 +5850,7 @@ disk_manager() {
 	send_stats "Hard disk management function"
 	while true; do
 		clear
-		echo "Hard drive partition management"
+		echo "Hard disk partition management"
 		echo -e "${gl_huang}This feature is under internal testing and should not be used in a production environment.${gl_bai}"
 		echo "------------------------"
 		list_partitions
@@ -6030,7 +6030,7 @@ schedule_task() {
 		echo "Error: The scheduled synchronization for this task already exists!"
 		return
 	fi
-	# 创建到用户的 crontab
+	# Create to user's crontab
 	(crontab -l 2>/dev/null; echo "$cron_job") | crontab -
 	echo "Scheduled task has been created:$cron_job"
 }
@@ -8146,7 +8146,7 @@ moltbot_menu() {
 		echo "--------------------"
 		echo "4. View status log"
 		echo "5. Change model"
-		echo "6. API management"
+		echo "6. API Management"
 		echo "7. Robot connection and docking"
 		echo "8. Plug-in management (installation/removal)"
 		echo "9. Skill management (installation/removal)"
@@ -11408,7 +11408,7 @@ EOF
 		model_path=$(openclaw_memory_expand_path "$model_path")
 		model_status=$(openclaw_memory_local_model_status "$model_path")
 		if [ "$model_status" = "ok" ]; then
-			echo "✅ The model file already exists:$model_path"
+			echo "✅ Model file already exists:$model_path"
 			OPENCLAW_MEMORY_MODEL_PATH="$model_path"
 		else
 			local model_name="embeddinggemma-300M-Q8_0.gguf"
@@ -13005,7 +13005,7 @@ while true; do
 	  done
 	  echo -e "${gl_kjlan}1.   ${color1}Pagoda panel official version${gl_kjlan}2.   ${color2}aaPanel Pagoda International Version"
 	  echo -e "${gl_kjlan}3.   ${color3}1Panel new generation management panel${gl_kjlan}4.   ${color4}NginxProxyManager visualization panel"
-	  echo -e "${gl_kjlan}5.   ${color5}OpenList multi-store file list program${gl_kjlan}6.   ${color6}Ubuntu Remote Desktop Web Edition"
+	  echo -e "${gl_kjlan}5.   ${color5}OpenList multi-store file list program${gl_kjlan}6.   ${color6}Ubuntu Remote Desktop Web Version"
 	  echo -e "${gl_kjlan}7.   ${color7}Nezha Probe VPS Monitoring Panel${gl_kjlan}8.   ${color8}QB offline BT magnetic download panel"
 	  echo -e "${gl_kjlan}9.   ${color9}Poste.io mail server program${gl_kjlan}10.  ${color10}RocketChat multi-person online chat system"
 	  echo -e "${gl_kjlan}-------------------------"
@@ -13587,7 +13587,7 @@ while true; do
 		docker_rum() {
 			docker run -d --name looking-glass --restart=always -p ${docker_port}:80 wikihostinc/looking-glass-server
 		}
-		local docker_describe="Speedtest speed measurement panel is a VPS network speed test tool with multiple test functions and can also monitor VPS inbound and outbound traffic in real time."
+		local docker_describe="Speedtest speed test panel is a VPS network speed test tool with multiple test functions and can also monitor VPS inbound and outbound traffic in real time."
 		local docker_url="Official website introduction:${gh_proxy}github.com/wikihost-opensource/als"
 		local docker_use=""
 		local docker_passwd=""
@@ -14524,7 +14524,7 @@ while true; do
 		docker_rum() {
 			docker run -d -p ${docker_port}:8080 -v /home/docker/open-webui:/app/backend/data --name open-webui --restart=always ghcr.io/open-webui/open-webui:main
 		}
-		local docker_describe="OpenWebUI is a large language model web page framework, the official simplified version supports API access to all major models."
+		local docker_describe="OpenWebUI is a large language model web page framework, the official streamlined version supports API access to all major models."
 		local docker_url="Official website introduction:${gh_https_url}github.com/open-webui/open-webui"
 		local docker_use=""
 		local docker_passwd=""
@@ -14678,7 +14678,7 @@ while true; do
 			  -e ND_LOGLEVEL=info \
 			  deluan/navidrome:latest
 		}
-		local docker_describe="It is a lightweight, high-performance music streaming server"
+		local docker_describe="Is a lightweight, high-performance music streaming server"
 		local docker_url="Official website introduction: https://www.navidrome.org/"
 		local docker_use=""
 		local docker_passwd=""
@@ -14824,7 +14824,7 @@ while true; do
 		}
 		local docker_describe="Xunlei, your offline high-speed BT magnetic download tool"
 		local docker_url="Official website introduction:${gh_https_url}github.com/cnk3x/xunlei"
-		local docker_use="echo \"Log in to Xunlei with your mobile phone and enter the invitation code. Invitation code: Xunlei Niutong\""
+		local docker_use="echo \"Log in to Xunlei with your mobile phone, and then enter the invitation code. Invitation code: Xunlei Niutong\""
 		local docker_passwd=""
 		local app_size="1"
 		docker_app
@@ -15975,7 +15975,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 			echo -e "AimiliVPN proxy gateway$check_status"
 			echo "Official website: https://github.com/baoweise-bot/aimili-vpngate"
 			echo "Provide a clean exit IP to your VPS with VPNGate Public VPN"
-			echo "Supports HTTP/SOCKS5 dual-protocol proxy and intelligent automatic failover"
+			echo "Supports HTTP/SOCKS5 dual-protocol proxy, intelligent automatic failover"
 			echo ""
 			if [ -f "/opt/aimilivpn/vpngate_manager.py" ]; then
 				ip_address
@@ -17286,7 +17286,7 @@ linux_Settings() {
 			echo "python version management"
 			echo "Video introduction: https://www.bilibili.com/video/BV1Pm42157cK?t=0.1"
 			echo "---------------------------------------"
-			echo "This function can seamlessly install any version officially supported by python!"
+			echo "This function can seamlessly install any version officially supported by Python!"
 			local VERSION=$(python3 -V 2>&1 | awk '{print $2}')
 			echo -e "Current python version number:${gl_huang}$VERSION${gl_bai}"
 			echo "------------"
@@ -18313,7 +18313,7 @@ linux_file() {
 				read -e -p "Please enter the file or directory path to copy:" src_path
 				if [ ! -e "$src_path" ]; then
 					echo "Error: File or directory does not exist."
-					send_stats "Failed to copy file or directory: File or directory does not exist"
+					send_stats "Copying file or directory failed: File or directory does not exist"
 					continue
 				fi
 				read -e -p "Please enter the destination path (including new file or directory name):" dest_path
