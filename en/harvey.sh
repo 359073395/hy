@@ -16280,7 +16280,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 		  ;;
 	  121|yt|video-parser|yinglian)
 		local app_id="121"
-		send_stats "Yinglian Workshop 2.0"
+		send_stats "Yinglian Workshop 2.1"
 		while true; do
 			clear
 			local check_status="${gl_hui}Not installed${gl_bai}"
@@ -16294,9 +16294,9 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 				yt_port=$(grep "^PUBLIC_PORT=" /opt/video-parser/project/video-parser/.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
 				yt_port=${yt_port:-9890}
 			fi
-			echo -e "Yinglian Workshop 2.0 $check_status"
+			echo -e "Yinglian Workshop 2.1 $check_status"
 			echo "Official website: https://github.com/359073395/yt"
-			echo "Format selection, audio, subtitles, live queue and history. Port: $yt_port"
+			echo "Profile batch downloads, real quality, covers, subtitles, live queue and history. Port: $yt_port"
 			echo "Administrator: admin (password is shown during installation or stored in .env)"
 			echo ""
 			if [ -d /opt/video-parser/project/video-parser ]; then
@@ -16334,7 +16334,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					install curl
 					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh)
 					add_app_id
-					send_stats "Update Yinglian Workshop 2.0"
+					send_stats "Update Yinglian Workshop 2.1"
 					;;
 				3)
 					if [ -f /opt/video-parser/project/video-parser/.env ]; then

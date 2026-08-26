@@ -13077,7 +13077,7 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}120. ${color120}LittlePrinceAgent云端助手 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
-	  echo -e "${gl_kjlan}121. ${color121}影链工坊 2.0 视频下载中心 ${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}121. ${color121}影链工坊 2.1 视频下载中心 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}122. ${color122}流量IP核爆引擎 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
@@ -16276,7 +16276,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		  ;;
 	  121|yt|video-parser|yinglian)
 		local app_id="121"
-		send_stats "影链工坊 2.0"
+		send_stats "影链工坊 2.1"
 		while true; do
 			clear
 			local check_status="${gl_hui}未安装${gl_bai}"
@@ -16290,9 +16290,9 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 				yt_port=$(grep "^PUBLIC_PORT=" /opt/video-parser/project/video-parser/.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
 				yt_port=${yt_port:-9890}
 			fi
-			echo -e "影链工坊 2.0 $check_status"
+			echo -e "影链工坊 2.1 $check_status"
 			echo "官网: https://github.com/359073395/yt"
-			echo "格式选择、音频字幕、实时队列与历史记录，当前端口: $yt_port"
+			echo "主页批量下载、真实画质、封面字幕、实时队列与历史记录，当前端口: $yt_port"
 			echo "管理员账号: admin（密码见安装提示或项目 .env）"
 			echo ""
 			if [ -d /opt/video-parser/project/video-parser ]; then
@@ -16330,7 +16330,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 					install curl
 					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh)
 					add_app_id
-					send_stats "更新影链工坊 2.0"
+					send_stats "更新影链工坊 2.1"
 					;;
 				3)
 					if [ -f /opt/video-parser/project/video-parser/.env ]; then
