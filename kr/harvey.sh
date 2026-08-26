@@ -16297,7 +16297,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			echo -e "Shadow Chain 워크샵 영상 분석$check_status"
 			echo "공식 홈페이지: https://github.com/359073395/yt"
 			echo "공개 비디오 분석 및 서버 임시 다운로드 도구, 기본 포트:$yt_port"
-			echo "기본 관리자: admin / lhw111111"
+			echo "관리자: admin (비밀번호는 설치 시 또는 .env에서 확인)"
 			echo ""
 			if [ -d /opt/video-parser/project/video-parser ]; then
 				ip_address
@@ -16332,7 +16332,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					;;
 				2)
 					install curl
-					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh) --port 9890
+					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh)
 					add_app_id
 					send_stats "섀도우 체인 워크숍 업데이트"
 					;;

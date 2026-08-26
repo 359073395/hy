@@ -16297,7 +16297,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			echo -e "影鏈工坊影片解析$check_status"
 			echo "官網: https://github.com/359073395/yt"
 			echo "公開視訊解析與伺服器臨時下載工具，預設連接埠:$yt_port"
-			echo "預設管理員: admin / lhw111111"
+			echo "管理員：admin（密碼請查看安裝提示或 .env）"
 			echo ""
 			if [ -d /opt/video-parser/project/video-parser ]; then
 				ip_address
@@ -16332,7 +16332,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					;;
 				2)
 					install curl
-					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh) --port 9890
+					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh)
 					add_app_id
 					send_stats "更新影鏈工坊"
 					;;

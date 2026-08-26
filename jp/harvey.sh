@@ -16297,7 +16297,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			echo -e "シャドウチェーンワークショップのビデオ分析$check_status"
 			echo "公式サイト：https://github.com/359073395/yt"
 			echo "パブリックビデオ分析およびサーバー一時ダウンロードツール、デフォルトポート:$yt_port"
-			echo "デフォルトの管理者: admin / lhw111111"
+			echo "管理者: admin（パスワードはインストール時または .env で確認）"
 			echo ""
 			if [ -d /opt/video-parser/project/video-parser ]; then
 				ip_address
@@ -16332,7 +16332,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					;;
 				2)
 					install curl
-					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh) --port 9890
+					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh)
 					add_app_id
 					send_stats "シャドウチェーンワークショップを更新"
 					;;

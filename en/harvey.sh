@@ -16280,7 +16280,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 		  ;;
 	  121|yt|video-parser|yinglian)
 		local app_id="121"
-		send_stats "Shadow Chain Workshop video analysis"
+		send_stats "Yinglian Workshop 2.0"
 		while true; do
 			clear
 			local check_status="${gl_hui}Not installed${gl_bai}"
@@ -16294,10 +16294,10 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 				yt_port=$(grep "^PUBLIC_PORT=" /opt/video-parser/project/video-parser/.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
 				yt_port=${yt_port:-9890}
 			fi
-			echo -e "Shadow Chain Workshop video analysis$check_status"
+			echo -e "Yinglian Workshop 2.0 $check_status"
 			echo "Official website: https://github.com/359073395/yt"
-			echo "Public video analysis and server temporary download tool, default port:$yt_port"
-			echo "Default administrator: admin / lhw111111"
+			echo "Format selection, audio, subtitles, live queue and history. Port: $yt_port"
+			echo "Administrator: admin (password is shown during installation or stored in .env)"
 			echo ""
 			if [ -d /opt/video-parser/project/video-parser ]; then
 				ip_address
@@ -16332,9 +16332,9 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 					;;
 				2)
 					install curl
-					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh) --port 9890
+					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh)
 					add_app_id
-					send_stats "Update shadow chain workshop"
+					send_stats "Update Yinglian Workshop 2.0"
 					;;
 				3)
 					if [ -f /opt/video-parser/project/video-parser/.env ]; then
@@ -16467,7 +16467,7 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 				fi
 				for file in /home/web/conf.d/*; do
 					if [ -f "$file" ] && grep -q "127.0.0.1:$ipcg_port" "$file" 2>/dev/null; then
-						echo "Domain name access: https://$(basename"$file" | sed "s/.conf$//")"
+						echo "Domain name access: https://$(basename "$file" | sed "s/.conf$//")"
 					fi
 				done
 			fi
