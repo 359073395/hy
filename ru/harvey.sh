@@ -1623,6 +1623,7 @@ cf_purge_cache() {
 
 	  mkdir -p /home/web/config/
 	  echo "$API_TOKEN $EMAIL ${ZONE_IDS[*]}" > "$CONFIG_FILE"
+	  chmod 600 "$CONFIG_FILE"
 	fi
   fi
 
@@ -8566,10 +8567,11 @@ linux_panel() {
 
 
 			docker_rum() {
-
+				read -e -p "设置禅道管理员密码: " zentao_passwd
+				zentao_passwd="${zentao_passwd:-$(openssl rand -base64 12)}"
 
 				docker run -d -p ${docker_port}:80 \
-				  -e ADMINER_USER="root" -e ADMINER_PASSWD="password" \
+				  -e ADMINER_USER="root" -e ADMINER_PASSWD="${zentao_passwd}" \
 				  -e BIND_ADDRESS="false" \
 				  -v /home/docker/zentao-server/:/opt/zbox/ \
 				  --add-host smtp.exmail.qq.com:163.177.90.125 \
@@ -8583,7 +8585,7 @@ linux_panel() {
 			local docker_describe="禅道是通用的项目管理软件"
 			local docker_url="官网介绍: https://www.zentao.net/"
 			local docker_use="echo \"初始用户名: admin\""
-			local docker_passwd="echo \"初始密码: 123456\""
+			local docker_passwd="echo \"管理员密码已在部署时设置\""
 			local app_size="2"
 			docker_app
 

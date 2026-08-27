@@ -1419,6 +1419,7 @@ cf_purge_cache() {
 	  read -e -p "請輸入 zone_id（多個以空格分隔）:" -a ZONE_IDS
 	  mkdir -p /home/web/config/
 	  echo "$API_TOKEN $EMAIL ${ZONE_IDS[*]}" > "$CONFIG_FILE"
+	  chmod 600 "$CONFIG_FILE"
 	fi
   fi
   # 循環遍歷每個 zone_id 並執行清除快取命令
@@ -13467,8 +13468,10 @@ while true; do
 		local docker_img="idoop/zentao:latest"
 		local docker_port=82
 		docker_rum() {
+			read -e -p "設定禪道管理員密碼: " zentao_passwd
+			zentao_passwd="${zentao_passwd:-$(openssl rand -base64 12)}"
 			docker run -d -p ${docker_port}:80 \
-			  -e ADMINER_USER="root" -e ADMINER_PASSWD="password" \
+			  -e ADMINER_USER="root" -e ADMINER_PASSWD="${zentao_passwd}" \
 			  -e BIND_ADDRESS="false" \
 			  -v /home/docker/zentao-server/:/opt/zbox/ \
 			  --add-host smtp.exmail.qq.com:163.177.90.125 \
@@ -13479,7 +13482,7 @@ while true; do
 		local docker_describe="禪道是通用的專案管理軟體"
 		local docker_url="官網介紹: https://www.zentao.net/"
 		local docker_use="echo \"初始使用者名稱: admin\""
-		local docker_passwd="echo \"初始密碼: 123456\""
+		local docker_passwd="echo \"管理員密碼已在部署時設定\""
 		local app_size="2"
 		docker_app
 		  ;;

@@ -1419,6 +1419,7 @@ cf_purge_cache() {
 	  read -e -p "zone_id を入力してください (複数の場合はスペースで区切ります):" -a ZONE_IDS
 	  mkdir -p /home/web/config/
 	  echo "$API_TOKEN $EMAIL ${ZONE_IDS[*]}" > "$CONFIG_FILE"
+	  chmod 600 "$CONFIG_FILE"
 	fi
   fi
   # 各zone_idをループし、キャッシュクリアコマンドを実行します。
@@ -13467,8 +13468,10 @@ while true; do
 		local docker_img="idoop/zentao:latest"
 		local docker_port=82
 		docker_rum() {
+			read -e -p "Zentao 管理者パスワードを設定: " zentao_passwd
+			zentao_passwd="${zentao_passwd:-$(openssl rand -base64 12)}"
 			docker run -d -p ${docker_port}:80 \
-			  -e ADMINER_USER="root" -e ADMINER_PASSWD="password" \
+			  -e ADMINER_USER="root" -e ADMINER_PASSWD="${zentao_passwd}" \
 			  -e BIND_ADDRESS="false" \
 			  -v /home/docker/zentao-server/:/opt/zbox/ \
 			  --add-host smtp.exmail.qq.com:163.177.90.125 \
@@ -13479,7 +13482,7 @@ while true; do
 		local docker_describe="ZenTao はユニバーサルなプロジェクト管理ソフトウェアです"
 		local docker_url="公式サイト紹介：https://www.zentao.net/"
 		local docker_use="echo \"初期ユーザー名: admin\""
-		local docker_passwd="echo 「初期パスワード: 123456」"
+		local docker_passwd="echo \"管理者パスワードはデプロイ時に設定されました\""
 		local app_size="2"
 		docker_app
 		  ;;

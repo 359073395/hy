@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# 你需要配置Telegram Bot Token和Chat ID
-TELEGRAM_BOT_TOKEN="输入TG的机器人API"
-CHAT_ID="输入TG的接收通知的账号ID"
+# 请通过环境变量传入 Telegram Bot Token 和 Chat ID，不要在脚本中硬编码
+TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:?请设置环境变量 TELEGRAM_BOT_TOKEN}"
+CHAT_ID="${TELEGRAM_CHAT_ID:?请设置环境变量 TELEGRAM_CHAT_ID}"
 
 
 # 你可以修改监控阈值设置
