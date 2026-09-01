@@ -16280,7 +16280,19 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 		  ;;
 	  121|yt|video-parser|yinglian)
 		local app_id="121"
-		send_stats "影链工坊 2.1"
+		send_stats "Yinglian Workshop"
+		yt_run_installer() {
+			local installer_file installer_status
+			installer_file=$(mktemp /tmp/video-parser-install.XXXXXX.sh) || return 1
+			if ! curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh -o "$installer_file"; then
+				rm -f "$installer_file"
+				return 1
+			fi
+			bash "$installer_file" "$@"
+			installer_status=$?
+			rm -f "$installer_file"
+			return "$installer_status"
+		}
 		while true; do
 			clear
 			local check_status="${gl_hui}未安装${gl_bai}"
@@ -16294,20 +16306,23 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 				yt_port=$(grep "^PUBLIC_PORT=" /opt/video-parser/project/video-parser/.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
 				yt_port=${yt_port:-9890}
 			fi
-			echo -e "影链工坊 2.1 $check_status"
-			echo "官网: https://github.com/359073395/yt"
-			echo "主页批量下载、真实画质、封面字幕、实时队列与历史记录，当前端口: $yt_port"
-			echo "管理员账号: admin（密码见安装提示或项目 .env）"
+			local yt_version=""
+			if command -v curl >/dev/null 2>&1; then
+				yt_version=$(curl -fsS --max-time 3 "http://127.0.0.1:$yt_port/api/health" 2>/dev/null | sed -n 's/.*"version":"\([^"]*\)".*/\1/p')
+			fi
+			echo -e "Yinglian Workshop${yt_version:+ $yt_version} $check_status"
+			echo "Official website: https://github.com/359073395/yt"
+			echo "Profile batch downloads, real quality, covers, subtitles, platform QR login, live queue and history. Port: $yt_port"
 			echo ""
 			if [ -d /opt/video-parser/project/video-parser ]; then
 				ip_address
 				if [ -n "$ipv4_address" ]; then
-					echo "Web管理面板: http://$ipv4_address:$yt_port"
-					echo "健康检查: http://$ipv4_address:$yt_port/api/health"
+					echo "Web address: http://$ipv4_address:$yt_port"
+					echo "Health Check: http://$ipv4_address:$yt_port/api/health"
 				fi
 				for file in /home/web/conf.d/*; do
 					if [ -f "$file" ] && grep -q "127.0.0.1:$yt_port" "$file" 2>/dev/null; then
-						echo "域名访问: https://$(basename "$file" | sed "s/.conf$//")"
+						echo "Domain name access: https://$(basename "$file" | sed "s/.conf$//")"
 					fi
 				done
 			fi
@@ -16325,16 +16340,22 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 				1)
 					check_disk_space 2
 					install curl
-					check_port_conflict 9890 && { open_port 9890; } || { echo "安装取消"; break; }
-					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh) --port 9890
-					add_app_id
-					send_stats "安装影链工坊"
+					check_port_conflict 9890 && { open_port 9890; } || { echo "Installation canceled"; break; }
+					if yt_run_installer --port 9890; then
+						add_app_id
+						send_stats "Install shadow chain workshop"
+					else
+						echo "Installation failed. See /var/log/video-parser-install.log"
+					fi
 					;;
 				2)
 					install curl
-					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh)
-					add_app_id
-					send_stats "更新影链工坊 2.1"
+					if yt_run_installer; then
+						add_app_id
+						send_stats "Update Yinglian Workshop"
+					else
+						echo "Update failed; the previous version was kept or restored. See /var/log/video-parser-install.log"
+					fi
 					;;
 				3)
 					if [ -f /opt/video-parser/project/video-parser/.env ]; then

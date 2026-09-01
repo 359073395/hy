@@ -16280,7 +16280,19 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 		  ;;
 	  121|yt|video-parser|yinglian)
 		local app_id="121"
-		send_stats "影链工坊 2.1"
+		send_stats "Shadow Chain 워크샵 영상 분석"
+		yt_run_installer() {
+			local installer_file installer_status
+			installer_file=$(mktemp /tmp/video-parser-install.XXXXXX.sh) || return 1
+			if ! curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh -o "$installer_file"; then
+				rm -f "$installer_file"
+				return 1
+			fi
+			bash "$installer_file" "$@"
+			installer_status=$?
+			rm -f "$installer_file"
+			return "$installer_status"
+		}
 		while true; do
 			clear
 			local check_status="${gl_hui}未安装${gl_bai}"
@@ -16294,20 +16306,23 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 				yt_port=$(grep "^PUBLIC_PORT=" /opt/video-parser/project/video-parser/.env 2>/dev/null | tail -n 1 | cut -d= -f2-)
 				yt_port=${yt_port:-9890}
 			fi
-			echo -e "影链工坊 2.1 $check_status"
-			echo "官网: https://github.com/359073395/yt"
-			echo "主页批量下载、真实画质、封面字幕、实时队列与历史记录，当前端口: $yt_port"
-			echo "管理员账号: admin（密码见安装提示或项目 .env）"
+			local yt_version=""
+			if command -v curl >/dev/null 2>&1; then
+				yt_version=$(curl -fsS --max-time 3 "http://127.0.0.1:$yt_port/api/health" 2>/dev/null | sed -n 's/.*"version":"\([^"]*\)".*/\1/p')
+			fi
+			echo -e "Shadow Chain 워크샵${yt_version:+ $yt_version} $check_status"
+			echo "공식 홈페이지: https://github.com/359073395/yt"
+			echo "프로필 일괄 다운로드, 화질·표지·자막, 플랫폼 QR 로그인. 포트:$yt_port"
 			echo ""
 			if [ -d /opt/video-parser/project/video-parser ]; then
 				ip_address
 				if [ -n "$ipv4_address" ]; then
-					echo "Web管理面板: http://$ipv4_address:$yt_port"
-					echo "健康检查: http://$ipv4_address:$yt_port/api/health"
+					echo "웹 주소: http://$ipv4_address:$yt_port"
+					echo "건강검진: http://$ipv4_address:$yt_port/api/health"
 				fi
 				for file in /home/web/conf.d/*; do
 					if [ -f "$file" ] && grep -q "127.0.0.1:$yt_port" "$file" 2>/dev/null; then
-						echo "域名访问: https://$(basename "$file" | sed "s/.conf$//")"
+						echo "도메인 이름 액세스: https://$(basename "$file" | sed "s/.conf$//")"
 					fi
 				done
 			fi
@@ -16325,16 +16340,22 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 				1)
 					check_disk_space 2
 					install curl
-					check_port_conflict 9890 && { open_port 9890; } || { echo "安装取消"; break; }
-					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh) --port 9890
-					add_app_id
-					send_stats "安装影链工坊"
+					check_port_conflict 9890 && { open_port 9890; } || { echo "설치가 취소되었습니다."; break; }
+					if yt_run_installer --port 9890; then
+						add_app_id
+						send_stats "섀도우 체인 워크숍 설치"
+					else
+						echo "설치에 실패했습니다. /var/log/video-parser-install.log 를 확인하세요"
+					fi
 					;;
 				2)
 					install curl
-					bash <(curl -fsSL https://raw.githubusercontent.com/359073395/yt/main/project/video-parser/deploy/install.sh)
-					add_app_id
-					send_stats "更新影链工坊 2.1"
+					if yt_run_installer; then
+						add_app_id
+						send_stats "섀도우 체인 워크숍 업데이트"
+					else
+						echo "업데이트에 실패하여 이전 버전을 유지하거나 복원했습니다. /var/log/video-parser-install.log 를 확인하세요"
+					fi
 					;;
 				3)
 					if [ -f /opt/video-parser/project/video-parser/.env ]; then
