@@ -1,0 +1,10 @@
+node_modules/
+.next/
+dist/
+data/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+private-*.json
+test-results/

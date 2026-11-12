@@ -1,0 +1,156 @@
+/* 文章图文整理稿样式 —— 独立于手册，仅用于资料整理阅读 */
+
+.notes-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 20px 96px;
+  color: #1f2340;
+  font-family: "Nunito", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  line-height: 1.8;
+}
+
+.notes-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #5b6cff;
+  text-decoration: none;
+  margin-bottom: 22px;
+}
+.notes-back:hover { text-decoration: underline; }
+
+.notes-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.notes-tag {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #5b6cff;
+  background: #eef0ff;
+  border: 1px solid #d9deff;
+  border-radius: 99px;
+  padding: 4px 14px;
+}
+.notes-tag.gray { color: #6b7088; background: #f2f3f8; border-color: #e3e5ee; }
+
+.notes-title {
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 900;
+  line-height: 1.25;
+  margin: 6px 0 10px;
+}
+.notes-sub {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ff4d4f;
+  margin-bottom: 22px;
+}
+.notes-source {
+  font-size: 13px;
+  color: #8a8fa8;
+  border-bottom: 1px solid #eceef6;
+  padding-bottom: 24px;
+  margin-bottom: 28px;
+}
+.notes-source a { color: #5b6cff; word-break: break-all; }
+
+.notes-wrap h2 {
+  font-size: clamp(21px, 2.6vw, 26px);
+  font-weight: 900;
+  margin: 44px 0 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.notes-wrap h2 .pno {
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+  background: #5b6cff;
+  border-radius: 10px;
+  padding: 3px 10px;
+  letter-spacing: 0.05em;
+}
+.notes-wrap h2 .en {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #a3a8c4;
+}
+.notes-wrap h3 {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 26px 0 8px;
+}
+.notes-wrap p { margin: 10px 0; }
+.notes-wrap ul, .notes-wrap ol { margin: 10px 0; padding-left: 24px; }
+.notes-wrap li { margin: 6px 0; }
+.notes-wrap strong { color: #11142b; font-weight: 800; }
+.notes-wrap .hl { color: #ff4d4f; font-weight: 800; }
+.notes-wrap .term { color: #5b6cff; font-weight: 700; border-bottom: 1px dashed #5b6cff; }
+
+.notes-fig {
+  margin: 24px 0;
+  border: 1px solid #e7eaf5;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(40, 50, 120, 0.07);
+}
+.notes-fig img { display: block; width: 100%; height: auto; }
+.notes-fig figcaption {
+  font-size: 13px;
+  color: #7a7f9a;
+  padding: 10px 16px;
+  border-top: 1px solid #eef0f7;
+  background: #fafbff;
+}
+
+.notes-table-wrap { overflow-x: auto; margin: 20px 0; border-radius: 14px; border: 1px solid #e7eaf5; }
+.notes-table { width: 100%; border-collapse: collapse; min-width: 520px; font-size: 14.5px; background: #fff; }
+.notes-table th, .notes-table td { padding: 11px 14px; text-align: left; border-bottom: 1px solid #eef0f6; }
+.notes-table th { background: #f4f5ff; font-weight: 800; color: #3b4274; }
+.notes-table tr:last-child td { border-bottom: none; }
+.notes-table td.pct { font-weight: 900; color: #5b6cff; white-space: nowrap; }
+.notes-table td.down { color: #ff4d4f; font-weight: 800; }
+
+.notes-note, .notes-warn {
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin: 18px 0;
+  font-size: 14.5px;
+}
+.notes-note { background: #fff8e6; border: 1px solid #ffe9ad; }
+.notes-warn { background: #fff0f0; border: 1px solid #ffd4d4; }
+.notes-note .bt, .notes-warn .bt { font-weight: 900; margin-right: 6px; }
+
+.notes-actions {
+  margin-top: 40px;
+  background: linear-gradient(135deg, #f2f4ff, #f7f0ff);
+  border: 1px solid #e0e4ff;
+  border-radius: 20px;
+  padding: 24px 26px;
+}
+.notes-actions h2 { margin-top: 0; }
+.notes-actions ol { padding-left: 22px; }
+
+.notes-conclusion {
+  margin-top: 36px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #2a2f55;
+  border-left: 4px solid #5b6cff;
+  padding: 6px 0 6px 18px;
+}
+
+@media (max-width: 520px) {
+  .notes-wrap { padding: 22px 14px 72px; }
+  .notes-wrap h2 { flex-wrap: wrap; }
+}

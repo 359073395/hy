@@ -13085,6 +13085,7 @@ while true; do
 	  echo -e "${gl_kjlan}121. ${color121}影链工坊视频下载中心 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}122. ${color122}流量IP核爆引擎 ${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}123. ${color123}TikTok知识系统 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方应用列表"
   	  echo -e "${gl_kjlan}想要让你的应用出现在这里？查看开发者指南: ${gl_huang}https://dev.kejilion.sh/${gl_bai}"
@@ -16554,6 +16555,213 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 				*)
 					break
 					;;
+			esac
+			break_end
+		done
+		  ;;
+	  123|tiktok-knowledge|tiktok-kb|tkkb)
+		local app_id="123"
+		local tkkb_dir="/opt/tiktok-knowledge"
+		local tkkb_port=8791
+		tkkb_env_value() {
+			[ -f "$tkkb_dir/.env" ] || return 0
+			sed -n "s/^${1}=//p" "$tkkb_dir/.env" | tail -n 1
+		}
+		tkkb_run() {
+			local action="$1" temporary ref="${HY_REF:-main}" result=0 response
+			shift
+			if [ "$action" != --install ] && [ "$action" != --update ] && [ -f "$tkkb_dir/install.sh" ]; then
+				APP_DIR="$tkkb_dir" bash "$tkkb_dir/install.sh" "$action" "$@"
+				return $?
+			fi
+			[[ "$ref" =~ ^[a-zA-Z0-9._/-]+$ ]] || { echo "无效的仓库版本"; return 1; }
+			if [[ ! "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+				response=$(curl -fsSL --retry 3 --connect-timeout 15 --max-time 60 -H 'Cache-Control: no-cache' \
+					"https://api.github.com/repos/359073395/hy/commits/$ref") || { echo "无法读取安装版本"; return 1; }
+				ref=$(printf '%s\n' "$response" | sed -n 's/^[[:space:]]*"sha":[[:space:]]*"\([0-9a-f]\{40\}\)".*/\1/p' | head -n 1)
+				[[ "$ref" =~ ^[0-9a-f]{40}$ ]] || { echo "未取得有效安装版本"; return 1; }
+			fi
+			temporary=$(mktemp -d) || return 1
+			if curl -fsSL --retry 3 --connect-timeout 15 --max-time 90 \
+				"https://raw.githubusercontent.com/359073395/hy/$ref/apps/tiktok-knowledge/install.sh" -o "$temporary/install.sh" && \
+				bash -n "$temporary/install.sh"; then
+				APP_DIR="$tkkb_dir" APP_PORT="$tkkb_port" bash "$temporary/install.sh" "$action" "$@" --ref "$ref" || result=$?
+			else
+				echo "下载安装脚本失败"
+				result=1
+			fi
+			rm -f -- "$temporary/install.sh"
+			rmdir -- "$temporary" 2>/dev/null || true
+			return "$result"
+		}
+		tkkb_domain_valid() {
+			[[ "$1" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$ ]] && [ "${#1}" -le 253 ]
+		}
+		tkkb_domain_matches() {
+			[ -f "$1" ] && grep -Eq "(server[[:space:]]+|proxy_pass[[:space:]]+http://)127\\.0\\.0\\.1:${tkkb_port}[[:space:]]*;" "$1"
+		}
+		tkkb_write_proxy() {
+			local selected_conf="$1" selected_domain="$2"
+			cat > "$selected_conf" <<EOF
+# Harvey app 123 - TikTok knowledge system
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $selected_domain;
+    return 301 https://\$host\$request_uri;
+}
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name $selected_domain;
+    ssl_certificate /etc/nginx/certs/${selected_domain}_cert.pem;
+    ssl_certificate_key /etc/nginx/certs/${selected_domain}_key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    client_max_body_size 220m;
+    location / {
+        proxy_pass http://127.0.0.1:$tkkb_port;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Connection "";
+        proxy_cache off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+}
+EOF
+		}
+		tkkb_add_domain() {
+			[ -f "$tkkb_dir/.env" ] || { echo "请先安装应用"; return 1; }
+			add_yuming
+			local selected_domain="$yuming" selected_conf old_conf="" temporary_conf
+			tkkb_domain_valid "$selected_domain" || { echo "请输入有效域名，例如 learn.example.com"; return 1; }
+			selected_conf="/home/web/conf.d/$selected_domain.conf"
+			if [ -f "$selected_conf" ]; then
+				tkkb_domain_matches "$selected_conf" || { echo "此域名已用于其他站点，请选择新域名"; return 1; }
+				old_conf=$(mktemp) || return 1
+				cp "$selected_conf" "$old_conf"
+			fi
+			nginx_install_status
+			local yuming="$selected_domain"
+			install_ssltls
+			if [ ! -s "/home/web/certs/${selected_domain}_cert.pem" ] || [ ! -s "/home/web/certs/${selected_domain}_key.pem" ]; then
+				[ -z "$old_conf" ] || rm -f -- "$old_conf"
+				echo "证书申请失败，请检查域名解析与 80/443 端口后重试"
+				return 1
+			fi
+			temporary_conf=$(mktemp /home/web/conf.d/.tkkb.XXXXXX) || return 1
+			if tkkb_write_proxy "$temporary_conf" "$selected_domain" && mv -f "$temporary_conf" "$selected_conf"; then
+				if docker exec nginx nginx -t && docker exec nginx nginx -s reload && tkkb_run --set-domain "https://$selected_domain"; then
+					[ -z "$old_conf" ] || rm -f -- "$old_conf"
+					echo "知识系统访问地址: https://$selected_domain"
+					return 0
+				fi
+			fi
+			rm -f -- "$temporary_conf"
+			if [ -n "$old_conf" ]; then
+				cp "$old_conf" "$selected_conf"
+				rm -f -- "$old_conf"
+			else
+				rm -f -- "$selected_conf"
+			fi
+			docker exec nginx nginx -t && docker exec nginx nginx -s reload
+			echo "域名绑定未完成，请检查解析、证书和上方日志"
+			return 1
+		}
+		tkkb_remove_domain() {
+			local file selected_domain selected_conf previous_conf replacement=""
+			echo "当前知识系统域名:"
+			for file in /home/web/conf.d/*.conf; do
+				tkkb_domain_matches "$file" && basename "$file" .conf
+			done
+			read -e -p "请输入要删除的域名（回车取消）: " selected_domain
+			[ -n "$selected_domain" ] || return 0
+			tkkb_domain_valid "$selected_domain" || { echo "域名格式无效"; return 1; }
+			selected_conf="/home/web/conf.d/$selected_domain.conf"
+			tkkb_domain_matches "$selected_conf" || { echo "该域名未绑定到知识系统"; return 1; }
+			previous_conf=$(mktemp) || return 1
+			cp "$selected_conf" "$previous_conf"
+			rm -f -- "$selected_conf"
+			if ! docker exec nginx nginx -t || ! docker exec nginx nginx -s reload; then
+				cp "$previous_conf" "$selected_conf"
+				rm -f -- "$previous_conf"
+				return 1
+			fi
+			if [ "$(tkkb_env_value SITE_URL)" = "https://$selected_domain" ]; then
+				for file in /home/web/conf.d/*.conf; do
+					if tkkb_domain_matches "$file"; then replacement="https://$(basename "$file" .conf)"; break; fi
+				done
+				if [ -n "$replacement" ]; then
+					tkkb_run --set-domain "$replacement"
+				else
+					tkkb_run --clear-domain
+				fi
+				if [ "$?" -ne 0 ]; then
+					cp "$previous_conf" "$selected_conf"
+					rm -f -- "$previous_conf"
+					docker exec nginx nginx -s reload
+					return 1
+				fi
+			fi
+			rm -f -- "$previous_conf"
+			echo "已删除知识系统的域名入口"
+		}
+		while true; do
+			clear
+			local check_status="${gl_hui}未安装${gl_bai}" tkkb_running=""
+			if [ -f "$tkkb_dir/.env" ]; then tkkb_port=$(tkkb_env_value APP_PORT); tkkb_port=${tkkb_port:-8791}; fi
+			tkkb_running=$(docker inspect --format '{{.State.Running}}' tiktok-knowledge 2>/dev/null || true)
+			if [ "$tkkb_running" = true ]; then
+				check_status="${gl_lv}运行中${gl_bai}"
+			elif [ -f "$tkkb_dir/compose.yaml" ]; then
+				check_status="${gl_huang}已安装未运行${gl_bai}"
+			fi
+			echo -e "TikTok 知识系统 $check_status"
+			echo "官网: https://github.com/359073395/hy/tree/main/apps/tiktok-knowledge"
+			echo "运营手册、人员管理、岗位考核与知识库升级，默认端口: $tkkb_port"
+			if [ -f "$tkkb_dir/.env" ]; then
+				ip_address
+				[ -z "$ipv4_address" ] || echo "访问地址: http://$ipv4_address:$tkkb_port"
+				[ -z "$(tkkb_env_value SITE_URL)" ] || echo "域名访问: $(tkkb_env_value SITE_URL)"
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 安装              2. 更新            3. 卸载"
+			echo "------------------------"
+			echo "5. 添加域名访问      6. 删除域名访问"
+			echo "7. 查看服务状态      8. 查看运行日志"
+			echo "------------------------"
+			echo "0. 返回上一级选单"
+			echo "------------------------"
+			read -e -p "请输入你的选择: " sub_choice
+			case "$sub_choice" in
+				1)
+					install curl openssl util-linux
+					install_docker
+					if [ ! -f "$tkkb_dir/.env" ]; then
+						check_port_conflict "$tkkb_port" || { echo "安装取消"; break_end; continue; }
+					fi
+					if tkkb_run --install; then open_port "$tkkb_port"; add_app_id; fi
+					;;
+				2)
+					if tkkb_run --update; then add_app_id; fi
+					;;
+				3)
+					read -e -p "卸载应用容器并保留全部数据？(y/N): " confirm
+					if [[ "$confirm" =~ ^[Yy]$ ]] && tkkb_run --uninstall; then
+						close_port "$tkkb_port"
+						[ ! -f /home/docker/appno.txt ] || sed -i '/^123$/d' /home/docker/appno.txt
+					fi
+					;;
+				5) tkkb_add_domain ;;
+				6) tkkb_remove_domain ;;
+				7) tkkb_run --status ;;
+				8) tkkb_run --logs ;;
+				0) break ;;
+				*) echo "无效选项" ;;
 			esac
 			break_end
 		done

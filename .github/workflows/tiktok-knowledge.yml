@@ -1,0 +1,219 @@
+name: TikTok knowledge
+
+on:
+  push:
+    branches: [main, feat/tiktok-knowledge]
+    paths:
+      - 'apps/tiktok-knowledge/**'
+      - '.github/workflows/tiktok-knowledge.yml'
+      - 'tests/tests_tiktok_knowledge_installer.sh'
+      - 'harvey.sh'
+      - 'cn/harvey.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tiktok-knowledge-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/tiktok-knowledge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.25.0 --activate
+          pnpm install --frozen-lockfile
+      - name: Check types and regression tests
+        run: |
+          pnpm typecheck
+          pnpm test
+          pnpm lint
+          for script in ../../harvey.sh ../../cn/harvey.sh install.sh; do bash -n "$script"; done
+          bash ../../tests/tests_tiktok_knowledge_installer.sh
+      - uses: docker/setup-buildx-action@v3
+      - name: Build production container
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/tiktok-knowledge
+          load: true
+          tags: tiktok-knowledge:test
+          cache-from: type=gha,scope=tiktok-amd64
+          cache-to: type=gha,scope=tiktok-amd64,mode=max
+      - name: Start a fresh database and application
+        run: |
+          admin_token=$(openssl rand -hex 24)
+          database_password=$(openssl rand -hex 24)
+          echo "::add-mask::$admin_token"
+          echo "::add-mask::$database_password"
+          printf 'ADMIN_TOKEN=%s\nPOSTGRES_PASSWORD=%s\nSITE_URL=http://127.0.0.1:8791\nAPP_PORT=8791\nTIKTOK_IMAGE=tiktok-knowledge:test\n' "$admin_token" "$database_password" > .env
+          mkdir -p data
+          sudo chown 1001:1001 data
+          docker compose up -d --wait --wait-timeout 240
+      - name: Verify permissions, imports and exams through HTTP
+        run: node --env-file=.env tests/integration.mjs
+      - name: Verify browser workflows
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          sudo apt-get install -y fonts-noto-cjk
+          node --env-file=.env tests/browser-smoke.mjs
+      - name: Verify restart preserves edits and people
+        run: |
+          docker compose restart app
+          docker compose up -d --wait --wait-timeout 180
+          node --env-file=.env tests/integration.mjs --after-restart
+      - name: Download a full backup and restore through the installer
+        run: |
+          node --env-file=.env tests/backup-smoke.mjs
+          docker compose exec -T db psql -U knowledge -d knowledge -v ON_ERROR_STOP=1 -c "UPDATE chapters SET title = 'changed after backup'; UPDATE users SET status = 'active';"
+          sudo env APP_DIR="$PWD" bash install.sh --restore "$PWD/test-results/full-backup.tar.gz"
+          node --env-file=.env tests/integration.mjs --after-restart
+      - name: Diagnostic logs
+        if: failure()
+        run: docker compose logs --no-color --tail=150
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tiktok-verification
+          path: |
+            apps/tiktok-knowledge/test-results/*-results.json
+            apps/tiktok-knowledge/test-results/*.png
+          if-no-files-found: ignore
+      - name: Shut down test services
+        if: always()
+        run: docker compose down
+
+  release-check:
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      needed: ${{ steps.check.outputs.needed }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check immutable version
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(cat apps/tiktok-knowledge/VERSION)
+          if gh release view "tiktok-knowledge-v$version" >/dev/null 2>&1; then
+            echo 'needed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'needed=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  publish-images:
+    needs: release-check
+    if: needs.release-check.outputs.needed == 'true'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read release version
+        id: version
+        run: echo "value=$(cat apps/tiktok-knowledge/VERSION)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: apps/tiktok-knowledge
+          load: true
+          tags: ghcr.io/359073395/tiktok-knowledge:${{ steps.version.outputs.value }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/359073395/hy
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.version.outputs.value }}
+          cache-from: type=gha,scope=tiktok-${{ matrix.arch }}
+          cache-to: type=gha,scope=tiktok-${{ matrix.arch }},mode=max
+      - name: Publish architecture image and portable archive
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          image="ghcr.io/359073395/tiktok-knowledge:$VERSION"
+          docker tag "$image" "$image-$ARCH"
+          docker push "$image-$ARCH"
+          mkdir -p release
+          docker save "$image" | gzip -1 > "release/tiktok-knowledge-$VERSION-linux-$ARCH.tar.gz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tiktok-image-${{ matrix.arch }}
+          path: release/*.tar.gz
+          compression-level: 0
+          retention-days: 3
+
+  release:
+    needs: publish-images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tiktok-image-*
+          merge-multiple: true
+          path: release
+      - name: Publish multi-platform tags and GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(cat apps/tiktok-knowledge/VERSION)
+          image=ghcr.io/359073395/tiktok-knowledge
+          docker buildx imagetools create --tag "$image:$version" --tag "$image:latest" "$image:$version-amd64" "$image:$version-arm64"
+          (cd release && sha256sum *.tar.gz > SHA256SUMS)
+          tag="tiktok-knowledge-v$version"
+          gh release create "$tag" release/* --target "$GITHUB_SHA" --title "TikTok 知识系统 $version" --notes-file apps/tiktok-knowledge/RELEASE.md
+
+  verify-published-installer:
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install and update the public release without registry credentials
+        run: |
+          sudo bash apps/tiktok-knowledge/install.sh --install --ref "$GITHUB_SHA" > /tmp/knowledge-install.log 2>&1 || { cat /tmp/knowledge-install.log; exit 1; }
+          curl --fail --silent http://127.0.0.1:8791/api/health
+          sudo cp /opt/tiktok-knowledge/.env /tmp/knowledge-original.env
+          sudo bash apps/tiktok-knowledge/install.sh --update --ref "$GITHUB_SHA" > /tmp/knowledge-update.log 2>&1 || { cat /tmp/knowledge-update.log; exit 1; }
+          curl --fail --silent http://127.0.0.1:8791/api/health
+          sudo cmp /tmp/knowledge-original.env /opt/tiktok-knowledge/.env
+          sudo test -s /opt/tiktok-knowledge/backups/latest-pre-update/database.dump
+      - name: Stop published test services
+        if: always()
+        run: sudo bash apps/tiktok-knowledge/install.sh --uninstall
