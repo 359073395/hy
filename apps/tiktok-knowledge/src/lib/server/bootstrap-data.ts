@@ -10,11 +10,13 @@ export async function runDataBootstrap(): Promise<void> {
     await client.query(`CREATE TABLE IF NOT EXISTS schema_migrations (
       version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now()
     )`);
-    const applied = await client.query('SELECT 1 FROM schema_migrations WHERE version = $1', ['001']);
-    if (applied.rowCount === 0) {
-      const sql = await readFile(path.join(process.cwd(), 'deploy/migrations/001.sql'), 'utf8');
-      await client.query(sql);
-      await client.query('INSERT INTO schema_migrations(version) VALUES ($1)', ['001']);
+    for (const version of ['001', '002']) {
+      const applied = await client.query('SELECT 1 FROM schema_migrations WHERE version = $1', [version]);
+      if (applied.rowCount === 0) {
+        const sql = await readFile(path.join(process.cwd(), `deploy/migrations/${version}.sql`), 'utf8');
+        await client.query(sql);
+        await client.query('INSERT INTO schema_migrations(version) VALUES ($1)', [version]);
+      }
     }
     // pg_restore --no-acl recreates tables without API grants, including when migration 001 is already recorded.
     await client.query(`

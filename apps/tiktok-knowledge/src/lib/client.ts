@@ -73,6 +73,8 @@ export interface ManualResult {
 }
 
 export const login = (token: string) => api<{ user: AuthUser }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ token }) });
+export const loginWithPassword = (username: string, password: string) =>
+  api<{ user: AuthUser }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
 export const me = () => api<{ user: AuthUser | null }>('/api/auth/me');
 export const logout = () => api<{ ok: boolean }>('/api/auth/logout', { method: 'POST' });
 export const getManual = () => api<ManualResult>('/api/manual');
@@ -85,7 +87,7 @@ export const changePassphrase = (newPass: string, confirm: string) =>
  * 用 location.assign（硬刷新）而非 router.replace，确保 SPA 内所有缓存状态被清空，
  * 退出后再打开带 #令牌 的链接是干净的整页加载，hash 自动登录不会被旧状态干扰。
  */
-export async function performLogout() {
+export async function performLogout(destination: '/' | '/admin/login' = '/') {
   try {
     await logout();
   } catch {
@@ -96,5 +98,5 @@ export async function performLogout() {
   } catch {
     /* ignore */
   }
-  window.location.assign('/');
+  window.location.assign(destination);
 }

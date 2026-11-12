@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthBootstrap } from '@/lib/use-auth-bootstrap';
 
 const exports = [
@@ -15,8 +17,12 @@ const exports = [
 
 export default function DataAdminPage() {
   const boot = useAuthBootstrap();
+  const router = useRouter();
+  useEffect(() => {
+    if (!boot.loading && (!boot.user || boot.error)) router.replace('/admin/login?reason=session');
+  }, [boot.loading, boot.user, boot.error, router]);
   if (boot.loading) return <p className="p-8">正在验证登录状态…</p>;
-  if (!boot.user) return <main className="p-8"><Link href="/">请先登录</Link></main>;
+  if (!boot.user) return <main className="p-8"><Link href="/admin/login">请先登录后台</Link></main>;
   if (boot.user.role !== 'super_admin') {
     return <main className="mx-auto max-w-3xl space-y-4 p-8">
       <h1 className="text-xl font-bold">数据与备份</h1>

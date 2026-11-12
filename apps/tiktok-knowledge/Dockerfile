@@ -19,6 +19,7 @@ COPY --from=build --chown=knowledge:knowledge /app/.next/standalone ./
 COPY --from=build --chown=knowledge:knowledge /app/.next/static ./.next/static
 COPY --from=build --chown=knowledge:knowledge /app/public ./public
 COPY --from=build --chown=knowledge:knowledge /app/deploy/migrations ./deploy/migrations
+COPY --from=build --chown=knowledge:knowledge /app/deploy/admin-account.cjs /app/deploy/password.cjs ./deploy/
 COPY --from=build --chown=knowledge:knowledge /app/VERSION ./VERSION
 USER knowledge
 EXPOSE 3000

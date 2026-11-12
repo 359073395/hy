@@ -16566,7 +16566,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 		tkkb_run() {
 			local action="$1" temporary ref="${HY_REF:-main}" result=0 response
 			shift
-			if [ "$action" != --install ] && [ "$action" != --update ] && [ -f "$tkkb_dir/install.sh" ]; then
+			if [ "$action" != --install ] && [ "$action" != --update ] && [ "$action" != --admin-account ] && [ -f "$tkkb_dir/install.sh" ]; then
 				APP_DIR="$tkkb_dir" bash "$tkkb_dir/install.sh" "$action" "$@"
 				return $?
 			fi
@@ -16652,7 +16652,8 @@ EOF
 			if tkkb_write_proxy "$temporary_conf" "$selected_domain" && mv -f "$temporary_conf" "$selected_conf"; then
 				if docker exec nginx nginx -t && docker exec nginx nginx -s reload && tkkb_run --set-domain "https://$selected_domain"; then
 					[ -z "$old_conf" ] || rm -f -- "$old_conf"
-					echo "知识系统访问地址: https://$selected_domain"
+						echo "知识系统访问地址: https://$selected_domain"
+						echo "后台登录 https://$selected_domain/admin/login"
 					return 0
 				fi
 			fi
@@ -16707,7 +16708,7 @@ EOF
 		}
 		while true; do
 			clear
-			local check_status="${gl_hui}未安装${gl_bai}" tkkb_running=""
+			local check_status="${gl_hui}未安装${gl_bai}" tkkb_running="" tkkb_origin="" tkkb_admin_status=""
 			if [ -f "$tkkb_dir/.env" ]; then tkkb_port=$(tkkb_env_value APP_PORT); tkkb_port=${tkkb_port:-8791}; fi
 			tkkb_running=$(docker inspect --format '{{.State.Running}}' tiktok-knowledge 2>/dev/null || true)
 			if [ "$tkkb_running" = true ]; then
@@ -16722,10 +16723,22 @@ EOF
 				ip_address
 				[ -z "$ipv4_address" ] || echo "访问地址: http://$ipv4_address:$tkkb_port"
 				[ -z "$(tkkb_env_value SITE_URL)" ] || echo "域名访问: $(tkkb_env_value SITE_URL)"
+				tkkb_origin=$(tkkb_env_value SITE_URL)
+				if [ -z "$tkkb_origin" ] && [ -n "$ipv4_address" ]; then tkkb_origin="http://$ipv4_address:$tkkb_port"; fi
+				if [ -z "$tkkb_origin" ] && [ -n "$ipv6_address" ]; then tkkb_origin="http://[$ipv6_address]:$tkkb_port"; fi
+				[ -z "$tkkb_origin" ] || echo "后台登录 ${tkkb_origin}/admin/login"
+				if [ "$tkkb_running" = true ]; then
+					if tkkb_admin_status=$(printf '{"action":"status"}\n' | docker exec -i -w /app tiktok-knowledge node deploy/admin-account.cjs 2>/dev/null); then
+						printf '%s' "$tkkb_admin_status" | python3 -c 'import json,sys; users=json.load(sys.stdin)["admins"]; names=[u["username"] for u in users if u.get("hasPassword") and u.get("username") and u.get("status") == "active"]; print("超级管理员 " + "、".join(names) if names else "超级管理员账号待设置，请选择4")'
+					else
+						echo "请选择2更新应用，启用后台用户名和密码登录"
+					fi
+				fi
 			fi
 			echo ""
 			echo "------------------------"
 			echo "1. 安装              2. 更新            3. 卸载"
+			echo "4. 设置/重置超级管理员账号"
 			echo "------------------------"
 			echo "5. 添加域名访问      6. 删除域名访问"
 			echo "7. 查看服务状态      8. 查看运行日志"
@@ -16752,6 +16765,7 @@ EOF
 						[ ! -f /home/docker/appno.txt ] || sed -i '/^123$/d' /home/docker/appno.txt
 					fi
 					;;
+				4) tkkb_run --admin-account ;;
 				5) tkkb_add_domain ;;
 				6) tkkb_remove_domain ;;
 				7) tkkb_run --status ;;

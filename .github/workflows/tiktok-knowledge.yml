@@ -55,14 +55,18 @@ jobs:
         run: |
           admin_token=$(openssl rand -hex 24)
           database_password=$(openssl rand -hex 24)
+          admin_password=$(openssl rand -hex 20)
           echo "::add-mask::$admin_token"
           echo "::add-mask::$database_password"
-          printf 'ADMIN_TOKEN=%s\nPOSTGRES_PASSWORD=%s\nSITE_URL=http://127.0.0.1:8791\nAPP_PORT=8791\nTIKTOK_IMAGE=tiktok-knowledge:test\n' "$admin_token" "$database_password" > .env
+          echo "::add-mask::$admin_password"
+          printf 'ADMIN_TOKEN=%s\nPOSTGRES_PASSWORD=%s\nSITE_URL=http://127.0.0.1:8791\nAPP_PORT=8791\nTIKTOK_IMAGE=tiktok-knowledge:test\nTEST_ADMIN_USERNAME=ci-admin\nTEST_ADMIN_PASSWORD=%s\n' "$admin_token" "$database_password" "$admin_password" > .env
           mkdir -p data
           sudo chown 1001:1001 data
           docker compose up -d --wait --wait-timeout 240
       - name: Verify permissions, imports and exams through HTTP
         run: node --env-file=.env tests/integration.mjs
+      - name: Verify password setup and selected administrator reset
+        run: node --env-file=.env tests/admin-credentials.mjs
       - name: Verify browser workflows
         run: |
           pnpm exec playwright install --with-deps chromium
@@ -79,6 +83,25 @@ jobs:
           docker compose exec -T db psql -U knowledge -d knowledge -v ON_ERROR_STOP=1 -c "UPDATE chapters SET title = 'changed after backup'; UPDATE users SET status = 'active';"
           sudo env APP_DIR="$PWD" bash install.sh --restore "$PWD/test-results/full-backup.tar.gz"
           node --env-file=.env tests/integration.mjs --after-restart
+      - name: Verify a populated 0.1.0 installation upgrades with its existing domain and data
+        run: |
+          docker compose down
+          legacy="$RUNNER_TEMP/tiktok-legacy"
+          mkdir -p "$legacy/data"
+          sudo chown 1001:1001 "$legacy/data"
+          cp compose.yaml "$legacy/compose.yaml"
+          sed 's|TIKTOK_IMAGE=tiktok-knowledge:test|TIKTOK_IMAGE=ghcr.io/359073395/tiktok-knowledge:0.1.0|; s|SITE_URL=http://127.0.0.1:8791|SITE_URL=https://existing-domain.example|' .env > "$legacy/.env"
+          cp "$legacy/.env" "$legacy/before.env"
+          curl -fSL --retry 3 'https://github.com/359073395/hy/releases/download/tiktok-knowledge-v0.1.0/tiktok-knowledge-0.1.0-linux-amd64.tar.gz' -o "$RUNNER_TEMP/legacy-image.tar.gz"
+          docker load --input "$RUNNER_TEMP/legacy-image.tar.gz"
+          docker compose --project-directory "$legacy" --env-file "$legacy/.env" -f "$legacy/compose.yaml" up -d --wait --wait-timeout 240
+          node --env-file="$legacy/.env" tests/integration.mjs
+          node --env-file="$legacy/.env" tests/legacy-upgrade.mjs --before
+          sed -i 's|TIKTOK_IMAGE=ghcr.io/359073395/tiktok-knowledge:0.1.0|TIKTOK_IMAGE=tiktok-knowledge:test|' "$legacy/.env"
+          docker compose --project-directory "$legacy" --env-file "$legacy/.env" -f "$legacy/compose.yaml" up -d --wait --wait-timeout 240
+          node --env-file="$legacy/.env" tests/legacy-upgrade.mjs --after
+          node --env-file="$legacy/.env" tests/admin-credentials.mjs
+          diff <(grep -v '^TIKTOK_IMAGE=' "$legacy/before.env") <(grep -v '^TIKTOK_IMAGE=' "$legacy/.env")
       - name: Diagnostic logs
         if: failure()
         run: docker compose logs --no-color --tail=150
@@ -207,13 +230,32 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install and update the public release without registry credentials
         run: |
-          sudo bash apps/tiktok-knowledge/install.sh --install --ref "$GITHUB_SHA" > /tmp/knowledge-install.log 2>&1 || { cat /tmp/knowledge-install.log; exit 1; }
+          node -e 'require("fs").writeFileSync("/tmp/admin-setup.json", JSON.stringify({action:"create",username:"published-admin",password:require("crypto").randomBytes(24).toString("hex")}), {mode:0o600})'
+          sudo env ADMIN_SETUP_FILE=/tmp/admin-setup.json bash apps/tiktok-knowledge/install.sh --install --ref "$GITHUB_SHA" > /tmp/knowledge-install.log 2>&1 || { cat /tmp/knowledge-install.log; exit 1; }
           curl --fail --silent http://127.0.0.1:8791/api/health
+          node apps/tiktok-knowledge/tests/check-installed-admin.mjs /tmp/admin-setup.json
           sudo cp /opt/tiktok-knowledge/.env /tmp/knowledge-original.env
           sudo bash apps/tiktok-knowledge/install.sh --update --ref "$GITHUB_SHA" > /tmp/knowledge-update.log 2>&1 || { cat /tmp/knowledge-update.log; exit 1; }
           curl --fail --silent http://127.0.0.1:8791/api/health
+          node apps/tiktok-knowledge/tests/check-installed-admin.mjs /tmp/admin-setup.json
           sudo cmp /tmp/knowledge-original.env /opt/tiktok-knowledge/.env
           sudo test -s /opt/tiktok-knowledge/backups/latest-pre-update/database.dump
+      - name: Upgrade the public 0.1.0 release through the new installer
+        working-directory: apps/tiktok-knowledge
+        run: |
+          sudo bash install.sh --uninstall
+          legacy=/opt/tiktok-knowledge-legacy-test
+          curl -fsSL --retry 3 'https://raw.githubusercontent.com/359073395/hy/4c85cd67c85d3fe8709e362c9619b5bd522d9d69/apps/tiktok-knowledge/install.sh' -o /tmp/legacy-install.sh
+          sudo env APP_DIR="$legacy" SITE_URL=https://existing-domain.example bash /tmp/legacy-install.sh --install --ref 4c85cd67c85d3fe8709e362c9619b5bd522d9d69 > /tmp/legacy-install.log 2>&1 || { cat /tmp/legacy-install.log; exit 1; }
+          sudo cp "$legacy/.env" /tmp/legacy-test.env
+          sudo chown "$USER" /tmp/legacy-test.env
+          node --env-file=/tmp/legacy-test.env tests/integration.mjs
+          node --env-file=/tmp/legacy-test.env tests/legacy-upgrade.mjs --before
+          sudo env APP_DIR="$legacy" ADMIN_SETUP_FILE=/tmp/admin-setup.json bash install.sh --update --ref "$GITHUB_SHA" > /tmp/legacy-update.log 2>&1 || { cat /tmp/legacy-update.log; exit 1; }
+          node tests/check-installed-admin.mjs /tmp/admin-setup.json
+          node --env-file=/tmp/legacy-test.env tests/legacy-upgrade.mjs --after --allow-new-admin
+          diff <(sudo grep -v '^TIKTOK_IMAGE=' "$legacy/.env") <(grep -v '^TIKTOK_IMAGE=' /tmp/legacy-test.env)
+          sudo env APP_DIR="$legacy" bash install.sh --uninstall
       - name: Stop published test services
         if: always()
         run: sudo bash apps/tiktok-knowledge/install.sh --uninstall

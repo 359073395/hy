@@ -114,6 +114,21 @@ docker() { printf 'sha256:previous-image\n'; }
 compose() {
     printf '%s\n' "$*" >> "$TEST_ROOT/compose-calls"
     if [[ "$*" == *pg_dump* ]]; then printf 'database dump'; fi
+    if [[ "$*" == *deploy/admin-account.cjs* ]]; then
+        local payload
+        payload=$(cat)
+        if [[ "$payload" == '{"action":"status"}' ]]; then
+            if [ -f "$TEST_ROOT/admin-configured" ]; then
+                printf '{"admins":[{"id":"admin-id","name":"网站管理员","username":"owner","hasPassword":true,"status":"active"}],"hasPasswordAdmin":true}\n'
+            else
+                printf '{"admins":[],"hasPasswordAdmin":false}\n'
+            fi
+        else
+            printf '%s' "$payload" > "$TEST_ROOT/admin-input.json"
+            touch "$TEST_ROOT/admin-configured"
+            printf '{"ok":true,"user":{"id":"admin-id","name":"网站管理员","username":"owner"}}\n'
+        fi
+    fi
     return 0
 }
 wait_healthy() {
@@ -123,10 +138,50 @@ wait_healthy() {
     fi
     return 0
 }
-deploy >/dev/null
+deploy > "$TEST_ROOT/installed.log"
 original_token=$(env_value ADMIN_TOKEN)
 [ "${#original_token}" -eq 48 ]
 assert_equal 0.1.0 "$(cat "$APP_DIR/VERSION")"
+grep -q '/admin/login' "$TEST_ROOT/installed.log"
+grep -q -- '--admin-account' "$TEST_ROOT/installed.log"
+if grep -q "$original_token" "$TEST_ROOT/installed.log"; then exit 1; fi
+
+# Password input preserves spaces and shell characters and travels only over stdin JSON.
+test_password='  CI "quote" \slash $value `literal`  '
+prompt_admin_credentials reset admin-id owner < <(printf '%s\n' OWNER "$test_password" "$test_password") > /dev/null
+apply_admin_payload > "$TEST_ROOT/admin-output.log"
+python3 - "$TEST_ROOT/admin-input.json" <<'PY'
+import json,sys
+with open(sys.argv[1], encoding='utf-8') as stream:
+    value = json.load(stream)
+assert value == {'action': 'reset', 'userId': 'admin-id', 'username': 'owner', 'password': '  CI "quote" \\slash $value `literal`  '}
+PY
+assert_equal '' "$ADMIN_PAYLOAD"
+if grep -q 'quote\|slash\|literal' "$TEST_ROOT/admin-output.log" "$APP_DIR/.env"; then exit 1; fi
+set_env_value SITE_URL 'https://bound.example'
+show_access > "$TEST_ROOT/access.log"
+grep -q 'https://bound.example/admin/login' "$TEST_ROOT/access.log"
+cp "$TEST_ROOT/admin-input.json" "$TEST_ROOT/admin-before-update.json"
+ADMIN_PAYLOAD='{"action":"create","username":"unrequested","password":"unused-password"}'
+ensure_admin_account
+cmp "$TEST_ROOT/admin-input.json" "$TEST_ROOT/admin-before-update.json"
+assert_equal '' "$ADMIN_PAYLOAD"
+assert_equal 'https://bound.example' "$(env_value SITE_URL)"
+assert_equal "$original_token" "$(env_value ADMIN_TOKEN)"
+
+# Explicit unattended setup files require private permissions and get passed over stdin.
+if [ "$(command uname -s)" = Linux ]; then
+    rm -f "$TEST_ROOT/admin-configured"
+    ADMIN_SETUP_FILE="$TEST_ROOT/admin-setup.json"
+    printf '{"action":"create","username":"owner","password":"CI-only-password"}' > "$ADMIN_SETUP_FILE"
+    chmod 600 "$ADMIN_SETUP_FILE"
+    ensure_admin_account > "$TEST_ROOT/setup.log"
+    grep -q '"create"' "$TEST_ROOT/admin-input.json"
+    if grep -q 'CI-only-password' "$TEST_ROOT/setup.log" "$APP_DIR/.env"; then exit 1; fi
+    chmod 644 "$ADMIN_SETUP_FILE"
+    if load_admin_setup_file >/dev/null 2>&1; then exit 1; fi
+    unset ADMIN_SETUP_FILE
+fi
 cleanup
 MOCK_VERSION=0.2.0
 MOCK_FAIL_HEALTH=1
@@ -327,6 +382,8 @@ for entry in harvey.sh cn/harvey.sh; do
     grep -q '123|tiktok-knowledge|tiktok-kb|tkkb)' "$ROOT/$entry"
     grep -q 'tkkb_run --set-domain' "$ROOT/$entry"
     grep -q 'tkkb_run --clear-domain' "$ROOT/$entry"
+    grep -q '4) tkkb_run --admin-account' "$ROOT/$entry"
+    grep -q '后台登录.*admin/login' "$ROOT/$entry"
 done
 diff <(sed -n '/123|tiktok-knowledge|tiktok-kb|tkkb)/,/^\s*b)/p' "$ROOT/harvey.sh") \
      <(sed -n '/123|tiktok-knowledge|tiktok-kb|tkkb)/,/^\s*b)/p' "$ROOT/cn/harvey.sh")

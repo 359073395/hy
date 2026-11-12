@@ -158,7 +158,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (boot.loading) return;
     if (boot.error || !boot.user) {
-      router.replace('/?reason=session');
+      router.replace('/admin/login?reason=session');
       return;
     }
     if (!isAdminRole) return;
@@ -449,10 +449,10 @@ export default function AdminPage() {
   };
 
   const logoutHandler = async () => {
-    await performLogout();
+    await performLogout('/admin/login');
   };
 
-  if (boot.loading) {
+  if (boot.loading || !boot.user || boot.error) {
     return <div className="flex min-h-screen items-center justify-center bg-[#F7F8FF] text-sm text-slate-500">正在验证登录状态…</div>;
   }
   // 无权限：普通员工访问管理后台

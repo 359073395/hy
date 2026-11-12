@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuthBootstrap } from '@/lib/use-auth-bootstrap';
 import { api } from '@/lib/client';
 import { MODULES } from '@/lib/constants';
@@ -18,6 +19,7 @@ async function knowledgeRequest(body: unknown) {
 
 export default function KnowledgeAdminPage() {
   const boot = useAuthBootstrap();
+  const router = useRouter();
   const [pack, setPack] = useState<unknown>(null);
   const [fileName, setFileName] = useState('');
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -29,8 +31,12 @@ export default function KnowledgeAdminPage() {
   const [sectionNo, setSectionNo] = useState('');
   const [title, setTitle] = useState('');
 
+  useEffect(() => {
+    if (!boot.loading && (!boot.user || boot.error)) router.replace('/admin/login?reason=session');
+  }, [boot.loading, boot.user, boot.error, router]);
+
   if (boot.loading) return <p className="p-8">正在验证登录状态…</p>;
-  if (!boot.user) return <main className="p-8"><Link href="/">请先登录</Link></main>;
+  if (!boot.user) return <main className="p-8"><Link href="/admin/login">请先登录后台</Link></main>;
   if (!['admin', 'super_admin'].includes(boot.user.role)) return <main className="p-8">仅管理员可管理知识库。<a className="ml-4 underline" href="/manual">返回手册</a></main>;
 
   const selectFile = async (file?: File) => {

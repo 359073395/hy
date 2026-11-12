@@ -1,7 +1,7 @@
 name: tiktok-knowledge
 services:
   app:
-    image: ${TIKTOK_IMAGE:-ghcr.io/359073395/tiktok-knowledge:0.1.0}
+    image: ${TIKTOK_IMAGE:-ghcr.io/359073395/tiktok-knowledge:0.2.0}
     container_name: tiktok-knowledge
     restart: unless-stopped
     init: true

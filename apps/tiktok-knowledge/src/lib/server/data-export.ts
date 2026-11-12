@@ -9,7 +9,7 @@ const TABLE_GROUPS = {
 } as const;
 
 export const CSV_COLUMNS = {
-  members: ['id', 'name', 'role', 'tier', 'status', 'token', 'token_custom', 'token_hash', 'custom_token_hash', 'created_at', 'updated_at'],
+  members: ['id', 'name', 'username', 'role', 'tier', 'status', 'token', 'token_custom', 'token_hash', 'custom_token_hash', 'password_hash', 'created_at', 'updated_at'],
   exams: ['id', 'exam_id', 'exam_code', 'exam_name', 'user_id', 'user_name', 'status', 'score', 'official_passed', 'practical_status', 'answers', 'question_snapshot', 'started_at', 'submitted_at', 'created_at'],
 };
 

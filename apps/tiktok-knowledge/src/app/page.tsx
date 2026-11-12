@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { login } from '@/lib/client';
 import { useAuthBootstrap } from '@/lib/use-auth-bootstrap';
@@ -92,6 +93,7 @@ export default function LoginPage() {
               {submitting ? '登录中…' : '进入手册'}
             </button>
           </form>
+          <div className="mt-5 text-center text-sm"><Link href="/admin/login" className="text-indigo-700 underline">管理员账号登录</Link></div>
         </div>
 
         <p className="mt-3 text-center text-[11px] font-semibold text-slate-400">
