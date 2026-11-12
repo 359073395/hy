@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { api, performLogout } from '@/lib/client';
 import { useAuthBootstrap } from '@/lib/use-auth-bootstrap';
 import { BrandMark } from '@/components/brand-logo';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { validateMemberToken } from '@/lib/passphrase';
 
 interface Member {
   id: string;
@@ -80,6 +82,104 @@ const TIERS = ['M2', 'M4', 'M6'];
 const ROLES = ['employee', 'admin', 'super_admin'];
 const STATUS_TEXT: Record<string, string> = { pending: '待开始', in_progress: '进行中', obj_passed: '客观达标·待实操', failed: '未通过', passed: '已通过' };
 
+function MemberTokenDialog({ member, onClose, onSaved, trigger }: {
+  member: Member;
+  onClose: () => void;
+  onSaved: (kind: 'original' | 'custom') => Promise<void>;
+  trigger: React.RefObject<HTMLButtonElement | null>;
+}) {
+  const [tokenKind, setTokenKind] = useState<'original' | 'custom'>('custom');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (saving) return;
+    const value = newPass.trim();
+    const validation = validateMemberToken(value, tokenKind, member.name);
+    if (validation) { setError(validation); return; }
+    if (value !== confirmPass.trim()) { setError('两次输入的密令不一致'); return; }
+    setSaving(true);
+    setError('');
+    try {
+      await api(`/api/admin/users/${member.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ tokenKind, newPass: value, confirm: confirmPass.trim() }),
+      });
+      await onSaved(tokenKind);
+      onClose();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '密令修改失败，请重试');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return <Dialog open onOpenChange={open => { if (!open && !saving) onClose(); }}>
+    <DialogContent
+      className="max-h-[90dvh] overflow-y-auto bg-white"
+      showCloseButton={!saving}
+      onOpenAutoFocus={event => { event.preventDefault(); inputRef.current?.focus(); }}
+      onCloseAutoFocus={event => { event.preventDefault(); trigger.current?.focus(); }}
+      onPointerDownOutside={event => event.preventDefault()}
+      onEscapeKeyDown={event => { if (saving) event.preventDefault(); }}
+    >
+      <DialogHeader>
+        <DialogTitle>修改「{member.name}」的密令</DialogTitle>
+        <DialogDescription>
+          {tokenKind === 'custom' ? '设置成员自定义登录密令，原始密令继续可用。' : '保存后旧原始密令将失效，请将新原始密令交给该成员。'}
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={event => void save(event)} className="space-y-4">
+        <fieldset disabled={saving} className="space-y-4">
+          <div>
+            <p id="member-token-kind" className="mb-2 text-sm font-medium">密令类型</p>
+            <div role="radiogroup" aria-labelledby="member-token-kind" className="flex flex-wrap gap-5 text-sm">
+              <label className="flex items-center gap-2">
+                <input type="radio" name="member-token-kind" value="custom" checked={tokenKind === 'custom'} onChange={() => { setTokenKind('custom'); setError(''); }} />
+                自定义密令
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="member-token-kind" value="original" checked={tokenKind === 'original'} onChange={() => { setTokenKind('original'); setError(''); }} />
+                原始密令
+              </label>
+            </div>
+          </div>
+          <p id="member-token-rules" className="text-xs leading-6 text-slate-500">
+            {tokenKind === 'custom' ? '6–20位，包含字母和数字，避开常见弱密令及成员姓名。' : '1–128个字符，首尾空格会自动去除。'}
+          </p>
+          <div>
+            <label htmlFor="member-new-token" className="mb-1 block text-sm font-medium">新密令</label>
+            <input
+              ref={inputRef} id="member-new-token" name="newPass" type="password" autoComplete="new-password"
+              autoCapitalize="none" spellCheck={false} required minLength={tokenKind === 'custom' ? 6 : 1} maxLength={tokenKind === 'custom' ? 20 : 128}
+              aria-describedby="member-token-rules" value={newPass} onChange={event => setNewPass(event.target.value)}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="member-confirm-token" className="mb-1 block text-sm font-medium">确认新密令</label>
+            <input
+              id="member-confirm-token" name="confirm" type="password" autoComplete="new-password"
+              autoCapitalize="none" spellCheck={false} required maxLength={tokenKind === 'custom' ? 20 : 128}
+              value={confirmPass} onChange={event => setConfirmPass(event.target.value)}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+            />
+          </div>
+        </fieldset>
+        {error && <p role="alert" className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
+        <DialogFooter>
+          <button type="button" disabled={saving} onClick={onClose} className="rounded-md border border-slate-300 px-4 py-2 text-sm disabled:opacity-50">取消</button>
+          <button type="submit" disabled={saving} className="rounded-md bg-[#5B6CFF] px-4 py-2 text-sm text-white disabled:opacity-50">{saving ? '保存中…' : '保存密令'}</button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  </Dialog>;
+}
+
 function nameOf(r: { exams?: unknown } | undefined): string {
   if (!r) return '-';
   const e = r.exams as { name?: string } | { name?: string }[] | undefined;
@@ -110,6 +210,8 @@ export default function AdminPage() {
   const [exams, setExams] = useState<ExamDef[]>([]);
   const [toast, setToast] = useState('');
   const [busy, setBusy] = useState(false);
+  const [tokenMember, setTokenMember] = useState<Member | null>(null);
+  const tokenTrigger = useRef<HTMLButtonElement>(null);
 
   // 新增成员表单
   const [name, setName] = useState('');
@@ -186,7 +288,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isAdminRole || tab !== 'members') return;
     const refresh = () => {
-      if (document.hidden || busy || document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')) return;
+      if (document.hidden || busy || tokenMember || document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')) return;
       void loadMembers(true);
     };
     refresh();
@@ -198,7 +300,7 @@ export default function AdminPage() {
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', refresh);
     };
-  }, [isAdminRole, tab, busy, loadMembers]);
+  }, [isAdminRole, tab, busy, tokenMember, loadMembers]);
 
   const loadRecords = useCallback(async () => {
     try {
@@ -593,7 +695,7 @@ export default function AdminPage() {
             {/* 移动端：成员卡片 */}
             <div className="space-y-2 md:hidden">
               {members.map((m) => (
-                <div key={m.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                <div key={m.id} data-member-id={m.id} className="rounded-xl border border-slate-200 bg-white p-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-slate-800">{m.name}{(isSuper || m.role === 'employee') && <button onClick={() => void renameMember(m)} className="ml-2 text-xs text-indigo-600">改名</button>}</div>
@@ -623,6 +725,7 @@ export default function AdminPage() {
                     {(m as Member & { tokenCustom?: string | null }).tokenCustom ? (
                       <button disabled={!isSuper && m.role !== 'employee'} onClick={() => resetCustom(m.id, m.name)} className="rounded bg-rose-50 px-2 py-0.5 text-[11px] text-rose-600 hover:bg-rose-100">重置自定义</button>
                     ) : null}
+                    {isSuper && <button aria-label={`修改${m.name}的密令`} onClick={event => { tokenTrigger.current = event.currentTarget; setTokenMember(m); }} className="rounded bg-indigo-50 px-2 py-1 text-[11px] text-indigo-700">修改密令</button>}
                     <button disabled={!isSuper && m.role !== 'employee'} onClick={() => delMember(m.id, m.name)} className="ml-auto rounded bg-rose-50 px-2 py-1 text-[11px] text-rose-600">删除</button>
                   </div>
                 </div>
@@ -644,7 +747,7 @@ export default function AdminPage() {
                 </thead>
                 <tbody>
                   {members.map((m) => (
-                    <tr key={m.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                    <tr key={m.id} data-member-id={m.id} className="border-b border-slate-50 hover:bg-slate-50/50">
                       <td className="px-4 py-2">{m.name}{(isSuper || m.role === 'employee') && <button onClick={() => void renameMember(m)} className="ml-2 text-xs text-indigo-600">改名</button>}</td>
                       <td className="px-3 py-2">
                         {isSuper ? (
@@ -681,6 +784,7 @@ export default function AdminPage() {
                         </div>
                       </td>
                       <td className="px-3 py-2">
+                        {isSuper && <button aria-label={`修改${m.name}的密令`} onClick={event => { tokenTrigger.current = event.currentTarget; setTokenMember(m); }} className="mr-3 text-xs text-indigo-700 hover:underline">修改密令</button>}
                         <button disabled={!isSuper && m.role !== 'employee'} onClick={() => delMember(m.id, m.name)} className="text-xs text-slate-400 hover:text-rose-600">删除</button>
                       </td>
                     </tr>
@@ -1044,6 +1148,17 @@ export default function AdminPage() {
           )}
         </div>
       )}
+
+      {isSuper && tokenMember && <MemberTokenDialog
+        key={tokenMember.id}
+        member={tokenMember}
+        trigger={tokenTrigger}
+        onClose={() => setTokenMember(null)}
+        onSaved={async kind => {
+          setToast(`已修改「${tokenMember.name}」的${kind === 'custom' ? '自定义' : '原始'}密令`);
+          await loadMembers();
+        }}
+      />}
 
       {/* 题库编辑弹层 */}
       {editQ && (

@@ -22,10 +22,13 @@ const change = (cookie, token, status = 200) => request('/api/auth/passphrase', 
   cookie, method: 'POST', body: { newPass: token, confirm: token }, status,
 });
 const admin = await login(process.env.ADMIN_TOKEN);
+const adminChange = (id, tokenKind, token, status = 200, cookie = admin.cookie) => request(`/api/admin/users/${id}`, {
+  cookie, method: 'PATCH', body: { tokenKind, newPass: token, confirm: token }, status,
+});
 
-async function createMember(name, token = uniqueToken('Original'), status = 201) {
+async function createMember(name, token = uniqueToken('Original'), status = 201, role = 'employee') {
   const result = await request('/api/admin/users', {
-    cookie: admin.cookie, method: 'POST', body: { name, token, role: 'employee', tier: 'M2' }, status,
+    cookie: admin.cookie, method: 'POST', body: { name, token, role, tier: 'M2' }, status,
   });
   return { ...result, token };
 }
@@ -36,6 +39,8 @@ async function storedMember(id) {
   assert.ok(member);
   const exported = (await request('/api/admin/data?scope=members', { cookie: admin.cookie })).data.find(user => user.id === id);
   assert.equal(exported.token_custom, member.tokenCustom);
+  assert.equal(exported.token, member.token);
+  assert.equal(exported.token_hash, createHash('sha256').update(member.token).digest('hex'));
   assert.equal(exported.custom_token_hash, member.tokenCustom ? createHash('sha256').update(member.tokenCustom).digest('hex') : null);
   return member;
 }
@@ -48,7 +53,16 @@ if (process.argv.includes('--after-restart')) {
   assert.equal((await login(state.originalToken)).data.user.id, state.userId);
   assert.equal((await login(state.customToken)).data.user.id, state.userId);
   await login(state.retiredToken, 401);
-  console.log('PASS custom token login, administrator display and export survive restart and restore');
+  await login(state.retiredOriginalToken, 401);
+  const records = (await request('/api/admin/data?scope=exams', { cookie: admin.cookie })).data;
+  assert.deepEqual(records.find(row => row.id === state.examRecord.id), state.examRecord);
+  const disabled = await storedMember(state.disabledUser.id);
+  assert.equal(disabled.status, 'disabled');
+  assert.equal(disabled.token, state.disabledUser.token);
+  assert.equal(disabled.tokenCustom, state.disabledUser.customToken);
+  await login(disabled.token, 403);
+  await login(disabled.tokenCustom, 403);
+  console.log('PASS administrator original/custom token changes, permissions, exams and disabled state survive restart and restore');
   process.exit(0);
 }
 
@@ -118,7 +132,104 @@ results.push('administrator clear and concurrent employee changes stay consisten
 
 const finalToken = uniqueToken('Persist');
 await change(employee.cookie, finalToken);
+
+const regularAdmin = await createMember('CI regular admin', uniqueToken('Operator'), 201, 'admin');
+const regularAdminSession = await login(regularAdmin.token);
+for (const kind of ['original', 'custom']) {
+  await adminChange(userId, kind, uniqueToken('Denied'), 403, regularAdminSession.cookie);
+  await adminChange(userId, kind, uniqueToken('Denied'), 403, employee.cookie);
+}
+const invalidBodies = [null, [], { tokenKind: null, newPass: 'Valid2026', confirm: 'Valid2026' },
+  { tokenKind: 'custom', newPass: null, confirm: null }, { tokenKind: 'custom', newPass: [], confirm: [] },
+  { tokenKind: 'custom', newPass: 'Valid2026', confirm: 'Different2026' },
+  { tokenKind: 'custom', newPass: '12345678', confirm: '12345678' },
+  { tokenKind: 'original', newPass: ' '.repeat(8), confirm: ' '.repeat(8) },
+  { tokenKind: 'original', newPass: 'x'.repeat(129), confirm: 'x'.repeat(129) },
+  ...['clearCustom', 'role', 'tier', 'status', 'name'].map(field => ({ tokenKind: 'custom', newPass: 'Valid2026', confirm: 'Valid2026', [field]: true })),
+];
+for (const body of invalidBodies) await request(`/api/admin/users/${userId}`, { cookie: admin.cookie, method: 'PATCH', body, status: 400 });
+await adminChange('00000000-0000-0000-0000-000000000000', 'original', 'Valid2026', 404);
+results.push('only super administrators can modify member tokens and malformed or mixed updates are rejected');
+
+const exam = (await request('/api/exams', { cookie: admin.cookie })).data.exams[0];
+assert.ok(exam);
+const assigned = (await request(`/api/admin/exams/${exam.id}/assign`, { cookie: admin.cookie, method: 'POST', body: { userId }, status: 201 })).data.record;
+const examRecord = (await request('/api/admin/data?scope=exams', { cookie: admin.cookie })).data.find(row => row.id === assigned.id);
+const accountBefore = await storedMember(userId);
+const replacementOriginal = randomBytes(32).toString('hex');
+await adminChange(userId, 'original', replacementOriginal);
+const afterOriginalChange = await storedMember(userId);
+await adminChange(userId, 'original', replacementOriginal);
+assert.deepEqual(await storedMember(userId), afterOriginalChange);
+await login(created.token, 401);
+assert.equal((await login(replacementOriginal)).data.user.id, userId);
+assert.equal((await login(finalToken)).data.user.id, userId);
+for (const field of ['id', 'name', 'role', 'tier', 'status', 'created_at']) assert.equal(afterOriginalChange[field], accountBefore[field]);
+await adminChange(userId, 'original', finalToken, 400);
+await adminChange(userId, 'custom', other.token, 409);
+const adminCustom = uniqueToken('Managed');
+await adminChange(userId, 'custom', adminCustom);
+const afterCustomChange = await storedMember(userId);
+await adminChange(userId, 'custom', adminCustom);
+assert.deepEqual(await storedMember(userId), afterCustomChange);
+await login(finalToken, 401);
+assert.equal((await login(adminCustom)).data.user.id, userId);
+assert.equal((await login(replacementOriginal)).data.user.id, userId);
+await createMember('CI short original collision', adminCustom, 409);
+results.push('super administrator changes original and custom tokens in place with idempotent long-original compatibility');
+
+for (const role of ['admin', 'super_admin']) {
+  const target = await createMember(`CI managed ${role}`, uniqueToken('Role'), 201, role);
+  const original = uniqueToken('RoleNew');
+  const custom = uniqueToken('RoleCustom');
+  await adminChange(target.data.user.id, 'original', original);
+  await adminChange(target.data.user.id, 'custom', custom);
+  await login(target.token, 401);
+  assert.equal((await login(original)).data.user.role, role);
+  assert.equal((await login(custom)).data.user.id, target.data.user.id);
+}
+results.push('super administrator can manage administrator and super administrator member tokens');
+
+const disabledTarget = await createMember('CI disabled token target');
+const disabledId = disabledTarget.data.user.id;
+await request(`/api/admin/users/${disabledId}`, { cookie: admin.cookie, method: 'PATCH', body: { status: 'disabled' } });
+const disabledUser = { id: disabledId, token: uniqueToken('Disabled'), customToken: uniqueToken('DisabledC') };
+await adminChange(disabledId, 'original', disabledUser.token);
+await adminChange(disabledId, 'custom', disabledUser.customToken);
+assert.equal((await storedMember(disabledId)).status, 'disabled');
+await login(disabledTarget.token, 401);
+await login(disabledUser.token, 403);
+await login(disabledUser.customToken, 403);
+results.push('credential changes preserve a disabled member status');
+
+const sharedClaim = uniqueToken('AdminRace');
+const adminRace = await Promise.all([
+  adminChange(userId, 'original', sharedClaim, null),
+  change(otherEmployee.cookie, sharedClaim, null),
+]);
+assert.deepEqual(adminRace.map(result => result.status).sort(), [200, 409]);
+const sameAccountClaim = uniqueToken('SameRace');
+const sameAccountRace = await Promise.all([
+  adminChange(userId, 'original', sameAccountClaim, null),
+  adminChange(userId, 'custom', sameAccountClaim, null),
+]);
+assert.deepEqual(sameAccountRace.map(result => result.status).sort(), [200, 400]);
+await storedMember(userId);
+results.push('administrator original/custom changes and employee changes resolve concurrent token conflicts atomically');
+
+const finalOriginal = randomBytes(32).toString('hex');
+const finalCustom = uniqueToken('AdminSaved');
+await adminChange(userId, 'original', finalOriginal);
+await adminChange(userId, 'custom', finalCustom);
+const recordsAfter = (await request('/api/admin/data?scope=exams', { cookie: admin.cookie })).data;
+assert.deepEqual(recordsAfter.find(row => row.id === assigned.id), examRecord);
+const audit = (await request('/api/admin/data?scope=audit', { cookie: admin.cookie })).data.audit_logs;
+const tokenAudit = audit.filter(row => row.action === 'member_token_changed');
+assert.ok(tokenAudit.some(row => row.user_id === admin.data.user.id && row.detail.target_user_id === userId && row.detail.token_kind === 'original'));
+assert.ok(tokenAudit.some(row => row.user_id === admin.data.user.id && row.detail.target_user_id === userId && row.detail.token_kind === 'custom'));
+for (const token of [replacementOriginal, adminCustom, finalOriginal, finalCustom]) assert.equal(JSON.stringify(tokenAudit).includes(token), false);
+results.push('member exam records survive credential changes and audit records identify actor and target without credential values');
 await mkdir('test-results', { recursive: true });
-await writeFile('test-results/token-sync-state.json', JSON.stringify({ userId, originalToken: created.token, customToken: finalToken, retiredToken: firstToken }));
+await writeFile('test-results/token-sync-state.json', JSON.stringify({ userId, originalToken: finalOriginal, customToken: finalCustom, retiredToken: firstToken, retiredOriginalToken: created.token, examRecord, disabledUser }));
 await writeFile('test-results/token-sync-results.json', JSON.stringify({ passed: results }, null, 2));
 for (const result of results) console.log(`PASS ${result}`);

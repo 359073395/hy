@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
-import { getCurrentUser, isAdmin, isSuperAdmin } from '@/lib/auth';
-import { deleteUserWithCascade, clearCustomToken } from '@/lib/server/bootstrap-utils';
+import { getCurrentUser, hashToken, isAdmin, isSuperAdmin } from '@/lib/auth';
+import { deleteUserWithCascade, clearCustomToken, setMemberToken } from '@/lib/server/bootstrap-utils';
+import { validateMemberToken } from '@/lib/passphrase';
 
 const VALID_TIERS = ['M2', 'M4', 'M6'];
 const VALID_ROLES = ['employee', 'admin', 'super_admin'];
@@ -11,7 +12,25 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (!op || !isAdmin(op)) return NextResponse.json({ error: '无权限' }, { status: 403 });
 
   const { id } = await ctx.params;
-  const body = await req.json().catch(() => ({}));
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: '请求资料格式无效' }, { status: 400 });
+  if (Object.hasOwn(body, 'tokenKind') || Object.hasOwn(body, 'newPass') || Object.hasOwn(body, 'confirm')) {
+    if (!isSuperAdmin(op)) return NextResponse.json({ error: '仅超管可修改成员密令' }, { status: 403 });
+    if (!['original', 'custom'].includes(body.tokenKind) || typeof body.newPass !== 'string' || typeof body.confirm !== 'string'
+      || Object.keys(body).some(key => !['tokenKind', 'newPass', 'confirm'].includes(key))) {
+      return NextResponse.json({ error: '请提供密令类型、新密令和确认密令，密令修改需单独提交' }, { status: 400 });
+    }
+    const token = body.newPass.trim();
+    if (!token) return NextResponse.json({ error: '请输入新密令' }, { status: 400 });
+    if (token !== body.confirm.trim()) return NextResponse.json({ error: '两次输入的密令不一致' }, { status: 400 });
+    const validation = validateMemberToken(token, body.tokenKind, '');
+    if (validation) return NextResponse.json({ error: validation }, { status: 400 });
+    if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id)) return NextResponse.json({ error: '成员ID格式无效' }, { status: 400 });
+    const ip = (req.headers.get('x-forwarded-for')?.split(',')[0] ?? req.headers.get('x-real-ip') ?? '').trim();
+    const result = await setMemberToken(id, body.tokenKind, token, hashToken(token), op.id, ip);
+    if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+    return NextResponse.json({ ok: true, tokenKind: body.tokenKind, message: '成员密令已更新' });
+  }
   const client = getSupabaseClient();
 
   const { data: target } = await client

@@ -1,27 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hashToken, getCurrentUser } from '@/lib/auth';
 import { setCustomToken } from '@/lib/server/bootstrap-utils';
-
-/** 常见弱口令黑名单 */
-const COMMON_WEAK = new Set([
-  '123456', '1234567', '12345678', '123456789', '1234567890',
-  'password', 'qwerty', 'qwerty123', 'abc123', 'abc1234', 'abcdef',
-  'abcabc', '111111', '000000', '888888', '123123', '123321',
-  'a123456', 'a12345', 'iloveyou', 'admin123', 'passw0rd', '654321',
-]);
-
-/** 新密令校验规则：6-20 位、字母+数字组合、拒绝弱口令/纯数字/纯字母/与姓名接近 */
-export function validateNewPassphrase(p: string, name: string): string | null {
-  if (!p || p.length < 6 || p.length > 20) return '密令长度需为 6-20 位';
-  if (!/[A-Za-z]/.test(p) || !/\d/.test(p)) return '密令需同时包含字母和数字';
-  // 经英文字母转小写后再判断，兼容大小写变体
-  const low = p.toLowerCase();
-  if (/^\d+$/.test(p) || /^[a-z]+$/i.test(p)) return '密令不能为纯数字或纯字母';
-  if (COMMON_WEAK.has(low)) return '密令过于简单，请更换后再试';
-  const uname = (name ?? '').trim().toLowerCase();
-  if (uname && (low === uname || low.includes(uname))) return '密令不能过于接近姓名，请更换';
-  return null;
-}
+import { validateNewPassphrase } from '@/lib/passphrase';
 
 export async function POST(req: NextRequest) {
   const me = await getCurrentUser();
