@@ -714,11 +714,11 @@ export default function AdminPage() {
                     <select disabled={!isSuper && m.role !== 'employee'} value={m.tier} onChange={(e) => patchMember(m.id, { tier: e.target.value })} className="rounded border border-slate-200 px-1.5 py-1">
                       {TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
                     </select>
-                    <span className="inline-flex items-center gap-1 rounded bg-slate-50 px-1.5 py-0.5 font-mono text-[11px] text-slate-600">
+                    <span className="min-w-0 max-w-full break-all rounded bg-slate-50 px-1.5 py-0.5 font-mono text-[11px] text-slate-600">
                       原始:{(m as Member & { token?: string | null }).token || '无'}
                     </span>
                     <button onClick={() => copyToken((m as Member & { token?: string | null }).token)} className="rounded bg-[#5B6CFF] px-2 py-0.5 text-[11px] text-white hover:bg-[#4a5ae0]">复制</button>
-                    <span className="inline-flex items-center gap-1 rounded bg-violet-50 px-1.5 py-0.5 font-mono text-[11px] text-violet-700">
+                    <span className="min-w-0 max-w-full break-all rounded bg-violet-50 px-1.5 py-0.5 font-mono text-[11px] text-violet-700">
                       自定义:{(m as Member & { tokenCustom?: string | null }).tokenCustom || '未设置'}
                     </span>
                     <button onClick={() => copyToken((m as Member & { tokenCustom?: string | null }).tokenCustom)} className="rounded bg-violet-500 px-2 py-0.5 text-[11px] text-white hover:bg-violet-400">复制</button>

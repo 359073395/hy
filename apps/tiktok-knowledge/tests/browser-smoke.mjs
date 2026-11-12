@@ -81,6 +81,7 @@ async function verifyMemberTokenEditor() {
     assert.equal((await loginContext.request.post(base + '/api/auth/login', { data: { token: custom } })).status(), 200);
 
     await page.setViewportSize({ width: 390, height: 844 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Long tokens must fit the mobile viewport');
     await edit.click();
     await dialog.getByRole('radio', { name: '原始密令', exact: true }).check();
     await dialog.getByText('保存后旧原始密令将失效，请将新原始密令交给该成员。', { exact: true }).waitFor();
@@ -88,10 +89,11 @@ async function verifyMemberTokenEditor() {
     await dialog.getByLabel('新密令', { exact: true }).fill(replacement);
     await dialog.getByLabel('确认新密令', { exact: true }).fill(replacement);
     assert.equal((await dialog.getByLabel('新密令', { exact: true }).inputValue()).length, 64);
-    await page.screenshot({ path: 'test-results/member-token-mobile.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/member-token-mobile.png', fullPage: false });
     await dialog.getByRole('button', { name: '保存密令', exact: true }).click();
     await dialog.waitFor({ state: 'hidden' });
     await member.getByText(`原始:${replacement}`, { exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Updated long tokens must fit the mobile viewport');
     await member.getByText(`自定义:${custom}`, { exact: true }).waitFor();
     assert.equal((await loginContext.request.post(base + '/api/auth/login', { data: { token: original } })).status(), 401);
     assert.equal((await loginContext.request.post(base + '/api/auth/login', { data: { token: replacement } })).status(), 200);
