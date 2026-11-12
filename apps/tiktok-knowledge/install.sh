@@ -355,7 +355,7 @@ PY
 restore_database() {
     compose exec -T db dropdb --force --if-exists -U knowledge knowledge &&
         compose exec -T db createdb -U knowledge knowledge &&
-        compose exec -T db pg_restore -U knowledge -d knowledge --no-owner --no-acl --exit-on-error --single-transaction < "$1"
+        compose exec -T db pg_restore -U knowledge -d knowledge --clean --if-exists --no-owner --no-acl --exit-on-error --single-transaction < "$1"
 }
 
 rollback_restore() {

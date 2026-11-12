@@ -16739,7 +16739,7 @@ EOF
 			read -e -p "请输入你的选择: " sub_choice
 			case "$sub_choice" in
 				1)
-					install curl openssl util-linux
+					install curl openssl util-linux python3
 					install_docker
 					if [ ! -f "$tkkb_dir/.env" ]; then
 						check_port_conflict "$tkkb_port" || { echo "安装取消"; break_end; continue; }
