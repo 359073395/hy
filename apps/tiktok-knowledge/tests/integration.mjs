@@ -68,6 +68,7 @@ await check('member import is atomic and repeated tokens preserve existing accou
   assert.equal(stored.token, importedToken);
 });
 const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=';
+const restrictedPng = Buffer.concat([Buffer.from(png, 'base64'), Buffer.from('restricted')]).toString('base64');
 const questions = [
   ...Array.from({ length: 15 }, (_, i) => ({ qtype: 'truefalse', question_text: `CI judgment ${i}`, options: null, answer: 'true', explanation: 'CI explanation', sort_order: i })),
   ...Array.from({ length: 10 }, (_, i) => ({ qtype: 'choice', question_text: `CI choice ${i}`, options: ['one', 'two', 'three', 'four'], answer: '0', explanation: 'CI explanation', sort_order: 15 + i })),
@@ -80,10 +81,13 @@ const pack = {
   schemaVersion: 1,
   chapters: [
     { module: 'M1', sectionNo: '1.1', title: 'CI chapter', sortOrder: 1, isPublic: false, html: '<p>CI original content</p><img src="/notes/test.png" alt="test" />' },
-    { module: 'M6', sectionNo: '6.1', title: 'CI restricted', sortOrder: 2, isPublic: false, html: '<p>Restricted content</p>' },
+    { module: 'M6', sectionNo: '6.1', title: 'CI restricted', sortOrder: 2, isPublic: false, html: '<p>Restricted content</p><img src="/notes/restricted.png" />' },
   ],
   exams: [{ code: 'product_ops', name: 'CI product exam', questions }],
-  assets: [{ path: 'notes/test.png', contentType: 'image/png', base64: png }],
+  assets: [
+    { path: 'notes/test.png', contentType: 'image/png', base64: png },
+    { path: 'notes/restricted.png', contentType: 'image/png', base64: restrictedPng },
+  ],
 };
 await check('employee cannot manage people or import knowledge', async () => {
   await request('/api/admin/users', { cookie: employee.cookie, status: 403 });
@@ -103,6 +107,10 @@ const chapter = manual.chapters.find(c => c.title === 'CI chapter');
 assert.ok(chapter);
 await check('server enforces module visibility and stable image links', async () => {
   assert.equal(manual.chapters.some(c => c.module === 'M6'), false);
+  const adminManual = (await request('/api/manual', { cookie: admin.cookie })).data;
+  const restrictedUrl = adminManual.chapters.find(c => c.module === 'M6').html.match(/src="([^"]+)"/)[1];
+  assert.equal((await fetch(base + restrictedUrl, { headers: { cookie: employee.cookie } })).status, 403);
+  assert.equal((await fetch(base + restrictedUrl, { headers: { cookie: admin.cookie } })).status, 200);
   const url = chapter.html.match(/src="([^"]+)"/)[1];
   assert.ok(url.startsWith('/api/files/knowledge-assets/'));
   const unauthorized = await fetch(base + url);

@@ -20,7 +20,7 @@ async function serve(request: Request, context: { params: Promise<{ key: string[
   let target: string;
   try { target = await resolveStoragePath(key); } catch { return new Response('文件路径无效', { status: 400 }); }
 
-  if (segments[0] === 'materials' && !isAdmin(user)) {
+  if (!isAdmin(user)) {
     const matches = await getPool().query<{ module: string; is_public: boolean }>(
       `SELECT c.module, c.is_public FROM materials m JOIN chapters c ON c.id = m.chapter_id
        WHERE m.file_key = $1 AND m.status = 'active'
