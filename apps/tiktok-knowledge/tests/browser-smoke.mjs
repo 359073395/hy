@@ -21,7 +21,7 @@ try {
   await page.screenshot({ path: 'test-results/manual.png', fullPage: true });
   await page.goto(base + '/admin');
   await page.getByText('成员管理', { exact: true }).waitFor();
-  await page.getByText('CI learner', { exact: true }).first().waitFor();
+  await page.getByRole('row').filter({ hasText: 'CI learner' }).waitFor();
   await page.screenshot({ path: 'test-results/admin.png', fullPage: true });
   await page.goto(base + '/admin/knowledge');
   await page.locator('input[type=file]').waitFor();
