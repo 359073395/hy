@@ -1,6 +1,31 @@
 import { z } from 'zod';
 
 export const KNOWLEDGE_MAX_BYTES = 40 * 1024 * 1024;
+const loopColorSchema = z.string().regex(/^#(?:[a-fA-F0-9]{3}|[a-fA-F0-9]{4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})$/, '颜色需为十六进制颜色值');
+const loopReferenceSchema = z.string().trim().max(64).regex(/^[a-zA-Z0-9_.-]*$/, '章节引用格式无效');
+
+export const loopStationSchema = z.object({
+  id: z.string().trim().min(1).max(64).regex(/^[a-zA-Z0-9_-]+$/, '节点标识格式无效'),
+  seq: z.number().int().min(1).max(10000).optional(),
+  kind: z.enum(['station', 'cross']).default('station'),
+  cls: z.string().max(128).regex(/^[a-zA-Z0-9_ -]*$/).default(''),
+  part: z.string().max(255).default(''),
+  name: z.string().trim().min(1).max(255),
+  sub: z.string().max(1000).default(''),
+  color: loopColorSchema.default('#5B6CFF'),
+  drive: z.string().max(10000).default(''),
+  modules: z.array(z.object({ code: loopReferenceSchema.min(1), name: z.string().trim().min(1).max(1000), color: loopColorSchema })).max(100).default([]),
+  points: z.array(z.object({ text: z.string().trim().min(1).max(10000), to: loopReferenceSchema.optional() })).max(100).default([]),
+  upstream: z.string().max(10000).default(''),
+  downstream: z.string().max(10000).default(''),
+}).passthrough();
+
+export const loopSchema = z.array(loopStationSchema).max(20)
+  .refine((stations) => new Set(stations.map((station) => station.id)).size === stations.length, '闭环图节点标识重复')
+  .refine((stations) => JSON.stringify(stations).length <= 200000, '闭环图数据超过200KB');
+
+export type LoopStation = z.infer<typeof loopStationSchema>;
+
 export const chapterSchema = z.object({
   module: z.enum(['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'APPENDIX']),
   moduleTitle: z.string().max(255).optional(),
@@ -33,7 +58,7 @@ export const questionSchema = z.object({
 
 export const knowledgePackageSchema = z.object({
   schemaVersion: z.literal(1),
-  loop: z.array(z.record(z.string(), z.unknown())).max(20).refine((value) => JSON.stringify(value).length <= 200000, '闭环图数据超过200KB').optional(),
+  loop: loopSchema.optional(),
   chapters: z.array(chapterSchema).max(2000).default([]),
   exams: z.array(z.object({
     code: z.enum(['ops_assistant', 'product_ops', 'content_ops']),

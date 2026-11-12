@@ -34,6 +34,6 @@ if (process.argv.includes('--before')) {
   }
   const assets = database.content_blocks.flatMap(row => [...row.html.matchAll(/src="(\/api\/files\/[^"\s]+)"/g)].map(match => match[1]));
   for (const url of assets) assert.equal((await fetch(base + url, { headers: { cookie } })).status, 200);
-  await writeFile('test-results/upgrade-results.json', JSON.stringify({ passed: ['0.1.0 to 0.2.0 additive migration', 'all original row values preserved', 'original admin token still signs in', 'persistent images remain readable'], tables: tables.length }, null, 2));
+  await writeFile('test-results/upgrade-results.json', JSON.stringify({ passed: ['legacy release additive migration', 'all original row values preserved', 'original admin token still signs in', 'persistent images remain readable'], tables: tables.length }, null, 2));
   console.log('PASS legacy upgrade preserves all original people, tokens, chapters and exams');
 }

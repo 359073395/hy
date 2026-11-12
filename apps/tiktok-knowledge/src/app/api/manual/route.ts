@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 import { getCurrentUser, canReadModule } from '@/lib/auth';
+import { getModuleAccess } from '@/lib/module-access';
 import { prependSignedUrl } from '@/lib/storage';
 import { MODULES } from '@/lib/constants';
 
@@ -12,12 +13,14 @@ export async function GET() {
 
   const client = getSupabaseClient();
 
-  const [{ data: chapters }, { data: blocks }, { data: materials }] = await Promise.all([
+  const [{ data: chapters, error: chaptersError }, { data: blocks, error: blocksError }, { data: materials, error: materialsError }] = await Promise.all([
     client.from('chapters').select('id, module, section_no, title, sort_order, is_public').order('sort_order'),
     client.from('content_blocks').select('id, chapter_id, html, version, updated_at'),
     client.from('materials').select('id, chapter_id, sentence, word, file_key, file_type, file_name, file_size, uploader_id, status').eq('status', 'active'),
   ]);
-  if (!chapters) return NextResponse.json({ error: '章节读取失败' }, { status: 500 });
+  if (chaptersError || blocksError || materialsError || !chapters || !blocks || !materials) {
+    return NextResponse.json({ error: '手册内容读取失败，请稍后重试' }, { status: 500 });
+  }
 
   const blockByChapter = new Map(blocks?.map((b) => [b.chapter_id, b]) ?? []);
   const matsByChapter = new Map<string, typeof materials>();
@@ -74,5 +77,5 @@ export async function GET() {
   }
   await Promise.all(urlPromises);
 
-  return NextResponse.json({ user, chapters: result });
+  return NextResponse.json({ user, chapters: result, moduleAccess: getModuleAccess(chapters, user) });
 }

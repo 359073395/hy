@@ -70,6 +70,7 @@ export interface ChapterDTO {
 export interface ManualResult {
   user: AuthUser;
   chapters: ChapterDTO[];
+  moduleAccess?: Record<string, boolean>;
 }
 
 export const login = (token: string) => api<{ user: AuthUser }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ token }) });

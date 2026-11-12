@@ -23,10 +23,14 @@ interface CreatedMember {
 /** The caller owns the transaction so account creation and its login token commit together. */
 export async function insertMember(db: PoolClient, input: MemberInput) {
   const token = input.token || generateMemberToken();
+  const tokenHash = hashToken(token);
+  await db.query('SELECT pg_advisory_xact_lock(581927104)');
+  const existing = await db.query('SELECT 1 FROM users WHERE token_hash = $1 OR custom_token_hash = $1', [tokenHash]);
+  if (existing.rowCount) return { user: undefined, token };
   const inserted = await db.query<CreatedMember>(
     `INSERT INTO users(name, token_hash, role, tier, status) VALUES($1, $2, $3, $4, 'active')
      ON CONFLICT(token_hash) DO NOTHING RETURNING id, name, role, tier, status, created_at`,
-    [input.name || '未命名成员', hashToken(token), input.role, input.tier],
+    [input.name || '未命名成员', tokenHash, input.role, input.tier],
   );
   const user = inserted.rows[0];
   if (user) await db.query('INSERT INTO user_tokens(user_id, token) VALUES($1, $2)', [user.id, token]);

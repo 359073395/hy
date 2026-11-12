@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'crypto';
 import { cookies } from 'next/headers';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
+export { canReadModule } from './module-access';
 
 export const SESSION_COOKIE = 'manual_session';
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 天
@@ -39,20 +40,6 @@ export function isAdmin(user: AuthUser | null | undefined): boolean {
 
 export function isSuperAdmin(user: AuthUser | null | undefined): boolean {
   return !!user && user.role === 'super_admin';
-}
-
-/** 根据员工级别计算可读模块集合（M7/M8/附录 恒可见，返回 true 于 isPublic 判断） */
-const TIER_MODULES: Record<Tier, string[]> = {
-  M2: ['M1', 'M2'],
-  M4: ['M1', 'M2', 'M3', 'M4'],
-  M6: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
-};
-
-export function canReadModule(moduleCode: string, isPublic: boolean, user: AuthUser | null | undefined): boolean {
-  if (!user) return false;
-  if (isAdmin(user)) return true;
-  if (isPublic) return true; // M7/M8/附录 全角色可见
-  return (TIER_MODULES[user.tier] ?? []).includes(moduleCode);
 }
 
 export interface SessionContext {

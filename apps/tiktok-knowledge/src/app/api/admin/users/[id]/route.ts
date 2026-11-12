@@ -24,16 +24,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
   // 管理员一键清空该成员的自定义密令（重置后仅原始密令可用）
   if (body.clearCustom === true) {
-    const res = await clearCustomToken(id);
+    const res = await clearCustomToken(id, op.id);
     if (!res.ok) return NextResponse.json({ error: `重置失败：${res.error ?? '未知错误'}` }, { status: 500 });
-    // 同步清空登录认证侧数据库的自定义密令哈希
-    const sync = await client.from('users').update({ custom_token_hash: null }).eq('id', id);
-    if (sync.error) return NextResponse.json({ error: `认证数据同步失败：${sync.error.message}` }, { status: 500 });
-    await client.from('audit_logs').insert({
-      user_id: op.id,
-      action: 'custom_passphrase_cleared',
-      detail: { target_user_id: id, target_name: target.name },
-    });
     return NextResponse.json({ ok: true, clearedCustom: true });
   }
 

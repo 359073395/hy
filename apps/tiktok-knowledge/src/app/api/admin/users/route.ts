@@ -23,7 +23,7 @@ export async function GET() {
     return { ...u, token: t?.token ?? null, tokenCustom: t?.tokenCustom ?? null };
   });
 
-  return NextResponse.json({ users });
+  return NextResponse.json({ users }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function POST(req: Request) {

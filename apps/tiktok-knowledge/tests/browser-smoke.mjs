@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
+import { randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 
 const base = process.env.TEST_URL || 'http://127.0.0.1:8791';
@@ -44,10 +45,50 @@ try {
   await signInAdmin();
   await page.goto(base + '/manual');
   await page.getByText('CI updated chapter', { exact: false }).first().waitFor();
+  assert.equal(await page.locator('.path-card').count(), 9);
+  assert.equal(await page.locator('.path-card.locked').count(), 0);
+  const emptyModule = page.getByText('暂无章节 · 点击导入或新增', { exact: true }).first();
+  await emptyModule.waitFor();
+  await emptyModule.click();
+  await page.waitForURL(url => url.pathname === '/admin/knowledge');
+  await page.goto(base + '/manual');
+  await page.getByText('CI updated chapter', { exact: false }).first().waitFor();
   await page.screenshot({ path: 'test-results/manual.png', fullPage: true });
   await page.goto(base + '/admin');
   await page.getByText('成员管理', { exact: true }).waitFor();
   await page.getByRole('row').filter({ hasText: 'CI learner' }).waitFor();
+  const state = JSON.parse(await readFile('test-results/state.json', 'utf8'));
+  const employeeContext = await browser.newContext();
+  try {
+    const employeeLogin = await employeeContext.request.post(base + '/api/auth/login', { data: { token: state.retakeToken } });
+    assert.equal(employeeLogin.status(), 200);
+    const changeToken = async () => {
+      const custom = `Browser${randomBytes(4).toString('hex')}9`;
+      const changed = await employeeContext.request.post(base + '/api/auth/passphrase', { data: { newPass: custom, confirm: custom } });
+      assert.equal(changed.status(), 200);
+      return custom;
+    };
+    const row = page.getByRole('row').filter({ hasText: 'CI retake' });
+    const manuallyRefreshed = await changeToken();
+    await page.getByPlaceholder('姓名 *', { exact: true }).fill('Draft must survive refresh');
+    await page.getByRole('button', { name: '刷新成员数据', exact: true }).click();
+    await row.getByText(`自定义:${manuallyRefreshed}`, { exact: true }).waitFor();
+    assert.equal(await page.getByPlaceholder('姓名 *', { exact: true }).inputValue(), 'Draft must survive refresh');
+    await page.getByRole('button', { name: '考核管理', exact: true }).click();
+    const tabRefreshed = await changeToken();
+    await page.getByRole('button', { name: '成员管理', exact: true }).click();
+    await row.getByText(`自定义:${tabRefreshed}`, { exact: true }).waitFor();
+    const automaticallyRefreshed = await changeToken();
+    await row.getByText(`自定义:${automaticallyRefreshed}`, { exact: true }).waitFor({ timeout: 45_000 });
+    await page.getByRole('status').filter({ hasText: '最近同步' }).waitFor();
+    page.once('dialog', dialog => dialog.accept());
+    await row.getByRole('button', { name: '重置自定义', exact: true }).click();
+    await row.getByText('自定义:未设置', { exact: true }).waitFor();
+    const originalStillWorks = await employeeContext.request.post(base + '/api/auth/login', { data: { token: state.retakeToken } });
+    assert.equal(originalStillWorks.status(), 200);
+  } finally {
+    await employeeContext.close();
+  }
   await page.screenshot({ path: 'test-results/admin.png', fullPage: true });
   await page.goto(base + '/admin/knowledge');
   await page.locator('input[type=file]').waitFor();
@@ -60,7 +101,6 @@ try {
   await page.locator('a[href="/api/admin/backup"]').waitFor();
   await page.screenshot({ path: 'test-results/data.png', fullPage: true });
   // Exercise the normal retake button after a real failed attempt.
-  const state = JSON.parse(await readFile('test-results/state.json', 'utf8'));
   await page.context().close();
   page = await browser.newPage({ viewport: { width: 1360, height: 900 } });
   page.on('pageerror', error => errors.push(error.message));
@@ -80,7 +120,7 @@ try {
   await signInAdmin();
   assert.equal(await page.evaluate(() => sessionStorage.getItem('manual-last-token')), null);
   assert.deepEqual(errors, []);
-  await writeFile('test-results/browser-results.json', JSON.stringify({ passed: ['protected administrator page redirects', 'incorrect password feedback', 'administrator password sign-in', 'manual', 'member management', 'knowledge import preview', 'data and backup page', 'employee token login and retake', 'employee to administrator session switch'], pageErrors: errors }, null, 2));
+  await writeFile('test-results/browser-results.json', JSON.stringify({ passed: ['protected administrator page redirects', 'incorrect password feedback', 'administrator password sign-in', 'administrator module permissions and empty content import link', 'member management', 'employee custom token manual and tab refresh', 'automatic custom token synchronization', 'administrator custom token reset preserves original login', 'knowledge import preview', 'data and backup page', 'employee token login and retake', 'employee to administrator session switch'], pageErrors: errors }, null, 2));
   console.log('PASS browser administrator password login, knowledge preview, and employee token retake flow');
 } catch (error) {
   await page.screenshot({ path: 'test-results/browser-failure.png', fullPage: true }).catch(() => undefined);

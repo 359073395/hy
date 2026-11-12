@@ -25,8 +25,11 @@ async function manageAdminAccount(db, input) {
   try {
     let user;
     if (input.action === 'create') {
+      await db.query('SELECT pg_advisory_xact_lock(581927104)');
       const token = randomBytes(24).toString('hex');
       const tokenHash = createHash('sha256').update(token).digest('hex');
+      const existing = await db.query('SELECT 1 FROM users WHERE token_hash = $1 OR custom_token_hash = $1', [tokenHash]);
+      if (existing.rowCount) throw new Error('生成的令牌已被使用，请重试');
       const result = await db.query(
         `INSERT INTO users(name, token_hash, username, password_hash, role, tier, status)
          VALUES ($1, $2, $3, $4, 'super_admin', 'M6', 'active') RETURNING id, name, username`,

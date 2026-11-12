@@ -67,6 +67,10 @@ jobs:
         run: node --env-file=.env tests/integration.mjs
       - name: Verify password setup and selected administrator reset
         run: node --env-file=.env tests/admin-credentials.mjs
+      - name: Verify employee token changes synchronize with administrator data
+        run: node --env-file=.env tests/token-sync.mjs
+      - name: Verify knowledge statistics, missing content repair and loop management
+        run: node --env-file=.env tests/knowledge-admin.mjs
       - name: Verify browser workflows
         run: |
           pnpm exec playwright install --with-deps chromium
@@ -77,12 +81,14 @@ jobs:
           docker compose restart app
           docker compose up -d --wait --wait-timeout 180
           node --env-file=.env tests/integration.mjs --after-restart
+          node --env-file=.env tests/token-sync.mjs --after-restart
       - name: Download a full backup and restore through the installer
         run: |
           node --env-file=.env tests/backup-smoke.mjs
           docker compose exec -T db psql -U knowledge -d knowledge -v ON_ERROR_STOP=1 -c "UPDATE chapters SET title = 'changed after backup'; UPDATE users SET status = 'active';"
           sudo env APP_DIR="$PWD" bash install.sh --restore "$PWD/test-results/full-backup.tar.gz"
           node --env-file=.env tests/integration.mjs --after-restart
+          node --env-file=.env tests/token-sync.mjs --after-restart
       - name: Verify a populated 0.1.0 installation upgrades with its existing domain and data
         run: |
           docker compose down

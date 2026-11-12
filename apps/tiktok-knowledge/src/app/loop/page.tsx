@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import './loop.css';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/client';
+import { useAuthBootstrap } from '@/lib/use-auth-bootstrap';
 
 type ModuleRef = { code: string; name: string; color: string };
 type Point = { text: string; to?: string };
@@ -266,7 +267,14 @@ export default function LoopOverviewPage() {
   const [loadError, setLoadError] = useState('');
   const [loaded, setLoaded] = useState(false);
   const router = useRouter();
+  const boot = useAuthBootstrap();
+  const isAdmin = boot.user?.role === 'admin' || boot.user?.role === 'super_admin';
   useEffect(() => {
+    if (boot.loading) return;
+    if (boot.error || !boot.user) {
+      router.replace('/?reason=session');
+      return;
+    }
     let cancelled = false;
     api<{ stations: Omit<Station, 'icon'>[] }>('/api/loop')
       .then((result) => {
@@ -279,11 +287,15 @@ export default function LoopOverviewPage() {
       })
       .finally(() => { if (!cancelled) setLoaded(true); });
     return () => { cancelled = true; };
-  }, [router]);
+  }, [router, boot.loading, boot.error, boot.user]);
   if (!loaded || stations.length === 0) return (
-    <main className="p-8 text-center">
-      <p>{loadError || (loaded ? '请管理员在知识库管理中导入带有闭环图的知识包。' : '正在加载闭环图…')}</p>
-      <a href="/manual" className="text-indigo-600 underline">返回手册</a>
+    <main className="mx-auto max-w-xl px-6 py-16 text-center">
+      <h1 className="mb-3 text-xl font-bold">{loadError ? '闭环图读取失败' : loaded ? '带货闭环图待导入' : '正在加载闭环图…'}</h1>
+      <p className="mb-6 text-sm leading-7 text-slate-600">{loadError || (loaded ? isAdmin ? '当前站点尚未保存闭环图数据，请在知识库管理中导入原知识包。' : '当前站点尚未保存闭环图数据，请联系管理员导入。' : '')}</p>
+      <div className="flex flex-wrap justify-center gap-5">
+        {loaded && !loadError && isAdmin && <a href="/admin/knowledge" className="font-semibold text-indigo-700 underline">导入闭环图知识包</a>}
+        <a href="/manual" className="text-indigo-600 underline">返回手册</a>
+      </div>
     </main>
   );
 

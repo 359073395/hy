@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, performLogout } from '@/lib/client';
 import { useAuthBootstrap } from '@/lib/use-auth-bootstrap';
@@ -97,6 +97,11 @@ export default function AdminPage() {
   const router = useRouter();
   const [tab, setTab] = useState<'members' | 'exams' | 'materials' | 'library' | 'bank'>('members');
   const [members, setMembers] = useState<Member[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersSyncError, setMembersSyncError] = useState('');
+  const [membersSyncedAt, setMembersSyncedAt] = useState('');
+  const membersRequest = useRef(0);
+  const membersRequestPending = useRef(false);
   const [records, setRecords] = useState<RecordRow[]>([]);
   const [rps, setRps] = useState<RPItem[]>([]);
   const [lib, setLib] = useState<LibItem[]>([]);
@@ -114,7 +119,7 @@ export default function AdminPage() {
 
   // 批量导入
   const [bulkText, setBulkText] = useState('');
-  const [bulkResult, setBulkResult] = useState<Member[]>([]);
+  const [bulkResult, setBulkResult] = useState<(Member & { skipped?: boolean })[]>([]);
 
   // 考核发起
   const [assignExam, setAssignExam] = useState('');
@@ -138,12 +143,24 @@ export default function AdminPage() {
   const isSuper = role === 'super_admin';
   const isAdminRole = role === 'admin' || role === 'super_admin';
 
-  const loadMembers = useCallback(async () => {
+  const loadMembers = useCallback(async (background = false) => {
+    if (background && membersRequestPending.current) return;
+    const requestId = ++membersRequest.current;
+    membersRequestPending.current = true;
+    setMembersLoading(true);
     try {
       const r = await api<{ users: Member[] }>('/api/admin/users');
+      if (requestId !== membersRequest.current) return;
       setMembers(r.users);
+      setMembersSyncError('');
+      setMembersSyncedAt(new Date().toLocaleTimeString('zh-CN', { hour12: false }));
     } catch (e) {
-      setToast((e as Error).message);
+      if (requestId === membersRequest.current) setMembersSyncError((e as Error).message);
+    } finally {
+      if (requestId === membersRequest.current) {
+        membersRequestPending.current = false;
+        setMembersLoading(false);
+      }
     }
   }, []);
   const loadExams = useCallback(async () => {
@@ -165,6 +182,23 @@ export default function AdminPage() {
     void loadMembers();
     void loadExams();
   }, [boot.loading, boot.error, boot.user, isAdminRole, router, loadMembers, loadExams]);
+
+  useEffect(() => {
+    if (!isAdminRole || tab !== 'members') return;
+    const refresh = () => {
+      if (document.hidden || busy || document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')) return;
+      void loadMembers(true);
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [isAdminRole, tab, busy, loadMembers]);
 
   const loadRecords = useCallback(async () => {
     try {
@@ -296,9 +330,9 @@ export default function AdminPage() {
     if (!Array.isArray(arr) || arr.length === 0) return setToast('数组不能为空');
     setBusy(true);
     try {
-      const r = await api<{ users: Member[] }>('/api/admin/users/bulk', { method: 'POST', body: JSON.stringify(arr) });
+      const r = await api<{ users: (Member & { skipped?: boolean })[]; count: number; skipped: number }>('/api/admin/users/bulk', { method: 'POST', body: JSON.stringify(arr) });
       setBulkResult(r.users);
-      setToast(`导入 ${r.users.length} 人成功`);
+      setToast(`新增 ${r.count} 人，已存在 ${r.skipped} 人`);
       await loadMembers();
     } catch (e) {
       setToast((e as Error).message);
@@ -510,6 +544,14 @@ export default function AdminPage() {
         {/* 成员管理 */}
         {tab === 'members' && (
           <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <p role="status" className={membersSyncError ? 'text-rose-600' : 'text-slate-500'}>
+                {membersSyncError ? `成员同步失败，${membersSyncError}` : membersSyncedAt ? `最近同步 ${membersSyncedAt}，每30秒自动同步员工自定义令牌` : '正在读取成员数据…'}
+              </p>
+              <button onClick={() => void loadMembers()} disabled={membersLoading || busy} className="rounded-md bg-white px-3 py-1.5 text-indigo-700 shadow-sm disabled:opacity-50">
+                {membersLoading ? '同步中…' : '刷新成员数据'}
+              </button>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-xl border border-slate-200 bg-white p-4">
                 <h3 className="mb-3 text-sm font-semibold text-slate-800">新增成员</h3>
@@ -537,9 +579,9 @@ export default function AdminPage() {
                 <button onClick={bulkImport} disabled={busy} className="mt-2 w-full rounded-md bg-[#5B6CFF] py-2 text-sm text-white hover:bg-[#4a5ae0] disabled:opacity-50">导入</button>
                 {bulkResult.length > 0 && (
                   <div className="mt-2 max-h-40 overflow-auto rounded-md bg-[#F7F8FF] p-2 text-xs">
-                    {bulkResult.map((u) => (
-                      <div key={u.id} className="flex justify-between py-0.5">
-                        <span>{u.name}</span>
+                    {bulkResult.map((u, index) => (
+                      <div key={`${u.id || u.name}-${index}`} className="flex justify-between py-0.5">
+                        <span>{u.name} · {u.skipped ? '已存在' : '已新增'}</span>
                         <code className="text-rose-600">{(u as Member & { token?: string }).token ?? '—'}</code>
                       </div>
                     ))}

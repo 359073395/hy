@@ -7,6 +7,7 @@ import MaterialViewer, { ImageLightbox, esc } from '@/components/material-viewer
 import { getManual, performLogout, changePassphrase, api, type ManualResult, type ChapterMaterial, type ChapterDTO } from '@/lib/client';
 import { useAuthBootstrap, resumeSession } from '@/lib/use-auth-bootstrap';
 import { MAX_VIDEO_MB, MAX_IMAGE_MB, formatSize } from '@/lib/constants';
+import { getModuleAccess } from '@/lib/module-access';
 import { uploadMaterial, UploadError } from '@/lib/upload';
 import { injectWordMarkers, materialChipSvg } from '@/lib/material-marking';
 import './manual-theme.css';
@@ -273,7 +274,8 @@ function ManualPageInner() {
     return () => { document.removeEventListener('mousedown', out); document.removeEventListener('keydown', key); };
   }, []);
 
-  const isAdmin = !!data?.user && (data.user.role === 'admin' || data.user.role === 'super_admin');
+  const user = data?.user ?? boot.user;
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   const editMode = editChapterId !== null;
 
   // 按模块分组小节（小节 = chapters，按 sort_order 升序）
@@ -321,7 +323,7 @@ function ManualPageInner() {
     return map;
   }, [data]);
 
-  // 可见模块（后端已按 tier 过滤 chapters，故以「是否有可见小节」判定解锁；公开模块恒可见）
+  // The API returns readable chapters. An empty module still has its own permission state.
   const visibleModules = useMemo(() => new Set(groups.map(([m]) => m)), [groups]);
 
   // 某模块的可见小节列表
@@ -1036,9 +1038,17 @@ function ManualPageInner() {
   };
 
   if (!data) {
-    return <div className="flex min-h-screen items-center justify-center text-sm font-semibold text-slate-400">加载手册中…</div>;
+    return <main className="mx-auto max-w-xl px-6 py-16 text-center text-sm">
+      <h1 className="font-semibold text-slate-700">{toast ? '手册读取失败' : '加载手册中…'}</h1>
+      {toast && <>
+        <p role="alert" className="my-4 text-rose-700">{toast}</p>
+        <button type="button" onClick={() => { setToast(''); void load(); }} className="mr-5 text-indigo-700 underline">重新加载</button>
+        {isAdmin && <a href="/admin/knowledge" className="text-indigo-700 underline">知识库管理</a>}
+      </>}
+    </main>;
   }
 
+  const moduleAccess = data.moduleAccess ?? getModuleAccess(data.chapters, data.user);
   const isContinuous = activeModule === 'ALL';
   // 连续阅读：按模块顺序拼出全部可见模块；单模块视图则只取该模块
   const readingList = isContinuous
@@ -1195,7 +1205,7 @@ function ManualPageInner() {
               <div className="meta-card">
                 <div className="k">覆盖范围</div>
                 <div className="v">
-                  8 大模块 · 50+ 个操作节点
+                  {data.chapters.length} 个小节 · {visibleModules.size} 个模块
                   <small>店铺 / 商品 / 活动 / 内容 / 达人 / 广告 / 数据 / 考核</small>
                 </div>
               </div>
@@ -1203,7 +1213,7 @@ function ManualPageInner() {
                 <div className="k">当前账号</div>
                 <div className="v">
                   {esc(data.user.name)} · {data.user.role === 'super_admin' ? '超级管理员' : data.user.role === 'admin' ? '管理员' : `在岗成员（${data.user.tier}）`}
-                  <small>点击下方模块卡片进入学习，灰色为暂未解锁模块</small>
+                  <small>{isAdmin ? '可访问全部知识模块，并在管理后台维护内容' : '点击已有内容的模块进入学习，权限按岗位等级开放'}</small>
                 </div>
               </div>
             </div>
@@ -1218,18 +1228,26 @@ function ManualPageInner() {
               <p className="sec-intro">
                 模块顺序按「开店 → 有货卖 → 拿到流量 → 放大流量 → 管好数据 → 管好团队」的实战推进逻辑排列。M1-M3 解决「店铺和货」，M4-M6 解决「流量和成交」，M7 解决「复盘」，<b>M8 违规处理单列、高频踩坑保命章</b>。
               </p>
+              {data.chapters.length === 0 && (
+                <div role="status" className="mb-6 rounded-xl border border-indigo-200 bg-white p-5 text-sm leading-7">
+                  <h3 className="font-bold">当前手册暂无章节</h3>
+                  <p>{isAdmin ? '请导入原知识包，载入章节正文、题库、图片和带货闭环图。' : '请联系管理员补充当前可阅读的知识内容。'}</p>
+                  {isAdmin && <a href="/admin/knowledge" className="font-semibold text-indigo-700 underline">导入原知识包</a>}
+                </div>
+              )}
               <div className="path-grid">
                 {MODULE_META.map((m) => {
                   const chs = moduleChapters(m.code);
-                  const unlocked = visibleModules.has(m.code);
+                  const unlocked = moduleAccess[m.code];
+                  const canOpen = unlocked && (chs.length > 0 || isAdmin);
                   return (
                     <button
                       key={m.code}
                       type="button"
                       className={`path-card ${m.pc} ${unlocked ? '' : 'locked'}`}
-                      onClick={() => unlocked && jumpToModule(m.code)}
-                      disabled={!unlocked}
-                      aria-disabled={!unlocked}
+                      onClick={() => chs.length > 0 ? jumpToModule(m.code) : router.push('/admin/knowledge')}
+                      disabled={!canOpen}
+                      aria-disabled={!canOpen}
                     >
                       {!unlocked && (
                         <span className="lock-badge">
@@ -1240,7 +1258,7 @@ function ManualPageInner() {
                       <h3>{m.name}</h3>
                       <p dangerouslySetInnerHTML={{ __html: m.desc }} />
                       {unlocked ? (
-                        <div className="lessons">{chs.length} 小节</div>
+                        <div className="lessons">{chs.length > 0 ? `${chs.length} 小节` : isAdmin ? '暂无章节 · 点击导入或新增' : '暂无章节 · 等待管理员补充'}</div>
                       ) : (
                         <div className="lock-note">
                           <LockIcon size={12} /> 暂未解锁（按岗位权限开放）
@@ -1274,6 +1292,13 @@ function ManualPageInner() {
                 ← 返回顶部
               </button>
             </div>
+
+            {chs.length === 0 && (
+              <div role="status" className="px-5 py-8 text-sm leading-7 text-slate-600">
+                <p>{moduleAccess[modCode] ? '此模块暂无章节。' : '此模块暂未开放，请联系管理员核对岗位等级。'}</p>
+                {isAdmin && <a href="/admin/knowledge" className="font-semibold text-indigo-700 underline">导入或新增章节</a>}
+              </div>
+            )}
 
             {/* 重挂横幅 */}
             {repin && (

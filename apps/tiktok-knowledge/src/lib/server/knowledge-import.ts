@@ -56,6 +56,7 @@ export async function previewKnowledge(input: unknown) {
     questions: prepared.pack.exams.reduce((n, e) => n + e.questions.length, 0),
     assets: prepared.assets.length,
     assetBytes: prepared.totalBytes,
+    loopStations: prepared.pack.loop?.length ?? 0,
   };
 }
 
@@ -70,21 +71,25 @@ export async function importKnowledge(input: unknown, mode: 'add' | 'update', us
   }
   return withTransaction(async (db) => {
     await db.query('SELECT pg_advisory_xact_lock(7362841)');
-    const result = { addedChapters: 0, updatedChapters: 0, skippedChapters: 0, addedQuestions: 0, updatedQuestions: 0 };
+    const result = { addedChapters: 0, updatedChapters: 0, skippedChapters: 0, filledChapterContents: 0, addedQuestions: 0, updatedQuestions: 0, loopStations: 0 };
     for (const chapter of prepared.pack.chapters) {
       const found = await db.query<{ id: string }>('SELECT id FROM chapters WHERE module=$1 AND section_no=$2 FOR UPDATE', [chapter.module, chapter.sectionNo]);
       let chapterId = found.rows[0]?.id;
-      if (chapterId && mode === 'add') { result.skippedChapters++; continue; }
+      const existingChapter = !!chapterId;
       if (!chapterId) {
         const created = await db.query<{ id: string }>('INSERT INTO chapters(module,section_no,title,sort_order,is_public) VALUES($1,$2,$3,$4,$5) RETURNING id', [chapter.module, chapter.sectionNo, chapter.title, chapter.sortOrder, chapter.isPublic]);
         chapterId = created.rows[0].id;
         result.addedChapters++;
-      } else {
+      } else if (mode === 'update') {
         await db.query('UPDATE chapters SET title=$2,sort_order=$3,is_public=$4,updated_at=now() WHERE id=$1', [chapterId, chapter.title, chapter.sortOrder, chapter.isPublic]);
         result.updatedChapters++;
       }
       const blocks = await db.query<{ id: string; html: string; version: number }>('SELECT id,html,version FROM content_blocks WHERE chapter_id=$1 FOR UPDATE', [chapterId]);
       const block = blocks.rows[0];
+      if (existingChapter && mode === 'add') {
+        if (block?.html.trim()) { result.skippedChapters++; continue; }
+        result.filledChapterContents++;
+      }
       if (block && block.html !== chapter.html) {
         await db.query('INSERT INTO content_snapshots(content_block_id,version,html,created_by) VALUES($1,$2,$3,$4)', [block.id, block.version, block.html, userId]);
         await db.query('UPDATE content_blocks SET html=$2,version=version+1,updated_by=$3,updated_at=now() WHERE id=$1', [block.id, chapter.html, userId]);
@@ -116,12 +121,20 @@ export async function importKnowledge(input: unknown, mode: 'add' | 'update', us
       }
     }
     if (prepared.pack.loop) {
-      const conflict = mode === 'update' ? 'DO UPDATE SET value=EXCLUDED.value' : 'DO NOTHING';
+      const conflict = mode === 'update'
+        ? 'DO UPDATE SET value=EXCLUDED.value'
+        : "DO UPDATE SET value=EXCLUDED.value WHERE knowledge_settings.value IN ('[]'::jsonb, 'null'::jsonb)";
       await db.query(`INSERT INTO knowledge_settings(key,value) VALUES('loop',$1) ON CONFLICT(key) ${conflict}`, [JSON.stringify(prepared.pack.loop)]);
     }
+    const loop = await db.query<{ value: unknown }>("SELECT value FROM knowledge_settings WHERE key='loop'");
+    result.loopStations = Array.isArray(loop.rows[0]?.value) ? loop.rows[0].value.length : 0;
     await db.query("INSERT INTO audit_logs(user_id,action,detail) VALUES($1,'knowledge_import',$2)", [userId, JSON.stringify({ mode, ...result })]);
     return result;
   });
+}
+
+export function getLoopRevision(value: unknown): string {
+  return createHash('sha256').update(JSON.stringify(value ?? [])).digest('hex');
 }
 
 export async function exportKnowledge(): Promise<KnowledgePackage> {
