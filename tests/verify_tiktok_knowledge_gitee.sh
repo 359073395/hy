@@ -70,6 +70,9 @@ pathlib.Path(path).write_text(json.dumps({
 }, indent=2) + '\n')
 PY
     cp "$TIKTOK_GUARD_LOG" "$results/network-calls.log"
+    # sudo plus umask 077 also protects the newly created parent directory.
+    # Let the runner traverse it to upload only the explicitly selected redacted results.
+    chmod a+rx "$app_source/test-results"
     chmod -R a+rX "$results"
     if [ -f "$APP_DIR/compose.yaml" ]; then
         "$TIKTOK_REAL_DOCKER" compose --project-name tiktok-knowledge --project-directory "$APP_DIR" \
