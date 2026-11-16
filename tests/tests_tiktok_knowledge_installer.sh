@@ -91,6 +91,68 @@ MOCK_SUM=$(printf '0%.0s' {1..64})
 if pull_application_image >/dev/null 2>&1; then exit 1; fi
 assert_equal 1 "$(wc -l < "$TEST_ROOT/loads" | tr -d ' ')"
 
+# Interrupted HTTP bodies never become completed files, and retries are bounded.
+(
+source "$ROOT/apps/tiktok-knowledge/install.sh"
+WORK_DIR="$TEST_ROOT/download-retries"
+mkdir -p "$WORK_DIR"
+retry_target="$WORK_DIR/complete.tar.gz.part-000"
+printf 'previous verified bytes' > "$retry_target"
+retry_previous='previous verified bytes'
+retry_mode=recover
+retry_count=0
+retry_first_partial=''
+sleep() { printf '%s\n' "$1" >> "$WORK_DIR/delays"; }
+curl() {
+    local output='' retry_option=''
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            -o) shift; output="$1" ;;
+            --retry) shift; retry_option="$1" ;;
+            -C|--continue-at) printf 'Unexpected resumed download\n' >&2; return 99 ;;
+        esac
+        shift
+    done
+    assert_equal 0 "$retry_option"
+    [[ "$output" == "$WORK_DIR"/.download.* ]] || exit 1
+    [ "$output" != "$retry_target" ] && [ ! -s "$output" ] || exit 1
+    if [ -n "$retry_previous" ]; then assert_equal "$retry_previous" "$(cat "$retry_target")"
+    else [ ! -e "$retry_target" ] || exit 1
+    fi
+    retry_count=$((retry_count + 1))
+    printf '%s\n' "$output" >> "$WORK_DIR/attempt-paths"
+    if [ "$retry_count" -eq 1 ]; then
+        retry_first_partial="$output"
+    else
+        [ ! -e "$retry_first_partial" ] || exit 1
+    fi
+    if [ "$retry_mode" = always-fail ] || [ "$retry_count" -eq 1 ]; then
+        printf 'incomplete HTTP body' > "$output"
+        return 18
+    fi
+    printf 'complete replacement bytes' > "$output"
+}
+download_file 'https://gitee.com/example/complete.tar.gz.part-000' "$retry_target" >/dev/null 2>&1
+assert_equal 2 "$retry_count"
+assert_equal 'complete replacement bytes' "$(cat "$retry_target")"
+assert_equal 1 "$(cat "$WORK_DIR/delays")"
+if compgen -G "$WORK_DIR/.download.*" >/dev/null; then exit 1; fi
+
+retry_target="$WORK_DIR/never-completed.tar.gz.part-001"
+retry_previous=''
+retry_mode=always-fail
+retry_count=0
+retry_first_partial=''
+: > "$WORK_DIR/delays"
+: > "$WORK_DIR/attempt-paths"
+if download_file 'https://gitee.com/example/never-completed.tar.gz.part-001' "$retry_target" >/dev/null 2>&1; then exit 1; fi
+assert_equal 4 "$retry_count"
+assert_equal $'1\n2\n3' "$(cat "$WORK_DIR/delays")"
+assert_equal 4 "$(sort -u "$WORK_DIR/attempt-paths" | wc -l | tr -d ' ')"
+[ ! -e "$retry_target" ]
+if compgen -G "$WORK_DIR/.download.*" >/dev/null; then exit 1; fi
+)
+
 # Full first install and failed update preserve the administrator and roll back exactly.
 source "$ROOT/apps/tiktok-knowledge/install.sh"
 APP_DIR="$TEST_ROOT/deploy"
@@ -518,7 +580,8 @@ cp "$APP_DIR/.env" "$TEST_ROOT/before-broken-bundle-env"
 cp "$APP_DIR/compose.yaml" "$TEST_ROOT/before-broken-bundle-compose"
 cp "$TEST_ROOT/bundle-origin/$stem.sha256" "$TEST_ROOT/valid-bundle.sha256"
 
-# A corrupt part must be rejected before backups, service changes or docker load.
+# A transport-successful corrupt part must fail SHA before backups or docker load.
+unset TIKTOK_BUNDLE_DIR
 printf 'corrupt payload' > "$TEST_ROOT/bundle-origin/$stem.tar.gz.part-001"
 : > "$TEST_ROOT/domestic-compose"
 : > "$TEST_ROOT/domestic-docker"
@@ -530,6 +593,7 @@ cmp "$APP_DIR/compose.yaml" "$TEST_ROOT/before-broken-bundle-compose"
 if grep -q '^load ' "$TEST_ROOT/domestic-docker"; then exit 1; fi
 
 # Reject empty, path-traversal, duplicate, out-of-order and non-contiguous manifests.
+TIKTOK_BUNDLE_DIR="$TEST_ROOT/bundle-origin"
 printf 'second image archive portion' > "$TEST_ROOT/bundle-origin/$stem.tar.gz.part-001"
 configure_downloads
 WORK_DIR=$(mktemp -d "$APP_DIR/.deploy.XXXXXX")

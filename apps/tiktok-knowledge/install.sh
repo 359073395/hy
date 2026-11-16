@@ -110,11 +110,26 @@ save_download_settings() {
 }
 
 download_file() {
-    local url="$1" target="$2" limit="${3:-90}" host
+    local url="$1" target="$2" limit="${3:-90}" host attempt partial result
     host="${url#https://}"; host="${host%%/*}"
-    printf '正在下载 %s（%s）...\n' "${target##*/}" "$host" >&2
-    curl --fail --silent --show-error --location --retry 3 --connect-timeout 15 --max-time "$limit" \
-        "$url" -o "$target" || { printf '下载失败：%s（%s）。\n' "${target##*/}" "$host" >&2; return 1; }
+    [ -n "$WORK_DIR" ] && [ -d "$WORK_DIR" ] || { printf '下载临时目录不可用。\n' >&2; return 1; }
+    for attempt in 1 2 3 4; do
+        partial=$(mktemp "$WORK_DIR/.download.XXXXXX") || return 1
+        printf '正在下载 %s（%s，第 %s/4 次）...\n' "${target##*/}" "$host" "$attempt" >&2
+        # Start each attempt from byte zero. curl 18 is not retried by older curl.
+        if curl --fail --silent --show-error --location --retry 0 --connect-timeout 15 --max-time "$limit" \
+            "$url" -o "$partial"; then
+            if mv -f -- "$partial" "$target"; then return 0; fi
+            rm -f -- "$partial"
+            return 1
+        else
+            result=$?
+        fi
+        rm -f -- "$partial" || return 1
+        printf '下载失败：%s（%s，第 %s/4 次，curl %s）。\n' "${target##*/}" "$host" "$attempt" "$result" >&2
+        if [ "$attempt" -lt 4 ]; then sleep "$attempt"; fi
+    done
+    return 1
 }
 
 resolve_ref() {
