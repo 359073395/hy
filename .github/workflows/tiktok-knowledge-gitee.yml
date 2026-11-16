@@ -1,0 +1,43 @@
+name: TikTok Gitee installer verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: 'Gitee branch or commit SHA containing the new installer'
+        required: false
+        default: main
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tiktok-gitee-verification
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify Gitee install and update with GitHub downloads and registry pulls blocked
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: |
+          bash -n tests/verify_tiktok_knowledge_gitee.sh
+          python3 tests/tiktok_knowledge_gitee_guard.py --self-test
+          sudo env PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" SOURCE_REF="$SOURCE_REF" \
+            bash tests/verify_tiktok_knowledge_gitee.sh
+      - name: Upload verification results and redacted failure logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tiktok-gitee-verification
+          path: apps/tiktok-knowledge/test-results/gitee-installer/
+          if-no-files-found: error
+          retention-days: 7

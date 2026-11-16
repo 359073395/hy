@@ -8,6 +8,18 @@
 </div>
 
 
+## 国内服务器入口
+
+以 root 执行下面的命令，从 [Gitee 国内仓库](https://gitee.com/hy91/hy) 下载并运行国内版：
+
+```bash
+curl -fL --retry 3 --connect-timeout 15 https://gitee.com/hy91/hy/raw/main/cn/harvey.sh -o /root/hy-cn.sh && bash /root/hy-cn.sh
+```
+
+TikTok 知识系统入口为 **11 应用系统 → 123**，首次选择 **1 安装**，已安装选择 **2 更新**。国内版从 Gitee 获取脚本与完整镜像分卷，并保留下载来源供后续更新使用。完整包包含应用、数据库和接口服务；更新保留人员、知识库、考核与域名配置。[部署与维护说明](apps/tiktok-knowledge/DEPLOYMENT.md)
+
+其他第三方软件仍使用各自的下载源，是否可安装取决于相应来源的网络可达性。
+
 <p align="center">
   <a href="/README.md">
     <img src="https://img.shields.io/badge/简体中文-2F4F4F?style=for-the-badge&logo=google-chrome&logoColor=white" alt="简体中文" style="margin: 5px;">
