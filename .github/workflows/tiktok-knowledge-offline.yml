@@ -1,0 +1,90 @@
+name: TikTok offline packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Published application version (blank uses VERSION)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tiktok-offline-${{ github.ref }}-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    env:
+      REQUESTED_VERSION: ${{ inputs.version }}
+      ARCH: ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select the published version
+        id: version
+        shell: bash
+        run: |
+          version=${REQUESTED_VERSION:-$(tr -d '\r\n' < apps/tiktok-knowledge/VERSION)}
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][a-zA-Z0-9.-]+)?$ ]] || { echo 'Invalid version'; exit 1; }
+          printf 'VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+          printf 'value=%s\n' "$version" >> "$GITHUB_OUTPUT"
+      - name: Load the published application and dependency images
+        shell: bash
+        run: |
+          image="ghcr.io/359073395/tiktok-knowledge:$VERSION"
+          if ! docker pull --platform "linux/$ARCH" "$image"; then
+            asset="tiktok-knowledge-$VERSION-linux-$ARCH.tar.gz"
+            release="https://github.com/359073395/hy/releases/download/tiktok-knowledge-v$VERSION"
+            download=$(mktemp -d "$RUNNER_TEMP/tiktok-release.XXXXXX")
+            curl -fsSL --retry 3 --connect-timeout 15 --max-time 120 "$release/SHA256SUMS" -o "$download/SHA256SUMS"
+            expected=$(awk -v name="$asset" '$2 == name || $2 == "*" name {print $1}' "$download/SHA256SUMS")
+            [[ "$expected" =~ ^[0-9a-fA-F]{64}$ ]] || { echo 'Invalid release checksum'; exit 1; }
+            curl -fSL --retry 3 --connect-timeout 15 --max-time 1200 "$release/$asset" -o "$download/$asset"
+            printf '%s  %s\n' "$expected" "$download/$asset" | sha256sum --check -
+            docker load --input "$download/$asset"
+          fi
+          docker pull --platform "linux/$ARCH" postgres:17-alpine
+          docker pull --platform "linux/$ARCH" postgrest/postgrest:v16.5
+      - name: Package three images into Gitee-sized attachments
+        shell: bash
+        run: |
+          bash -n apps/tiktok-knowledge/deploy/package-offline.sh
+          bash apps/tiktok-knowledge/deploy/package-offline.sh --version "$VERSION" --arch "$ARCH" --output "$RUNNER_TEMP/offline-package"
+      - name: Verify checksums and reconstruct the image archive
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/offline-package"
+          prefix="tiktok-knowledge-$VERSION-linux-$ARCH-full"
+          sha256sum --check "$prefix.sha256"
+          for part in "$prefix.tar.gz.part-"[0-9][0-9][0-9]; do
+            [ "$(stat -c %s "$part")" -lt 100000000 ] || { echo 'Attachment exceeds 100 MB'; exit 1; }
+          done
+          images=("ghcr.io/359073395/tiktok-knowledge:$VERSION" postgres:17-alpine postgrest/postgrest:v16.5)
+          docker image inspect --format '{{.Id}}' "${images[@]}" > "$RUNNER_TEMP/image-ids-before"
+          docker image rm "${images[@]}"
+          cat "$prefix.tar.gz.part-"[0-9][0-9][0-9] | gzip -dc | docker load
+          docker image inspect --format '{{.Id}}' "${images[@]}" > "$RUNNER_TEMP/image-ids-after"
+          cmp "$RUNNER_TEMP/image-ids-before" "$RUNNER_TEMP/image-ids-after"
+          for image in "${images[@]}"; do
+            [ "$(docker image inspect --format '{{.Os}}/{{.Architecture}}' "$image")" = "linux/$ARCH" ]
+          done
+          du -ch "$prefix"* | tail -n 1 >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tiktok-offline-${{ steps.version.outputs.value }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/offline-package/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
