@@ -1,5 +1,5 @@
 #!/bin/bash
-sh_v="4.5.1"
+sh_v="4.5.2"
 gl_hui='\e[37m'
 gl_hong='\033[31m'
 gl_lv='\033[32m'
@@ -11,19 +11,27 @@ gl_kjlan='\033[96m'
 canshu="default"
 permission_granted="false"
 ENABLE_STATS="true"
+hy_source="github"
+HY_SOURCE="${HY_SOURCE:-$hy_source}"
+case "$HY_SOURCE" in
+	gitee) hy_raw_base="https://gitee.com/hy91/hy/raw/main" ;;
+	github) hy_raw_base="https://raw.githubusercontent.com/359073395/hy/main" ;;
+	*) printf 'HY_SOURCE 仅支持 github 或 gitee。\n' >&2; exit 1 ;;
+esac
+export HY_SOURCE
 if [ ! -t 0 ] && [ -r /dev/tty ] && [ "${HARVEY_TTY_REEXEC:-0}" != "1" ]; then
 	tmp_script="${TMPDIR:-/tmp}/harvey-tty-$$.sh"
 	if command -v curl >/dev/null 2>&1; then
-		if curl -fsSL "https://raw.githubusercontent.com/359073395/hy/main/harvey.sh?ts=$(date +%s)" -o "$tmp_script"; then
-			chmod +x "$tmp_script" && HARVEY_TTY_REEXEC=1 exec bash "$tmp_script" "$@" </dev/tty
+		if curl -fsSL "${hy_raw_base}/harvey.sh?ts=$(date +%s)" -o "$tmp_script"; then
+			[ "$(head -n 1 "$tmp_script")" = '#!/bin/bash' ] && bash -n "$tmp_script" && chmod +x "$tmp_script" && HARVEY_TTY_REEXEC=1 exec bash "$tmp_script" "$@" </dev/tty
 		fi
 	fi
 	if command -v wget >/dev/null 2>&1; then
-		if wget -qO "$tmp_script" "https://raw.githubusercontent.com/359073395/hy/main/harvey.sh?ts=$(date +%s)"; then
-			chmod +x "$tmp_script" && HARVEY_TTY_REEXEC=1 exec bash "$tmp_script" "$@" </dev/tty
+		if wget -qO "$tmp_script" "${hy_raw_base}/harvey.sh?ts=$(date +%s)"; then
+			[ "$(head -n 1 "$tmp_script")" = '#!/bin/bash' ] && bash -n "$tmp_script" && chmod +x "$tmp_script" && HARVEY_TTY_REEXEC=1 exec bash "$tmp_script" "$@" </dev/tty
 		fi
 	fi
-	echo "当前以管道方式运行，菜单无法读取键盘输入。请下载脚本后运行，或使用: bash <(curl -fsSL https://raw.githubusercontent.com/359073395/hy/main/harvey.sh)"
+	echo "当前以管道方式运行，菜单无法读取键盘输入。请下载脚本后运行，或使用: bash <(curl -fsSL ${hy_raw_base}/harvey.sh)"
 	exit 1
 fi
 quanju_canshu() {
@@ -38,6 +46,9 @@ else
 	gh_proxy="https://"
 fi
 gh_https_url="https://"
+if [ "$HY_SOURCE" = github ]; then
+	hy_raw_base="${gh_proxy}raw.githubusercontent.com/359073395/hy/main"
+fi
 }
 quanju_canshu
 # 定义一个函数来执行命令
@@ -95,6 +106,7 @@ if [ -f "${BASH_SOURCE[0]}" ]; then
 else
 	cp -f ./harvey.sh ~/harvey.sh > /dev/null 2>&1
 fi
+sed -i "s/^hy_source=\"[a-z]*\"/hy_source=\"$HY_SOURCE\"/" ~/harvey.sh > /dev/null 2>&1
 cp -f ~/harvey.sh /usr/local/bin/H > /dev/null 2>&1
 ln -sf /usr/local/bin/H /usr/bin/H > /dev/null 2>&1
 CheckFirstRun_false() {
@@ -1142,7 +1154,7 @@ install_ldnmp() {
 	  fix_phpfpm_conf php
 	  fix_phpfpm_conf php74
 	  # mysql调优
-	  wget -O /home/custom_mysql_config.cnf ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/custom_mysql_config-1.cnf
+	  wget -O /home/custom_mysql_config.cnf ${hy_raw_base}/custom_mysql_config-1.cnf
 	  docker cp /home/custom_mysql_config.cnf mysql:/etc/mysql/conf.d/
 	  rm -rf /home/custom_mysql_config.cnf
 	  restart_ldnmp
@@ -1154,7 +1166,7 @@ install_ldnmp() {
 }
 install_certbot() {
 	cd ~
-	curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/auto_cert_renewal.sh
+	curl -sSL -O ${hy_raw_base}/auto_cert_renewal.sh
 	chmod +x auto_cert_renewal.sh
 	check_crontab_installed
 	local cron_job="0 0 * * * ~/auto_cert_renewal.sh"
@@ -1701,7 +1713,7 @@ web_security() {
 				  1)
 					  f2b_install_sshd
 					  cd /etc/fail2ban/filter.d
-					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/fail2ban-nginx-cc.conf
+					  curl -sSL -O ${hy_raw_base}/fail2ban-nginx-cc.conf
 					  wget ${gh_proxy}raw.githubusercontent.com/linuxserver/fail2ban-confs/master/filter.d/nginx-418.conf
 					  wget ${gh_proxy}raw.githubusercontent.com/linuxserver/fail2ban-confs/master/filter.d/nginx-deny.conf
 					  wget ${gh_proxy}raw.githubusercontent.com/linuxserver/fail2ban-confs/master/filter.d/nginx-unauthorized.conf
@@ -1800,7 +1812,7 @@ web_security() {
 					  cd ~
 					  install jq bc
 					  check_crontab_installed
-					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/CF-Under-Attack.sh
+					  curl -sSL -O ${hy_raw_base}/CF-Under-Attack.sh
 					  chmod +x CF-Under-Attack.sh
 					  sed -i "s/AAAA/$cfuser/g" ~/CF-Under-Attack.sh
 					  sed -i "s/BBBB/$cftoken/g" ~/CF-Under-Attack.sh
@@ -1893,12 +1905,12 @@ web_optimization() {
 				  sed -i "s/worker_processes.*/worker_processes ${cpu_cores};/" /home/web/nginx.conf
 				  sed -i "s/worker_connections.*/worker_connections ${connections};/" /home/web/nginx.conf
 				  # php调优
-				  wget -O /home/optimized_php.ini ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/optimized_php.ini
+				  wget -O /home/optimized_php.ini ${hy_raw_base}/optimized_php.ini
 				  docker cp /home/optimized_php.ini php:/usr/local/etc/php/conf.d/optimized_php.ini
 				  docker cp /home/optimized_php.ini php74:/usr/local/etc/php/conf.d/optimized_php.ini
 				  rm -rf /home/optimized_php.ini
 				  # php调优
-				  wget -O /home/www.conf ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/www-1.conf
+				  wget -O /home/www.conf ${hy_raw_base}/www-1.conf
 				  docker cp /home/www.conf php:/usr/local/etc/php-fpm.d/www.conf
 				  docker cp /home/www.conf php74:/usr/local/etc/php-fpm.d/www.conf
 				  rm -rf /home/www.conf
@@ -1907,7 +1919,7 @@ web_optimization() {
 				  fix_phpfpm_conf php
 				  fix_phpfpm_conf php74
 				  # mysql调优
-				  wget -O /home/custom_mysql_config.cnf ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/custom_mysql_config-1.cnf
+				  wget -O /home/custom_mysql_config.cnf ${hy_raw_base}/custom_mysql_config-1.cnf
 				  docker cp /home/custom_mysql_config.cnf mysql:/etc/mysql/conf.d/
 				  rm -rf /home/custom_mysql_config.cnf
 				  cd /home/web && docker compose restart
@@ -1922,12 +1934,12 @@ web_optimization() {
 				  sed -i "s/worker_processes.*/worker_processes ${cpu_cores};/" /home/web/nginx.conf
 				  sed -i "s/worker_connections.*/worker_connections ${connections};/" /home/web/nginx.conf
 				  # php调优
-				  wget -O /home/optimized_php.ini ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/optimized_php.ini
+				  wget -O /home/optimized_php.ini ${hy_raw_base}/optimized_php.ini
 				  docker cp /home/optimized_php.ini php:/usr/local/etc/php/conf.d/optimized_php.ini
 				  docker cp /home/optimized_php.ini php74:/usr/local/etc/php/conf.d/optimized_php.ini
 				  rm -rf /home/optimized_php.ini
 				  # php调优
-				  wget -O /home/www.conf ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/www.conf
+				  wget -O /home/www.conf ${hy_raw_base}/www.conf
 				  docker cp /home/www.conf php:/usr/local/etc/php-fpm.d/www.conf
 				  docker cp /home/www.conf php74:/usr/local/etc/php-fpm.d/www.conf
 				  rm -rf /home/www.conf
@@ -1936,7 +1948,7 @@ web_optimization() {
 				  fix_phpfpm_conf php
 				  fix_phpfpm_conf php74
 				  # mysql调优
-				  wget -O /home/custom_mysql_config.cnf ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/custom_mysql_config.cnf
+				  wget -O /home/custom_mysql_config.cnf ${hy_raw_base}/custom_mysql_config.cnf
 				  docker cp /home/custom_mysql_config.cnf mysql:/etc/mysql/conf.d/
 				  rm -rf /home/custom_mysql_config.cnf
 				  cd /home/web && docker compose restart
@@ -4402,7 +4414,7 @@ bbrv3() {
 				local keyring="/usr/share/keyrings/xanmod-archive-keyring.gpg"
 				local list_file="/etc/apt/sources.list.d/xanmod-release.list"
 				local key_url="https://dl.xanmod.org/archive.key"
-				local fallback_key_url="${gh_proxy}raw.githubusercontent.com/359073395/hy/main/archive.key"
+				local fallback_key_url="${hy_raw_base}/archive.key"
 				local os_codename=""
 				if command -v lsb_release >/dev/null 2>&1; then
 					os_codename=$(lsb_release -sc)
@@ -7887,7 +7899,7 @@ linux_ldnmp() {
 	  read -e -p "输入远程服务器IP: " useip
 	  read -e -p "输入远程服务器密码: " usepasswd
 	  cd ~
-	  wget -O ${useip}_beifen.sh ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/beifen.sh > /dev/null 2>&1
+	  wget -O ${useip}_beifen.sh ${hy_raw_base}/beifen.sh > /dev/null 2>&1
 	  chmod +x ${useip}_beifen.sh
 	  sed -i "s/0.0.0.0/$useip/g" ${useip}_beifen.sh
 	  sed -i "s/123456/$usepasswd/g" ${useip}_beifen.sh
@@ -15859,7 +15871,7 @@ discourse,yunsou,ahhhhfs,nsgame,gying" \
 	  	  moltbot_menu
 		  ;;
 	  115|hermes)
-	  	  bash <(curl -sL ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/hermes_manager.sh)
+		  bash <(curl -sL ${hy_raw_base}/hermes_manager.sh)
 		  ;;
 	  116|x-ui|xui)
 		local app_id="116"
@@ -16567,27 +16579,50 @@ check_port_conflict 6365 6366 && { open_port 6365; open_port 6366; } || { echo "
 			[ -f "$tkkb_dir/.env" ] || return 0
 			sed -n "s/^${1}=//p" "$tkkb_dir/.env" | tail -n 1
 		}
+		tkkb_download_source() {
+			printf '%s\n' "${TIKTOK_SOURCE:-$(tkkb_env_value TIKTOK_SOURCE)}" | sed '/^$/d'
+		}
 		tkkb_run() {
-			local action="$1" temporary ref="${HY_REF:-main}" result=0 response
+			local action="$1" temporary ref="${HY_REF:-main}" result=0 response source repository api_url script_url
 			shift
 			if [ "$action" != --install ] && [ "$action" != --update ] && [ "$action" != --admin-account ] && [ -f "$tkkb_dir/install.sh" ]; then
 				APP_DIR="$tkkb_dir" bash "$tkkb_dir/install.sh" "$action" "$@"
 				return $?
 			fi
+			source=$(tkkb_download_source)
+			source="${source:-${HY_SOURCE:-github}}"
+			repository="${TIKTOK_GITEE_REPOSITORY:-$(tkkb_env_value TIKTOK_GITEE_REPOSITORY)}"
+			repository="${repository:-hy91/hy}"
+			[[ "$repository" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*/[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]] || { echo "无效的 Gitee 仓库地址"; return 1; }
 			[[ "$ref" =~ ^[a-zA-Z0-9._/-]+$ ]] || { echo "无效的仓库版本"; return 1; }
+			case "$source" in
+				gitee) api_url="https://gitee.com/api/v5/repos/$repository/commits/$ref" ;;
+				github) api_url="https://api.github.com/repos/359073395/hy/commits/$ref" ;;
+				*) echo "TIKTOK_SOURCE 仅支持 github 或 gitee"; return 1 ;;
+			esac
 			if [[ ! "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+				command -v python3 >/dev/null || { echo "解析安装版本需要 python3，请先安装 python3。"; return 1; }
+				printf '正在从 %s 解析安装版本 %s...\n' "$source" "$ref"
 				response=$(curl -fsSL --retry 3 --connect-timeout 15 --max-time 60 -H 'Cache-Control: no-cache' \
-					"https://api.github.com/repos/359073395/hy/commits/$ref") || { echo "无法读取安装版本"; return 1; }
-				ref=$(printf '%s\n' "$response" | sed -n 's/^[[:space:]]*"sha":[[:space:]]*"\([0-9a-f]\{40\}\)".*/\1/p' | head -n 1)
+					"$api_url") || { echo "无法从 $source 读取安装版本"; return 1; }
+				ref=$(printf '%s\n' "$response" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("sha", ""))') || { echo "安装版本返回格式无效"; return 1; }
 				[[ "$ref" =~ ^[0-9a-f]{40}$ ]] || { echo "未取得有效安装版本"; return 1; }
 			fi
-			temporary=$(mktemp -d) || return 1
-			if curl -fsSL --retry 3 --connect-timeout 15 --max-time 90 \
-				"https://raw.githubusercontent.com/359073395/hy/$ref/apps/tiktok-knowledge/install.sh" -o "$temporary/install.sh" && \
-				bash -n "$temporary/install.sh"; then
-				APP_DIR="$tkkb_dir" APP_PORT="$tkkb_port" bash "$temporary/install.sh" "$action" "$@" --ref "$ref" || result=$?
+			if [ "$source" = gitee ]; then
+				script_url="https://gitee.com/$repository/raw/$ref/apps/tiktok-knowledge/install.sh"
 			else
-				echo "下载安装脚本失败"
+				script_url="https://raw.githubusercontent.com/359073395/hy/$ref/apps/tiktok-knowledge/install.sh"
+			fi
+			temporary=$(mktemp -d) || return 1
+			printf '正在从 %s 下载安装器（版本 %s）...\n' "$source" "$ref"
+			if curl -fsSL --retry 3 --connect-timeout 15 --max-time 90 \
+				"$script_url" -o "$temporary/install.sh" && \
+				[ "$(head -n 1 "$temporary/install.sh")" = '#!/usr/bin/env bash' ] && \
+				bash -n "$temporary/install.sh"; then
+				APP_DIR="$tkkb_dir" APP_PORT="$tkkb_port" TIKTOK_SOURCE="$source" TIKTOK_GITEE_REPOSITORY="$repository" \
+					bash "$temporary/install.sh" "$action" "$@" --ref "$ref" || result=$?
+			else
+				echo "从 $source 下载安装脚本失败，或返回的文件不是有效安装器"
 				result=1
 			fi
 			rm -f -- "$temporary/install.sh"
@@ -16722,6 +16757,11 @@ EOF
 			fi
 			echo -e "TikTok 知识系统 $check_status"
 			echo "官网: https://github.com/359073395/hy/tree/main/apps/tiktok-knowledge"
+			local tkkb_selected_source tkkb_selected_repo
+			tkkb_selected_source=$(tkkb_download_source)
+			tkkb_selected_repo="${TIKTOK_GITEE_REPOSITORY:-$(tkkb_env_value TIKTOK_GITEE_REPOSITORY)}"
+			echo "下载源: ${tkkb_selected_source:-${HY_SOURCE:-github}}"
+			[ "${tkkb_selected_source:-${HY_SOURCE:-github}}" != gitee ] || echo "国内仓库: https://gitee.com/${tkkb_selected_repo:-hy91/hy}"
 			echo "运营手册、人员管理、岗位考核与知识库升级，默认端口: $tkkb_port"
 			if [ -f "$tkkb_dir/.env" ]; then
 				ip_address
@@ -18129,7 +18169,7 @@ EOF
 					read -e -p "请输入流量重置日期（默认每月1日重置）: " cz_day
 					cz_day=${cz_day:-1}
 					cd ~
-					curl -Ss -o ~/Limiting_Shut_down.sh ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/Limiting_Shut_down1.sh
+					curl -SsL -o ~/Limiting_Shut_down.sh ${hy_raw_base}/Limiting_Shut_down1.sh
 					chmod +x ~/Limiting_Shut_down.sh
 					sed -i "s/110/$rx_threshold_gb/g" ~/Limiting_Shut_down.sh
 					sed -i "s/120/$tx_threshold_gb/g" ~/Limiting_Shut_down.sh
@@ -18177,7 +18217,7 @@ EOF
 					  chmod +x ~/TG-check-notify.sh
 					  nano ~/TG-check-notify.sh
 				  else
-					  curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/TG-check-notify.sh
+					  curl -sSL -O ${hy_raw_base}/TG-check-notify.sh
 					  chmod +x ~/TG-check-notify.sh
 					  nano ~/TG-check-notify.sh
 				  fi
@@ -18185,7 +18225,7 @@ EOF
 				  tmux new -d -s TG-check-notify "~/TG-check-notify.sh"
 				  crontab -l | grep -v '~/TG-check-notify.sh' | crontab - > /dev/null 2>&1
 				  (crontab -l ; echo "@reboot tmux new -d -s TG-check-notify '~/TG-check-notify.sh'") | crontab - > /dev/null 2>&1
-				  curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/TG-SSH-check-notify.sh > /dev/null 2>&1
+				  curl -sSL -O ${hy_raw_base}/TG-SSH-check-notify.sh > /dev/null 2>&1
 				  sed -i "3i$(grep '^TELEGRAM_BOT_TOKEN=' ~/TG-check-notify.sh)" TG-SSH-check-notify.sh > /dev/null 2>&1
 				  sed -i "4i$(grep '^CHAT_ID=' ~/TG-check-notify.sh)" TG-SSH-check-notify.sh
 				  chmod +x ~/TG-SSH-check-notify.sh
@@ -18213,7 +18253,7 @@ EOF
 			  root_use
 			  send_stats "修复SSH高危漏洞"
 			  cd ~
-			  curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/upgrade_openssh9.8p1.sh
+			  curl -sSL -O ${hy_raw_base}/upgrade_openssh9.8p1.sh
 			  chmod +x ~/upgrade_openssh9.8p1.sh
 			  ~/upgrade_openssh9.8p1.sh
 			  rm -f ~/upgrade_openssh9.8p1.sh
@@ -18794,11 +18834,11 @@ games_server_tools() {
 	  read -e -p "请输入你的选择: " sub_choice
 	  case $sub_choice in
 		  1) send_stats "幻兽帕鲁开服脚本" ; cd ~
-			 curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/palworld.sh ; chmod +x palworld.sh ; ./palworld.sh
+			 curl -sSL -O ${hy_raw_base}/palworld.sh ; chmod +x palworld.sh ; ./palworld.sh
 			 exit
 			 ;;
 		  2) send_stats "我的世界开服脚本" ; cd ~
-			 curl -sS -O ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/mc.sh ; chmod +x mc.sh ; ./mc.sh
+			 curl -sSL -O ${hy_raw_base}/mc.sh ; chmod +x mc.sh ; ./mc.sh
 			 exit
 			 ;;
 		  0)
@@ -18818,11 +18858,11 @@ while true; do
 	clear
 	echo "更新日志"
 	echo "------------------------"
-	echo "全部日志: ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/harvey_sh_log.txt"
+	echo "全部日志: ${hy_raw_base}/harvey_sh_log.txt"
 	echo "------------------------"
-	curl -s --max-time 15 ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/harvey_sh_log.txt | tail -n 30
+	curl -sL --max-time 15 ${hy_raw_base}/harvey_sh_log.txt | tail -n 30
 	# 只下载前5行获取版本号，避免下载整个脚本
-	local sh_v_new=$(curl -s --max-time 15 -r 0-200 ${gh_proxy}raw.githubusercontent.com/359073395/hy/main/harvey.sh | grep -o 'sh_v="[0-9.]*"' | head -1 | cut -d '"' -f 2)
+	local sh_v_new=$(curl -sL --max-time 15 -r 0-200 ${hy_raw_base}/harvey.sh | grep -o 'sh_v="[0-9.]*"' | head -1 | cut -d '"' -f 2)
 	if [ -z "$sh_v_new" ]; then
 		echo -e "${gl_hong}无法获取最新版本信息，请检查网络连接${gl_bai}"
 	elif [ "$sh_v" = "$sh_v_new" ]; then
@@ -18850,19 +18890,20 @@ while true; do
 			local country=$(curl -s --max-time 5 ipinfo.io/country)
 			local download_url
 			if [ "$country" = "CN" ]; then
-				download_url="${gh_proxy}raw.githubusercontent.com/359073395/hy/main/cn/harvey.sh"
+				download_url="${hy_raw_base}/cn/harvey.sh"
 			else
-				download_url="${gh_proxy}raw.githubusercontent.com/359073395/hy/main/harvey.sh"
+				download_url="${hy_raw_base}/harvey.sh"
 			fi
 			# 备份当前脚本
 			cp -f ~/harvey.sh ~/harvey.sh.bak 2>/dev/null
 			# 下载到临时文件，校验后再替换
 			local tmp_file=$(mktemp ~/harvey_tmp.XXXXXX)
-			if curl -sS --max-time 60 --fail -o "$tmp_file" "$download_url" && \
+			if curl -sSL --max-time 60 --fail -o "$tmp_file" "$download_url" && \
 			   [ -s "$tmp_file" ] && \
-			   head -1 "$tmp_file" | grep -q '^#!/bin/bash'; then
+			   head -1 "$tmp_file" | grep -q '^#!/bin/bash' && bash -n "$tmp_file"; then
 				chmod +x "$tmp_file"
 				mv -f "$tmp_file" ~/harvey.sh
+				sed -i "s/^hy_source=\"[a-z]*\"/hy_source=\"$HY_SOURCE\"/" ~/harvey.sh
 				canshu_v6
 				CheckFirstRun_true
 				yinsiyuanquan2
@@ -18887,7 +18928,7 @@ while true; do
 			clear
 			local country=$(curl -s --max-time 5 ipinfo.io/country)
 			local ipv6_address=$(curl -s --max-time 1 ipv6.ip.sb)
-			local cron_proxy cron_sed_cmd
+			local cron_proxy cron_sed_cmd cron_download_url
 			if [ "$country" = "CN" ]; then
 				cron_proxy="https://gh.kejilion.pro/"
 				cron_sed_cmd="sed -i 's/canshu=\"default\"/canshu=\"CN\"/g' ~/harvey.sh"
@@ -18898,8 +18939,14 @@ while true; do
 				cron_proxy="https://"
 				cron_sed_cmd=""
 			fi
+			if [ "$HY_SOURCE" = gitee ]; then
+				cron_download_url="${hy_raw_base}/harvey.sh"
+			else
+				cron_download_url="${cron_proxy}raw.githubusercontent.com/359073395/hy/main/harvey.sh"
+			fi
 			# 构建健壮的自动更新命令：下载到临时文件 → 校验 → 备份 → 替换 → 恢复本地设置 → 部署
-			SH_Update_task="cd ~ && tmp=\$(mktemp ~/harvey_tmp.XXXXXX) && curl -sS --max-time 60 --fail -o \"\$tmp\" ${cron_proxy}raw.githubusercontent.com/359073395/hy/main/harvey.sh && [ -s \"\$tmp\" ] && head -1 \"\$tmp\" | grep -q '^#!/bin/bash' && cp -f ~/harvey.sh ~/harvey.sh.bak 2>/dev/null && chmod +x \"\$tmp\" && mv -f \"\$tmp\" ~/harvey.sh"
+			SH_Update_task="cd ~ && tmp=\$(mktemp ~/harvey_tmp.XXXXXX) && curl -sSL --max-time 60 --fail -o \"\$tmp\" ${cron_download_url} && [ -s \"\$tmp\" ] && head -1 \"\$tmp\" | grep -q '^#!/bin/bash' && cp -f ~/harvey.sh ~/harvey.sh.bak 2>/dev/null && chmod +x \"\$tmp\" && mv -f \"\$tmp\" ~/harvey.sh"
+			SH_Update_task="$SH_Update_task && sed -i \"s/^hy_source=.*/hy_source=\\\"$HY_SOURCE\\\"/\" ~/harvey.sh"
 			# 追加设置恢复
 			if [ -n "$cron_sed_cmd" ]; then
 				SH_Update_task="$SH_Update_task && $cron_sed_cmd"
@@ -18912,7 +18959,9 @@ while true; do
 			SH_Update_task="$SH_Update_task || rm -f \"\$tmp\" 2>/dev/null"
 			check_crontab_installed
 			(crontab -l | grep -v "harvey.sh") | crontab -
-			(crontab -l 2>/dev/null; echo "$(shuf -i 0-59 -n 1) 2 * * * bash -c '$SH_Update_task'") | crontab -
+			local cron_command
+			printf -v cron_command '%q' "$SH_Update_task"
+			(crontab -l 2>/dev/null; printf '%s 2 * * * bash -c %s\n' "$(shuf -i 0-59 -n 1)" "$cron_command") | crontab -
 			echo -e "${gl_lv}自动更新已开启，每天凌晨2点脚本会自动更新！${gl_bai}"
 			send_stats "开启脚本自动更新"
 			break_end

@@ -6,6 +6,36 @@
 
 如果 GHCR 拉取失败，安装器会按服务器架构下载 GitHub Release 中的 amd64 或 arm64 镜像包，校验 SHA256 后导入 Docker。
 
+## 国内服务器安装
+
+国内入口使用 [Gitee 仓库](https://gitee.com/hy91/hy)。以 root 执行：
+
+```bash
+curl -fL --retry 3 --connect-timeout 15 https://gitee.com/hy91/hy/raw/main/cn/harvey.sh -o /root/hy-cn.sh && bash /root/hy-cn.sh
+```
+
+进入 **11 应用系统 → 123 TikTok 知识系统 → 1 安装**。国内版会从 Gitee 解析并固定提交 SHA，下载安装文件，然后从同仓库发行版下载当前架构的完整镜像分卷。安装包包括应用、PostgreSQL 17 和 PostgREST，逐卷验证 SHA256 后导入 Docker。这个安装路径不拉取 GHCR 或 Docker Hub；服务器仍需能访问 Gitee 及其下载域名，首次安装 Docker 和系统依赖也需要可用的系统软件源。
+
+安装成功后，来源记录在本机 `.env` 中。菜单 **2 更新** 或 `bash /opt/tiktok-knowledge/install.sh --update` 会沿用该来源，保留现有人员、知识、考核、域名和凭据。下载失败时会显示失败文件及来源，尚未完成的安装包不会启动部署。
+
+主脚本的下载和自身更新也使用 Gitee。HY 中其他第三方软件有各自的仓库、镜像和安装依赖，不能仅靠同步 HY 仓库解决它们的全部网络问题。
+
+独立运行安装器时可显式选择来源：
+
+```bash
+TIKTOK_SOURCE=gitee bash /opt/tiktok-knowledge/install.sh --update
+```
+
+这条维护命令需要已经具备 Gitee 支持的新版安装器。旧版请先通过上面的国内入口进入菜单更新。`TIKTOK_GITEE_REPOSITORY` 默认 `hy91/hy`；`TIKTOK_BUNDLE_BASE` 默认 `https://gitee.com/hy91/hy/releases/download`，也可指向自己提供相同发行版目录结构的 HTTPS 下载站。
+
+若安装包由其他电脑下载后上传到服务器，可设置 `TIKTOK_BUNDLE_DIR=/root/tiktok-package`，目录内需包含该架构的 `.sha256` 清单及全部 `.part-000` 等分卷。安装器仍会通过所选仓库下载源码配置，因此此参数不是完全断网安装。
+
+### 维护国内发行版
+
+Git 仓库同步不包含镜像安装包。发布应用后，运行 GitHub Actions 的 **TikTok offline packages** 工作流，生成 amd64 和 arm64 两份完整包。将产物中的分卷及校验清单上传到 Gitee 的 `tiktok-knowledge-v版本号` 发行版，保持文件名不变。每卷为 90 MiB，发布前检查仓库附件剩余容量；下载源只有在所有分卷上传并验证后才可用于新安装。
+
+工作流只读取发布镜像，不包含服务器 `.env`、员工、令牌或知识库业务数据。以后更新需要同时同步源码并发布对应版本安装包。分卷工具为 `deploy/package-offline.sh`，需在对应架构的 Docker 环境中先载入三个镜像后使用。
+
 ## 域名访问
 
 将域名解析到服务器后，在应用菜单选择 **5 添加域名访问**。脚本复用现有 Nginx 和证书功能，并同步网站的访问地址配置。已用于其他网站的域名会被拒绝覆盖。选择 **6 删除域名访问** 时只操作与此应用关联的反向代理配置。

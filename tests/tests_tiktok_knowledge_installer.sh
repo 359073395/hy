@@ -191,7 +191,7 @@ assert_equal "$original_token" "$(env_value ADMIN_TOKEN)"
 assert_equal 'sha256:previous-image' "$(env_value TIKTOK_IMAGE)"
 assert_equal 0.1.0 "$(cat "$APP_DIR/VERSION")"
 assert_equal 'database dump' "$(cat "$APP_DIR/backups/latest-pre-update/database.dump")"
-grep -q 'up -d --no-build db' "$TEST_ROOT/compose-calls"
+grep -q '^up -d --no-build --no-recreate db$' "$TEST_ROOT/compose-calls"
 
 # A missing initial release or failed image pull cannot alter existing credentials.
 pull_application_image() { return 1; }
@@ -257,9 +257,9 @@ curl() {
     done
     printf '%s\n' "$url" >> "$TEST_ROOT/download-urls"
     case "$url" in
-        */commits/main) printf '{\n  "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"\n}\n' ;;
+        */commits/main) printf '{"commit":{"sha":"nested-value-is-not-the-commit"},"sha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}\n' ;;
         */bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/apps/tiktok-knowledge/install.sh)
-            printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$@" > "$RUN_CAPTURE"\n' > "$output"
+            printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$@" > "$RUN_CAPTURE"\nprintf "%%s\\n" "${TIKTOK_SOURCE:-github}" > "$RUN_CAPTURE.source"\n' > "$output"
             ;;
         *) return 1 ;;
     esac
@@ -268,6 +268,10 @@ assert_equal bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb "$(resolve_ref)"
 tkkb_run --install
 assert_equal $'--install\n--ref\nbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' "$(cat "$RUN_CAPTURE")"
 grep -q '/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/apps/tiktok-knowledge/install.sh' "$TEST_ROOT/download-urls"
+TIKTOK_SOURCE=gitee tkkb_run --install
+assert_equal gitee "$(cat "$RUN_CAPTURE.source")"
+grep -q 'https://gitee.com/api/v5/repos/hy91/hy/commits/main' "$TEST_ROOT/download-urls"
+grep -q 'https://gitee.com/hy91/hy/raw/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/apps/tiktok-knowledge/install.sh' "$TEST_ROOT/download-urls"
 rm -f "$RUN_CAPTURE"
 curl() { return 1; }
 if tkkb_run --install >/dev/null 2>&1; then exit 1; fi
@@ -375,6 +379,176 @@ if (restore_backup "$TEST_ROOT/valid.tar.gz") >/dev/null 2>&1; then exit 1; fi
 assert_equal 'data before failed restore' "$(cat "$APP_DIR/data/image.txt")"
 assert_equal 'PGDMPdatabase before failed restore' "$(cat "$TEST_ROOT/current-database")"
 assert_equal target-token "$(env_value ADMIN_TOKEN)"
+
+# Domestic installs and local image bundles never contact foreign registries.
+(
+source "$ROOT/apps/tiktok-knowledge/install.sh"
+unset TIKTOK_SOURCE TIKTOK_GITEE_REPOSITORY TIKTOK_BUNDLE_BASE TIKTOK_BUNDLE_DIR TIKTOK_IMAGE
+APP_DIR="$TEST_ROOT/domestic-install"
+mkdir -p "$APP_DIR/data" "$TEST_ROOT/bundle-origin"
+printf 'ADMIN_TOKEN=unchanged-token\nPOSTGRES_PASSWORD=unchanged-password\nSITE_URL=https://existing.example\nAPP_PORT=8791\nTIKTOK_IMAGE=old-image\n' > "$APP_DIR/.env"
+printf 'services: {}\n' > "$APP_DIR/compose.yaml"
+printf '0.3.0\n' > "$APP_DIR/VERSION"
+printf 'existing uploaded image' > "$APP_DIR/data/keep.txt"
+printf 'existing employee and exam data' > "$TEST_ROOT/domestic-database"
+cp "$APP_DIR/.env" "$TEST_ROOT/domestic-original-env"
+configure_downloads
+assert_equal github "$DOWNLOAD_SOURCE"
+assert_equal 0 "$SAVE_DOWNLOAD_SETTINGS"
+TIKTOK_SOURCE=github TIKTOK_GITEE_REPOSITORY=hy91/hy configure_downloads
+assert_equal 0 "$SAVE_DOWNLOAD_SETTINGS"
+
+stem=tiktok-knowledge-0.3.1-linux-amd64-full
+printf 'first image archive portion' > "$TEST_ROOT/bundle-origin/$stem.tar.gz.part-000"
+printf 'second image archive portion' > "$TEST_ROOT/bundle-origin/$stem.tar.gz.part-001"
+for part in 000 001; do
+    sum=$(sha256sum "$TEST_ROOT/bundle-origin/$stem.tar.gz.part-$part" | cut -d ' ' -f 1)
+    printf '%s  %s.tar.gz.part-%s\n' "$sum" "$stem" "$part"
+done > "$TEST_ROOT/bundle-origin/$stem.sha256"
+cat "$TEST_ROOT/bundle-origin/$stem.tar.gz.part-000" "$TEST_ROOT/bundle-origin/$stem.tar.gz.part-001" > "$TEST_ROOT/expected-full-archive"
+curl() {
+    local url='' output='' file
+    while [ "$#" -gt 0 ]; do
+        case "$1" in https://*) url="$1" ;; -o) shift; output="$1" ;; esac
+        shift
+    done
+    printf '%s\n' "$url" >> "$TEST_ROOT/domestic-downloads"
+    case "$url" in
+        https://gitee.com/api/v5/repos/hy91/hy/commits/main)
+            printf '{"commit":{"sha":"wrong-nested-sha"},"sha":"cccccccccccccccccccccccccccccccccccccccc"}' ;;
+        https://gitee.com/hy91/hy/raw/cccccccccccccccccccccccccccccccccccccccc/apps/tiktok-knowledge/*)
+            file="${url##*/}"
+            if [ "$file" = install.sh ] && [ "${MOCK_BAD_INSTALLER:-0}" -eq 1 ]; then printf '<html>Login required</html>\n' > "$output"
+            elif [ "$file" = VERSION ]; then printf '0.3.1\n' > "$output"
+            else cp "$ROOT/apps/tiktok-knowledge/$file" "$output"
+            fi ;;
+        https://gitee.com/hy91/hy/releases/download/tiktok-knowledge-v0.3.1/*)
+            cp "$TEST_ROOT/bundle-origin/${url##*/}" "$output" ;;
+        *) printf 'Unexpected network request: %s\n' "$url" >&2; return 1 ;;
+    esac
+}
+docker() {
+    printf '%s\n' "$*" >> "$TEST_ROOT/domestic-docker"
+    case "$1" in
+        image) [ -f "$TEST_ROOT/bundle-loaded" ] || return 1; printf '%s\n' "${MOCK_BUNDLE_PLATFORM:-linux/amd64}" ;;
+        load)
+            cmp "$3" "$TEST_ROOT/expected-full-archive" || return 1
+            touch "$TEST_ROOT/bundle-loaded" ;;
+        inspect) printf 'sha256:old-image-id\n' ;;
+        *) printf 'Unexpected Docker command: %s\n' "$*" >&2; return 1 ;;
+    esac
+}
+compose() {
+    printf '%s\n' "$*" >> "$TEST_ROOT/domestic-compose"
+    case "$*" in
+        *pull\ db*|pull*) return 1 ;;
+        *pg_dump*) cat "$TEST_ROOT/domestic-database" ;;
+    esac
+    return 0
+}
+wait_healthy() { return 0; }
+ensure_admin_account() { return 0; }
+HY_REF=main
+TIKTOK_SOURCE=gitee
+assert_equal cccccccccccccccccccccccccccccccccccccccc "$(resolve_ref)"
+ACTION=--update
+deploy > "$TEST_ROOT/domestic-install.log"
+assert_equal unchanged-token "$(env_value ADMIN_TOKEN)"
+assert_equal unchanged-password "$(env_value POSTGRES_PASSWORD)"
+assert_equal 'https://existing.example' "$(env_value SITE_URL)"
+assert_equal 'existing uploaded image' "$(cat "$APP_DIR/data/keep.txt")"
+assert_equal 'existing employee and exam data' "$(cat "$TEST_ROOT/domestic-database")"
+assert_equal gitee "$(env_value TIKTOK_SOURCE)"
+assert_equal hy91/hy "$(env_value TIKTOK_GITEE_REPOSITORY)"
+assert_equal 'https://gitee.com/hy91/hy/releases/download' "$(env_value TIKTOK_BUNDLE_BASE)"
+cmp "$APP_DIR/backups/latest-pre-update/.env" "$TEST_ROOT/domestic-original-env"
+grep -q '^up -d --no-build --no-recreate --pull never db$' "$TEST_ROOT/domestic-compose"
+if grep -q '^pull ' "$TEST_ROOT/domestic-docker" "$TEST_ROOT/domestic-compose"; then exit 1; fi
+grep -Fq 'image inspect --format {{.Os}}/{{.Architecture}} ghcr.io/359073395/tiktok-knowledge:0.3.1' "$TEST_ROOT/domestic-docker"
+grep -Fq 'image inspect --format {{.Os}}/{{.Architecture}} postgres:17-alpine' "$TEST_ROOT/domestic-docker"
+grep -Fq 'image inspect --format {{.Os}}/{{.Architecture}} postgrest/postgrest:v16.5' "$TEST_ROOT/domestic-docker"
+if MOCK_BUNDLE_PLATFORM=linux/arm64 bundle_images_available; then exit 1; fi
+if grep -Eq 'github|ghcr|docker.io' "$TEST_ROOT/domestic-downloads"; then exit 1; fi
+cleanup
+
+# A later direct --update reuses the saved source; existing images need no bundle download.
+unset TIKTOK_SOURCE
+configure_downloads
+assert_equal gitee "$DOWNLOAD_SOURCE"
+cp "$APP_DIR/.env" "$TEST_ROOT/domestic-saved-env"
+if (MOCK_BAD_INSTALLER=1 deploy) >/dev/null 2>&1; then exit 1; fi
+cmp "$APP_DIR/.env" "$TEST_ROOT/domestic-saved-env"
+: > "$TEST_ROOT/domestic-downloads"
+deploy >/dev/null
+cmp "$APP_DIR/.env" "$TEST_ROOT/domestic-saved-env"
+if grep -q '/releases/download/' "$TEST_ROOT/domestic-downloads"; then exit 1; fi
+cleanup
+TIKTOK_SOURCE=github configure_downloads
+assert_equal github "$DOWNLOAD_SOURCE"
+configure_downloads
+assert_equal gitee "$DOWNLOAD_SOURCE"
+
+# Failed health after changing source settings restores the original complete .env.
+TIKTOK_GITEE_REPOSITORY=hy91/hy
+TIKTOK_BUNDLE_BASE=https://downloads.example/releases
+wait_healthy() {
+    if [ ! -f "$TEST_ROOT/domestic-health-failed" ]; then touch "$TEST_ROOT/domestic-health-failed"; return 1; fi
+    return 0
+}
+if (deploy) >/dev/null 2>&1; then exit 1; fi
+assert_equal 'https://gitee.com/hy91/hy/releases/download' "$(env_value TIKTOK_BUNDLE_BASE)"
+assert_equal unchanged-token "$(env_value ADMIN_TOKEN)"
+assert_equal 'https://existing.example' "$(env_value SITE_URL)"
+unset TIKTOK_GITEE_REPOSITORY TIKTOK_BUNDLE_BASE
+wait_healthy() { return 0; }
+
+# Local copied bundles work without any image-network calls and never persist their path.
+rm -f "$TEST_ROOT/bundle-loaded"
+TIKTOK_BUNDLE_DIR="$TEST_ROOT/bundle-origin"
+deploy >/dev/null
+if grep -q '^TIKTOK_BUNDLE_DIR=' "$APP_DIR/.env"; then exit 1; fi
+cleanup
+
+# A local bundle also selects registry-free image loading when the source is GitHub.
+TIKTOK_SOURCE=github configure_downloads
+assert_equal 1 "$USE_IMAGE_BUNDLE"
+configure_downloads
+rm -f "$TEST_ROOT/bundle-loaded"
+cp "$APP_DIR/.env" "$TEST_ROOT/before-broken-bundle-env"
+cp "$APP_DIR/compose.yaml" "$TEST_ROOT/before-broken-bundle-compose"
+cp "$TEST_ROOT/bundle-origin/$stem.sha256" "$TEST_ROOT/valid-bundle.sha256"
+
+# A corrupt part must be rejected before backups, service changes or docker load.
+printf 'corrupt payload' > "$TEST_ROOT/bundle-origin/$stem.tar.gz.part-001"
+: > "$TEST_ROOT/domestic-compose"
+: > "$TEST_ROOT/domestic-docker"
+if (deploy) > "$TEST_ROOT/broken-bundle.log" 2>&1; then exit 1; fi
+grep -q 'SHA256' "$TEST_ROOT/broken-bundle.log"
+cmp "$APP_DIR/.env" "$TEST_ROOT/before-broken-bundle-env"
+cmp "$APP_DIR/compose.yaml" "$TEST_ROOT/before-broken-bundle-compose"
+[ ! -s "$TEST_ROOT/domestic-compose" ]
+if grep -q '^load ' "$TEST_ROOT/domestic-docker"; then exit 1; fi
+
+# Reject empty, path-traversal, duplicate, out-of-order and non-contiguous manifests.
+printf 'second image archive portion' > "$TEST_ROOT/bundle-origin/$stem.tar.gz.part-001"
+configure_downloads
+WORK_DIR=$(mktemp -d "$APP_DIR/.deploy.XXXXXX")
+RELEASE_VERSION=0.3.1
+RELEASE_IMAGE=ghcr.io/359073395/tiktok-knowledge:0.3.1
+sum=$(printf '0%.0s' {1..64})
+for malformed in empty traversal duplicate gap reversed; do
+    case "$malformed" in
+        empty) : > "$TEST_ROOT/bundle-origin/$stem.sha256" ;;
+        traversal) printf '%s  ../outside\n' "$sum" > "$TEST_ROOT/bundle-origin/$stem.sha256" ;;
+        duplicate) head -n 1 "$TEST_ROOT/valid-bundle.sha256" > "$TEST_ROOT/bundle-origin/$stem.sha256"; head -n 1 "$TEST_ROOT/valid-bundle.sha256" >> "$TEST_ROOT/bundle-origin/$stem.sha256" ;;
+        gap) sed 's/part-001/part-002/' "$TEST_ROOT/valid-bundle.sha256" > "$TEST_ROOT/bundle-origin/$stem.sha256" ;;
+        reversed) tail -n 1 "$TEST_ROOT/valid-bundle.sha256" > "$TEST_ROOT/bundle-origin/$stem.sha256"; head -n 1 "$TEST_ROOT/valid-bundle.sha256" >> "$TEST_ROOT/bundle-origin/$stem.sha256" ;;
+    esac
+    if load_image_bundle >/dev/null 2>&1; then printf 'Accepted invalid bundle: %s\n' "$malformed" >&2; exit 1; fi
+done
+if grep -q '^load ' "$TEST_ROOT/domestic-docker"; then exit 1; fi
+cleanup
+)
 
 # Both menus use the same route and install/domain helpers.
 for entry in harvey.sh cn/harvey.sh; do
