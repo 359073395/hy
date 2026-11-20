@@ -101,7 +101,7 @@ jobs:
           curl -fSL --retry 3 'https://github.com/359073395/hy/releases/download/tiktok-knowledge-v0.1.0/tiktok-knowledge-0.1.0-linux-amd64.tar.gz' -o "$RUNNER_TEMP/legacy-image.tar.gz"
           docker load --input "$RUNNER_TEMP/legacy-image.tar.gz"
           docker compose --project-directory "$legacy" --env-file "$legacy/.env" -f "$legacy/compose.yaml" up -d --wait --wait-timeout 240
-          node --env-file="$legacy/.env" tests/integration.mjs
+          node --env-file="$legacy/.env" tests/integration.mjs --legacy-api
           node --env-file="$legacy/.env" tests/legacy-upgrade.mjs --before
           sed -i 's|TIKTOK_IMAGE=ghcr.io/359073395/tiktok-knowledge:0.1.0|TIKTOK_IMAGE=tiktok-knowledge:test|' "$legacy/.env"
           docker compose --project-directory "$legacy" --env-file "$legacy/.env" -f "$legacy/compose.yaml" up -d --wait --wait-timeout 240
@@ -255,7 +255,7 @@ jobs:
           sudo env APP_DIR="$legacy" SITE_URL=https://existing-domain.example bash /tmp/legacy-install.sh --install --ref 4c85cd67c85d3fe8709e362c9619b5bd522d9d69 > /tmp/legacy-install.log 2>&1 || { cat /tmp/legacy-install.log; exit 1; }
           sudo cp "$legacy/.env" /tmp/legacy-test.env
           sudo chown "$USER" /tmp/legacy-test.env
-          node --env-file=/tmp/legacy-test.env tests/integration.mjs
+          node --env-file=/tmp/legacy-test.env tests/integration.mjs --legacy-api
           node --env-file=/tmp/legacy-test.env tests/legacy-upgrade.mjs --before
           sudo env APP_DIR="$legacy" ADMIN_SETUP_FILE=/tmp/admin-setup.json bash install.sh --update --ref "$GITHUB_SHA" > /tmp/legacy-update.log 2>&1 || { cat /tmp/legacy-update.log; exit 1; }
           node tests/check-installed-admin.mjs /tmp/admin-setup.json
