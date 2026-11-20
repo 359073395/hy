@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 import { getCurrentUser, isAdmin } from '@/lib/auth';
+import { getPool } from '@/lib/server/db';
 
 /**
  * 管理员查看某考试的完整题库（含正确答案与解析/参考答案）。
@@ -15,12 +16,19 @@ export async function GET(req: Request) {
   if (!examId) return NextResponse.json({ error: '缺少 examId 参数' }, { status: 400 });
 
   const client = getSupabaseClient();
-  const { data, error } = await client
-    .from('questions')
-    .select('id,exam_id,qtype,question_text,options,answer,explanation,sort_order')
-    .eq('exam_id', examId)
-    .order('sort_order', { ascending: true });
+  const [{ data, error }, totals] = await Promise.all([
+    client
+      .from('questions')
+      .select('id,exam_id,qtype,question_text,options,answer,explanation,sort_order')
+      .eq('exam_id', examId)
+      .order('sort_order', { ascending: true }),
+    getPool().query<{ exams: number; questions: number }>(`SELECT
+      (SELECT count(*)::int FROM exams) AS exams,
+      (SELECT count(*)::int FROM questions) AS questions`),
+  ]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ questions: data ?? [] });
+  return NextResponse.json({ questions: data ?? [], summary: totals.rows[0] }, {
+    headers: { 'Cache-Control': 'private, no-store' },
+  });
 }
