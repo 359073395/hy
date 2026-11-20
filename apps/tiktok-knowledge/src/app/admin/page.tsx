@@ -19,6 +19,7 @@ interface Member {
   tokenCustom?: string | null;
 }
 interface ExamDef { id: string; code: string; name: string; scope: string; pass_score: number; }
+interface BankSummary { exams: number; questions: number; }
 interface BankQuestion {
   id: string;
   qtype: 'truefalse' | 'choice' | 'multiple' | 'practical';
@@ -231,7 +232,10 @@ export default function AdminPage() {
   const [bankExam, setBankExam] = useState('');
   const [bankQtype, setBankQtype] = useState<'all' | 'truefalse' | 'choice' | 'multiple' | 'practical'>('all');
   const [bankQuestions, setBankQuestions] = useState<BankQuestion[]>([]);
+  const [bankSummary, setBankSummary] = useState<BankSummary | null>(null);
   const [bankLoading, setBankLoading] = useState(false);
+  const [bankError, setBankError] = useState('');
+  const bankRequest = useRef(0);
   const [editQ, setEditQ] = useState<BankQuestion | null>(null);
   const [eqText, setEqText] = useState('');
   const [eqOptions, setEqOptions] = useState<string[]>(['', '', '', '']);
@@ -354,15 +358,21 @@ export default function AdminPage() {
 
   // 题库管理：加载某考试全部题目（含答案/解析）
   const loadBank = useCallback(async (examId: string) => {
-    if (!examId) { setBankQuestions([]); return; }
+    const requestId = ++bankRequest.current;
+    setBankQuestions([]);
+    setBankSummary(null);
+    setBankError('');
+    if (!examId) { setBankLoading(false); return; }
     setBankLoading(true);
     try {
-      const r = await api<{ questions: BankQuestion[] }>(`/api/admin/questions?examId=${examId}`);
+      const r = await api<{ questions: BankQuestion[]; summary: BankSummary }>(`/api/admin/questions?examId=${encodeURIComponent(examId)}`);
+      if (requestId !== bankRequest.current) return;
       setBankQuestions(r.questions);
+      setBankSummary(r.summary);
     } catch {
-      setToast('题库加载失败');
+      if (requestId === bankRequest.current) setBankError('题库加载失败，请重试');
     } finally {
-      setBankLoading(false);
+      if (requestId === bankRequest.current) setBankLoading(false);
     }
   }, []);
 
@@ -969,6 +979,7 @@ export default function AdminPage() {
             <div className="mb-3 rounded-lg bg-white p-3 shadow-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <select
+                  aria-label="选择考核题库"
                   value={bankExam}
                   onChange={(e) => { setBankExam(e.target.value); loadBank(e.target.value); }}
                   className="rounded-md border border-slate-300 px-2 py-2 text-sm"
@@ -986,14 +997,27 @@ export default function AdminPage() {
                     </button>
                   ))}
                 </div>
-                <span className="ml-auto text-xs text-slate-400">
-                  {bankLoading
-                    ? '加载中…'
-                    : (() => {
-                        const c = (t: string) => bankQuestions.filter((q) => q.qtype === t).length;
-                        return `判断${c('truefalse')} 单选${c('choice')} 多选${c('multiple')} 简述${c('practical')}`;
-                      })()}
-                </span>
+              </div>
+              <div className="mt-3 border-t border-slate-100 pt-3" role="status" aria-live="polite">
+                {bankLoading ? (
+                  <p className="text-sm text-slate-500">正在加载{exams.find((exam) => exam.id === bankExam)?.name}题库…</p>
+                ) : bankError ? (
+                  <div className="flex items-center gap-3 text-sm text-rose-600">
+                    <p>{bankError}</p>
+                    <button onClick={() => loadBank(bankExam)} className="rounded border border-rose-200 px-2 py-1 text-xs">重试</button>
+                  </div>
+                ) : bankSummary ? (
+                  <>
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+                      <p className="text-slate-700">当前题库：{exams.find((exam) => exam.id === bankExam)?.name} · 共 <strong className="text-slate-900">{bankQuestions.length}</strong> 题</p>
+                      <p className="text-slate-600">全部 {bankSummary.exams} 套题库合计 <strong className="text-[#5B6CFF]">{bankSummary.questions}</strong> 题</p>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      判断 {bankQuestions.filter((q) => q.qtype === 'truefalse').length} · 单选 {bankQuestions.filter((q) => q.qtype === 'choice').length} · 多选 {bankQuestions.filter((q) => q.qtype === 'multiple').length} · 简述 {bankQuestions.filter((q) => q.qtype === 'practical').length}
+                      <span className="ml-3">当前筛选显示 {bankQuestions.filter((q) => bankQtype === 'all' || q.qtype === bankQtype).length} 题</span>
+                    </p>
+                  </>
+                ) : null}
               </div>
             </div>
 
@@ -1043,7 +1067,7 @@ export default function AdminPage() {
                     )}
                   </div>
                 ))}
-              {!bankLoading && bankQuestions.length === 0 && (
+              {!bankLoading && !bankError && bankSummary && bankQuestions.length === 0 && (
                 <p className="py-10 text-center text-sm text-slate-400">该考试暂无题目</p>
               )}
             </div>

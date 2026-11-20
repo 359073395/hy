@@ -188,6 +188,28 @@ try {
   }
   await verifyMemberTokenEditor();
   await page.screenshot({ path: 'test-results/admin.png', fullPage: true });
+  await page.getByRole('button', { name: '题库管理', exact: true }).click();
+  const questionExport = await (await page.request.get(base + '/api/admin/data?scope=questions')).json();
+  const bankSummary = page.getByRole('status').filter({ hasText: '当前题库：' });
+  for (const exam of questionExport.exams) {
+    await page.getByLabel('选择考核题库', { exact: true }).selectOption(exam.id);
+    const count = questionExport.questions.filter(question => question.exam_id === exam.id).length;
+    await bankSummary.getByText(`当前题库：${exam.name} · 共 ${count} 题`, { exact: true }).waitFor();
+    await bankSummary.getByText(`全部 ${questionExport.exams.length} 套题库合计 ${questionExport.questions.length} 题`, { exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: '编辑', exact: true }).count(), count);
+  }
+  const populatedExam = questionExport.exams.find(exam => questionExport.questions.some(question => question.exam_id === exam.id));
+  await page.getByLabel('选择考核题库', { exact: true }).selectOption(populatedExam.id);
+  await bankSummary.waitFor();
+  await page.getByRole('button', { name: '判断', exact: true }).click();
+  const filteredCount = questionExport.questions.filter(question => question.exam_id === populatedExam.id && question.qtype === 'truefalse').length;
+  await bankSummary.getByText(`当前筛选显示 ${filteredCount} 题`, { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: '编辑', exact: true }).count(), filteredCount);
+  await page.screenshot({ path: 'test-results/question-bank-desktop.png', fullPage: false });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Question bank totals must fit the mobile viewport');
+  await page.screenshot({ path: 'test-results/question-bank-mobile.png', fullPage: false });
+  await page.setViewportSize({ width: 1360, height: 900 });
   await page.goto(base + '/admin/knowledge');
   await page.locator('input[type=file]').waitFor();
   const bundle = { schemaVersion: 1, chapters: [{ module: 'M1', sectionNo: '1.2', title: 'Browser import preview', sortOrder: 2, isPublic: false, html: '<p>Browser preview</p>' }], exams: [], assets: [] };
