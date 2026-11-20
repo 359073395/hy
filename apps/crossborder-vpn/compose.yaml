@@ -1,0 +1,24 @@
+services:
+  app:
+    build:
+      context: ./app_src
+      dockerfile: Dockerfile
+    image: crossborder-vpn-hub:${APP_VERSION:-latest}
+    container_name: crossborder-vpn
+    restart: unless-stopped
+    ports:
+      - "${APP_BIND_IP:-0.0.0.0}:${APP_PORT:-18800}:18800"
+    environment:
+      - VPN_HUB_PORT=18800
+      - VPN_COMPANY_NAME=${VPN_COMPANY_NAME:-跑量众创 · 内部专线 VPN}
+      - VPN_ADMIN_USER=${VPN_ADMIN_USER:-admin}
+      - VPN_ADMIN_PASSWORD=${VPN_ADMIN_PASSWORD:-}
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:18800/api/public/site_info', timeout=5).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s

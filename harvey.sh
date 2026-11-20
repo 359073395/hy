@@ -13098,6 +13098,7 @@ while true; do
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}122. ${color122}流量IP核爆引擎 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}123. ${color123}TikTok知识系统 ${gl_huang}★${gl_bai}"
+	  echo -e "${gl_kjlan}124. ${color124}跑量众创跨境VPN系统 ${gl_huang}★${gl_bai}"
 	  echo -e "${gl_kjlan}-------------------------"
 	  echo -e "${gl_kjlan}第三方应用列表"
   	  echo -e "${gl_kjlan}想要让你的应用出现在这里？查看开发者指南: ${gl_huang}https://dev.kejilion.sh/${gl_bai}"
@@ -16814,6 +16815,240 @@ EOF
 				6) tkkb_remove_domain ;;
 				7) tkkb_run --status ;;
 				8) tkkb_run --logs ;;
+				0) break ;;
+				*) echo "无效选项" ;;
+			esac
+			break_end
+		done
+		  ;;
+	  124|crossborder-vpn|paoliang-vpn|cbvpn)
+		local app_id="124"
+		local cbvpn_dir="/opt/crossborder-vpn"
+		local cbvpn_port=18800
+		cbvpn_env_value() {
+			[ -f "$cbvpn_dir/.env" ] || return 0
+			sed -n "s/^${1}=//p" "$cbvpn_dir/.env" | tail -n 1
+		}
+		cbvpn_download_source() {
+			printf '%s\n' "${CBVPN_SOURCE:-$(cbvpn_env_value CBVPN_SOURCE)}" | sed '/^$/d'
+		}
+		cbvpn_run() {
+			local action="$1" temporary ref="${HY_REF:-main}" result=0 response source repository api_url script_url
+			shift
+			if [ "$action" != --install ] && [ "$action" != --update ] && [ "$action" != --admin-account ] && [ -f "$cbvpn_dir/install.sh" ]; then
+				APP_DIR="$cbvpn_dir" bash "$cbvpn_dir/install.sh" "$action" "$@"
+				return $?
+			fi
+			source=$(cbvpn_download_source)
+			source="${source:-${HY_SOURCE:-github}}"
+			repository="${CBVPN_GITEE_REPOSITORY:-$(cbvpn_env_value CBVPN_GITEE_REPOSITORY)}"
+			repository="${repository:-hy91/hy}"
+			[[ "$repository" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*/[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]] || { echo "无效的 Gitee 仓库地址"; return 1; }
+			[[ "$ref" =~ ^[a-zA-Z0-9._/-]+$ ]] || { echo "无效的仓库版本"; return 1; }
+			case "$source" in
+				gitee) api_url="https://gitee.com/api/v5/repos/$repository/commits/$ref" ;;
+				github) api_url="https://api.github.com/repos/359073395/hy/commits/$ref" ;;
+				*) echo "CBVPN_SOURCE 仅支持 github 或 gitee"; return 1 ;;
+			esac
+			if [[ ! "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+				command -v python3 >/dev/null || { echo "解析安装版本需要 python3，请先安装 python3。"; return 1; }
+				printf '正在从 %s 解析安装版本 %s...\n' "$source" "$ref"
+				response=$(curl -fsSL --retry 3 --connect-timeout 15 --max-time 60 -H 'Cache-Control: no-cache' "$api_url") || { echo "无法从 $source 读取安装版本"; return 1; }
+				ref=$(printf '%s\n' "$response" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("sha", ""))') || { echo "安装版本返回格式无效"; return 1; }
+				[[ "$ref" =~ ^[0-9a-f]{40}$ ]] || { echo "未取得有效安装版本"; return 1; }
+			fi
+			if [ "$source" = gitee ]; then
+				script_url="https://gitee.com/$repository/raw/$ref/apps/crossborder-vpn/install.sh"
+			else
+				script_url="https://raw.githubusercontent.com/359073395/hy/$ref/apps/crossborder-vpn/install.sh"
+			fi
+			temporary=$(mktemp -d) || return 1
+			printf '正在从 %s 下载安装器（版本 %s）...\n' "$source" "$ref"
+			if curl -fsSL --retry 3 --connect-timeout 15 --max-time 90 "$script_url" -o "$temporary/install.sh" && \
+				[ "$(head -n 1 "$temporary/install.sh")" = '#!/usr/bin/env bash' ] && \
+				bash -n "$temporary/install.sh"; then
+				APP_DIR="$cbvpn_dir" APP_PORT="$cbvpn_port" CBVPN_SOURCE="$source" CBVPN_GITEE_REPOSITORY="$repository" \
+					bash "$temporary/install.sh" "$action" "$@" --ref "$ref" || result=$?
+			else
+				echo "从 $source 下载安装脚本失败"
+				result=1
+			fi
+			rm -f -- "$temporary/install.sh"
+			rmdir -- "$temporary" 2>/dev/null || true
+			return "$result"
+		}
+		cbvpn_domain_valid() {
+			[[ "$1" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$ ]] && [ "${#1}" -le 253 ]
+		}
+		cbvpn_domain_matches() {
+			[ -f "$1" ] && grep -Eq "(server[[:space:]]+|proxy_pass[[:space:]]+http://)127\\.0\\.0\\.1:${cbvpn_port}[[:space:]]*;" "$1"
+		}
+		cbvpn_write_proxy() {
+			local selected_conf="$1" selected_domain="$2"
+			cat > "$selected_conf" <<EOF
+# Harvey app 124 - 跑量众创跨境VPN系统
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $selected_domain;
+    return 301 https://\$host\$request_uri;
+}
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name $selected_domain;
+    ssl_certificate /etc/nginx/certs/${selected_domain}_cert.pem;
+    ssl_certificate_key /etc/nginx/certs/${selected_domain}_key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    client_max_body_size 300m;
+    location / {
+        proxy_pass http://127.0.0.1:$cbvpn_port;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Connection "";
+        proxy_cache off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+}
+EOF
+		}
+		cbvpn_add_domain() {
+			[ -f "$cbvpn_dir/.env" ] || { echo "请先安装应用"; return 1; }
+			add_yuming
+			local selected_domain="$yuming" selected_conf old_conf="" temporary_conf
+			cbvpn_domain_valid "$selected_domain" || { echo "请输入有效域名，例如 vpn.paoliang.com"; return 1; }
+			selected_conf="/home/web/conf.d/$selected_domain.conf"
+			if [ -f "$selected_conf" ]; then
+				cbvpn_domain_matches "$selected_conf" || { echo "此域名已用于其他站点，请选择新域名"; return 1; }
+				old_conf=$(mktemp) || return 1
+				cp "$selected_conf" "$old_conf"
+			fi
+			nginx_install_status
+			local yuming="$selected_domain"
+			install_ssltls
+			if [ ! -s "/home/web/certs/${selected_domain}_cert.pem" ] || [ ! -s "/home/web/certs/${selected_domain}_key.pem" ]; then
+				[ -z "$old_conf" ] || rm -f -- "$old_conf"
+				echo "证书申请失败，请检查域名解析与 80/443 端口后重试"
+				return 1
+			fi
+			temporary_conf=$(mktemp /home/web/conf.d/.cbvpn.XXXXXX) || return 1
+			if cbvpn_write_proxy "$temporary_conf" "$selected_domain" && mv -f "$temporary_conf" "$selected_conf"; then
+				if docker exec nginx nginx -t && docker exec nginx nginx -s reload && cbvpn_run --set-domain "https://$selected_domain"; then
+					[ -z "$old_conf" ] || rm -f -- "$old_conf"
+					echo "✅ 跑量众创跨境VPN 官网与员工下载页: https://$selected_domain/"
+					echo "🛡️ 管理员后台登录地址: https://$selected_domain/admin"
+					echo "📱 手机端员工门户地址: https://$selected_domain/portal"
+					return 0
+				fi
+			fi
+			rm -f -- "$temporary_conf"
+			if [ -n "$old_conf" ]; then
+				cp "$old_conf" "$selected_conf"
+				rm -f -- "$old_conf"
+			else
+				rm -f -- "$selected_conf"
+			fi
+			docker exec nginx nginx -t && docker exec nginx nginx -s reload
+			echo "域名绑定未完成，请检查解析、证书和上方日志"
+			return 1
+		}
+		cbvpn_remove_domain() {
+			local file selected_domain selected_conf previous_conf replacement=""
+			echo "当前跑量众创跨境VPN域名:"
+			for file in /home/web/conf.d/*.conf; do
+				cbvpn_domain_matches "$file" && basename "$file" .conf
+			done
+			read -e -p "请输入要删除的域名（回车取消）: " selected_domain
+			[ -n "$selected_domain" ] || return 0
+			cbvpn_domain_valid "$selected_domain" || { echo "域名格式无效"; return 1; }
+			selected_conf="/home/web/conf.d/$selected_domain.conf"
+			cbvpn_domain_matches "$selected_conf" || { echo "该域名未绑定到此系统"; return 1; }
+			previous_conf=$(mktemp) || return 1
+			cp "$selected_conf" "$previous_conf"
+			rm -f -- "$selected_conf"
+			if ! docker exec nginx nginx -t || ! docker exec nginx nginx -s reload; then
+				cp "$previous_conf" "$selected_conf"
+				rm -f -- "$previous_conf"
+				return 1
+			fi
+			if [ "$(cbvpn_env_value SITE_URL)" = "https://$selected_domain" ]; then
+				for file in /home/web/conf.d/*.conf; do
+					if cbvpn_domain_matches "$file"; then replacement="https://$(basename "$file" .conf)"; break; fi
+				done
+				if [ -n "$replacement" ]; then
+					cbvpn_run --set-domain "$replacement"
+				else
+					cbvpn_run --clear-domain
+				fi
+			fi
+			rm -f -- "$previous_conf"
+			echo "已删除跑量众创跨境VPN的域名入口"
+		}
+		while true; do
+			clear
+			local check_status="${gl_hui}未安装${gl_bai}" cbvpn_running="" cbvpn_origin="" cbvpn_admin_status=""
+			if [ -f "$cbvpn_dir/.env" ]; then cbvpn_port=$(cbvpn_env_value APP_PORT); cbvpn_port=${cbvpn_port:-18800}; fi
+			cbvpn_running=$(docker inspect --format '{{.State.Running}}' crossborder-vpn 2>/dev/null || true)
+			if [ "$cbvpn_running" = true ]; then
+				check_status="${gl_lv}运行中${gl_bai}"
+			elif [ -f "$cbvpn_dir/compose.yaml" ]; then
+				check_status="${gl_huang}已安装未运行${gl_bai}"
+			fi
+			echo -e "跑量众创跨境VPN系统 $check_status"
+			echo "多核心节点管控、官网下载中心、飞书故障直报、在线热更新，默认端口: $cbvpn_port"
+			if [ -f "$cbvpn_dir/.env" ]; then
+				ip_address
+				[ -z "$ipv4_address" ] || echo "官网下载页: http://$ipv4_address:$cbvpn_port/"
+				[ -z "$(cbvpn_env_value SITE_URL)" ] || echo "域名访问: $(cbvpn_env_value SITE_URL)/"
+				cbvpn_origin=$(cbvpn_env_value SITE_URL)
+				if [ -z "$cbvpn_origin" ] && [ -n "$ipv4_address" ]; then cbvpn_origin="http://$ipv4_address:$cbvpn_port"; fi
+				if [ -z "$cbvpn_origin" ] && [ -n "$ipv6_address" ]; then cbvpn_origin="http://[$ipv6_address]:$cbvpn_port"; fi
+				[ -z "$cbvpn_origin" ] || echo "管理员后台: ${cbvpn_origin}/admin"
+				if [ "$cbvpn_running" = true ]; then
+					if cbvpn_admin_status=$(docker exec crossborder-vpn python3 /app/run_admin_hub.py --admin-status 2>/dev/null); then
+						printf '%s' "$cbvpn_admin_status" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(f"管理员账号: {d.get(\"admin_username\",\"admin\")} (密码: {\"已设置\" if d.get(\"has_password\") else \"未设置，请选4\"})")'
+					fi
+				fi
+			fi
+			echo ""
+			echo "------------------------"
+			echo "1. 安装              2. 更新            3. 卸载"
+			echo "4. 设置/重置管理员账号密码"
+			echo "------------------------"
+			echo "5. 添加域名访问      6. 删除域名访问"
+			echo "7. 查看服务状态      8. 查看运行日志"
+			echo "------------------------"
+			echo "0. 返回上一级选单"
+			echo "------------------------"
+			read -e -p "请输入你的选择: " sub_choice
+			case "$sub_choice" in
+				1)
+					install curl openssl python3 tar
+					install_docker
+					if [ ! -f "$cbvpn_dir/.env" ]; then
+						check_port_conflict "$cbvpn_port" || { echo "安装取消"; break_end; continue; }
+					fi
+					if cbvpn_run --install; then open_port "$cbvpn_port"; add_app_id; fi
+					;;
+				2)
+					if cbvpn_run --update; then add_app_id; fi
+					;;
+				3)
+					read -e -p "卸载应用容器并保留全部节点与配置数据？(y/N): " confirm
+					if [[ "$confirm" =~ ^[Yy]$ ]] && cbvpn_run --uninstall; then
+						close_port "$cbvpn_port"
+						[ ! -f /home/docker/appno.txt ] || sed -i '/^124$/d' /home/docker/appno.txt
+					fi
+					;;
+				4) cbvpn_run --admin-account ;;
+				5) cbvpn_add_domain ;;
+				6) cbvpn_remove_domain ;;
+				7) cbvpn_run --status ;;
+				8) cbvpn_run --logs ;;
 				0) break ;;
 				*) echo "无效选项" ;;
 			esac
