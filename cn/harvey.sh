@@ -16912,6 +16912,23 @@ server {
 }
 EOF
 		}
+		cbvpn_reload_nginx() {
+			local i
+			docker start nginx >/dev/null 2>&1 || true
+			for i in 1 2 3 4 5 6 7 8 9 10; do
+				if docker exec nginx sh -c 'test -s /var/run/nginx.pid && kill -0 "$(cat /var/run/nginx.pid)" 2>/dev/null' >/dev/null 2>&1; then
+					break
+				fi
+				sleep 0.5
+			done
+			docker exec nginx nginx -t || return 1
+			if docker exec nginx nginx -s reload >/dev/null 2>&1; then
+				return 0
+			fi
+			docker restart nginx >/dev/null 2>&1 || return 1
+			sleep 1
+			docker exec nginx nginx -t
+		}
 		cbvpn_add_domain() {
 			[ -f "$cbvpn_dir/.env" ] || { echo "请先安装应用"; return 1; }
 			add_yuming
@@ -16933,7 +16950,7 @@ EOF
 			fi
 			temporary_conf=$(mktemp /home/web/conf.d/.cbvpn.XXXXXX) || return 1
 			if cbvpn_write_proxy "$temporary_conf" "$selected_domain" && mv -f "$temporary_conf" "$selected_conf"; then
-				if docker exec nginx nginx -t && docker exec nginx nginx -s reload && cbvpn_run --set-domain "https://$selected_domain"; then
+				if cbvpn_reload_nginx && cbvpn_run --set-domain "https://$selected_domain"; then
 					[ -z "$old_conf" ] || rm -f -- "$old_conf"
 					echo "✅ 跑量众创跨境VPN 官网与员工下载页: https://$selected_domain/"
 					echo "🛡️ 管理员后台登录地址: https://$selected_domain/admin"
@@ -16948,7 +16965,7 @@ EOF
 			else
 				rm -f -- "$selected_conf"
 			fi
-			docker exec nginx nginx -t && docker exec nginx nginx -s reload
+			cbvpn_reload_nginx || true
 			echo "域名绑定未完成，请检查解析、证书和上方日志"
 			return 1
 		}
@@ -16966,7 +16983,7 @@ EOF
 			previous_conf=$(mktemp) || return 1
 			cp "$selected_conf" "$previous_conf"
 			rm -f -- "$selected_conf"
-			if ! docker exec nginx nginx -t || ! docker exec nginx nginx -s reload; then
+			if ! cbvpn_reload_nginx; then
 				cp "$previous_conf" "$selected_conf"
 				rm -f -- "$previous_conf"
 				return 1
