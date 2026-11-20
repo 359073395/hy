@@ -1,5 +1,5 @@
 #!/bin/bash
-sh_v="4.5.2"
+sh_v="4.5.3"
 gl_hui='\e[37m'
 gl_hong='\033[31m'
 gl_lv='\033[32m'
@@ -16880,19 +16880,21 @@ EOF
 			[ -f "$1" ] && grep -Eq "(server[[:space:]]+|proxy_pass[[:space:]]+http://)127\\.0\\.0\\.1:${cbvpn_port}[[:space:]]*;" "$1"
 		}
 		cbvpn_write_proxy() {
-			local selected_conf="$1" selected_domain="$2"
+			local selected_conf="$1" selected_domain="$2" listen6_80="" listen6_443=""
+			if grep -q '[[:space:]]\[::\]:' /home/web/conf.d/*.conf 2>/dev/null || [ -s /proc/net/if_inet6 ]; then
+				listen6_80="    listen [::]:80;"$'\n'
+				listen6_443="    listen [::]:443 ssl;"$'\n'
+			fi
 			cat > "$selected_conf" <<EOF
 # Harvey app 124 - 跑量众创跨境VPN系统
 server {
     listen 80;
-    listen [::]:80;
-    server_name $selected_domain;
+${listen6_80}    server_name $selected_domain;
     return 301 https://\$host\$request_uri;
 }
 server {
     listen 443 ssl;
-    listen [::]:443 ssl;
-    server_name $selected_domain;
+${listen6_443}    server_name $selected_domain;
     ssl_certificate /etc/nginx/certs/${selected_domain}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${selected_domain}_key.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -16915,19 +16917,26 @@ EOF
 		cbvpn_reload_nginx() {
 			local i
 			docker start nginx >/dev/null 2>&1 || true
-			for i in 1 2 3 4 5 6 7 8 9 10; do
+			for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
 				if docker exec nginx sh -c 'test -s /var/run/nginx.pid && kill -0 "$(cat /var/run/nginx.pid)" 2>/dev/null' >/dev/null 2>&1; then
 					break
 				fi
 				sleep 0.5
 			done
-			docker exec nginx nginx -t || return 1
-			if docker exec nginx nginx -s reload >/dev/null 2>&1; then
+			if ! docker exec nginx nginx -t; then
+				echo "❌ Nginx 配置语法测试未通过，请查看上方报错"
+				return 1
+			fi
+			if docker exec nginx nginx -s reload; then
 				return 0
 			fi
-			docker restart nginx >/dev/null 2>&1 || return 1
-			sleep 1
-			docker exec nginx nginx -t
+			echo "⚠️ Nginx reload 未就绪，正在尝试重启 Nginx 容器..."
+			if docker restart nginx && sleep 2 && docker exec nginx sh -c 'test -s /var/run/nginx.pid && kill -0 "$(cat /var/run/nginx.pid)" 2>/dev/null'; then
+				return 0
+			fi
+			echo "❌ Nginx 启动或重载失败，最近容器日志如下："
+			docker logs --tail 25 nginx 2>&1 || true
+			return 1
 		}
 		cbvpn_add_domain() {
 			[ -f "$cbvpn_dir/.env" ] || { echo "请先安装应用"; return 1; }

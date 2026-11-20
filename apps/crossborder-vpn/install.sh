@@ -220,7 +220,9 @@ set_origin() {
         validate_origin "$origin" || die "域名地址格式无效：$origin"
     fi
     set_env_value "SITE_URL" "$origin"
-    compose exec -T app python3 /app/run_admin_hub.py --set-domain "$origin" >/dev/null
+    if docker inspect --format '{{.State.Running}}' crossborder-vpn 2>/dev/null | grep -q '^true$'; then
+        compose exec -T app python3 /app/run_admin_hub.py --set-domain "$origin" >/dev/null || true
+    fi
     echo "✅ 主后台域名已更新为: ${origin:-<已清除>}"
 }
 
