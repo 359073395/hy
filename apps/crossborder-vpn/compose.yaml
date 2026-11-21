@@ -16,6 +16,11 @@ services:
       - TZ=Asia/Shanghai
     volumes:
       - ./data:/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:18800/api/public/site_info', timeout=5).read()"]
       interval: 15s

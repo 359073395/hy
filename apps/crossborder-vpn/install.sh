@@ -189,6 +189,14 @@ deploy() {
     wait_healthy || die "服务启动超时，请检查: docker logs crossborder-vpn"
     sync_admin_into_container
 
+    # 自动清理旧镜像，仅保留最近 2 代容器镜像，防止 VPS 磁盘膨胀
+    docker image prune -f >/dev/null 2>&1 || true
+    local old_imgs
+    old_imgs=$(docker images --format '{{.Repository}}:{{.Tag}} {{.CreatedAt}}' crossborder-vpn-hub 2>/dev/null | sort -rk2 | awk 'NR>2 {print $1}' || true)
+    if [ -n "$old_imgs" ]; then
+        printf '%s\n' "$old_imgs" | xargs -r docker rmi >/dev/null 2>&1 || true
+    fi
+
     echo ""
     if [ "$is_update" -eq 1 ]; then
         echo "✅ 跑量众创跨境VPN系统已更新至 v$ver（全部节点、激活码、飞书配置与域名均已保留）！"
